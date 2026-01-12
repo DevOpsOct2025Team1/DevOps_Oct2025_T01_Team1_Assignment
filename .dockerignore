@@ -1,0 +1,35 @@
+# Ignore development files
+.git
+.gitignore
+.env
+.env.*
+*.md
+README.md
+
+# Ignore build artifacts
+dist/
+logs/
+*.log
+
+# Ignore IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Ignore node modules
+node_modules/
+.nx/
+
+# Ignore test files
+*_test.go
+**/*_test.go
+
+# Ignore documentation
+docs/
+
+# Ignore Kubernetes and Docker files
+k8s/
+docker-compose.yml
+Dockerfile
+**/Dockerfile

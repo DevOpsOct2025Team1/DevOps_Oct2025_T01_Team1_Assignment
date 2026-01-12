@@ -1,0 +1,36 @@
+{
+  "name": "auth-service",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "sourceRoot": "apps/auth-service",
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "go build -o ../../dist/auth-service ./cmd/server",
+        "cwd": "apps/auth-service"
+      }
+    },
+    "serve": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "go run ./cmd/server",
+        "cwd": "apps/auth-service"
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "go test -v ./...",
+        "cwd": "apps/auth-service"
+      }
+    },
+    "docker-build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "docker build -t auth-service:latest -f apps/auth-service/Dockerfile ."
+      }
+    }
+  },
+  "tags": ["type:service", "lang:go", "grpc"]
+}

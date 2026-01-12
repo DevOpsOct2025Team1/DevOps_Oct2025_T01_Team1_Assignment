@@ -1,0 +1,36 @@
+{
+  "name": "user-service",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "sourceRoot": "apps/user-service",
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "go build -o ../../dist/user-service ./cmd/server",
+        "cwd": "apps/user-service"
+      }
+    },
+    "serve": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "go run ./cmd/server",
+        "cwd": "apps/user-service"
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "go test -v ./...",
+        "cwd": "apps/user-service"
+      }
+    },
+    "docker-build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "docker build -t user-service:latest -f apps/user-service/Dockerfile ."
+      }
+    }
+  },
+  "tags": ["type:service", "lang:go", "grpc"]
+}

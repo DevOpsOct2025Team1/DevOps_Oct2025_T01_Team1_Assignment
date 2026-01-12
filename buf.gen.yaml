@@ -1,0 +1,15 @@
+version: v2
+managed:
+  enabled: true
+  override:
+    - file_option: go_package_prefix
+      value: github.com/provsalt/DOP_P01_Team1/common
+plugins:
+  - remote: buf.build/protocolbuffers/go
+    out: apps/common
+    opt:
+      - paths=source_relative
+  - remote: buf.build/grpc/go
+    out: apps/common
+    opt:
+      - paths=source_relative
