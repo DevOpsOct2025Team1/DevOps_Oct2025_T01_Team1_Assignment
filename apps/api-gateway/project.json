@@ -2,7 +2,7 @@
   "name": "api-gateway",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "projectType": "application",
-  "sourceRoot": "services/api-gateway",
+  "sourceRoot": "apps/api-gateway",
   "targets": {
     "build": {
       "executor": "nx:run-commands",
@@ -28,7 +28,7 @@
     "docker-build": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "docker build -t api-gateway:latest -f services/api-gateway/Dockerfile ."
+        "command": "docker build -t api-gateway:latest -f apps/api-gateway/Dockerfile ."
       }
     }
   },

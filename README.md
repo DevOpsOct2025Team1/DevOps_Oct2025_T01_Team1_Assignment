@@ -5,7 +5,6 @@ This assignment project uses a microservices architecture.
 - **User Service** (Port 8080): Manages user data with MongoDB
 - **Auth Service** (Port 8081): Handles authentication with JWT
 - **API Gateway** (Port 3000): HTTP/REST interface for clients
-- **Consul** (Port 8500): Service discovery and health checking
 
 ## Prerequisites
 
@@ -36,7 +35,6 @@ docker compose up
 
 This starts:
 - API Gateway: http://localhost:3000
-- Consul UI: http://localhost:8500
 
 **Stop everything:**
 ```bash

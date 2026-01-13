@@ -44,6 +44,6 @@ dev-deps:
 
 setup-env:
 	@if [ ! -f .env ]; then cp .env.example .env; echo "Created .env file"; fi
-	@if [ ! -f services/user-service/.env ]; then cp services/user-service/.env.example services/user-service/.env; echo "Created services/user-service/.env"; fi
-	@if [ ! -f services/auth-service/.env ]; then cp services/auth-service/.env.example services/auth-service/.env; echo "Created services/auth-service/.env"; fi
+	@if [ ! -f services/user-service/.env ]; then cp apps/user-service/.env.example apps/user-service/.env; echo "Created services/user-service/.env"; fi
+	@if [ ! -f services/auth-service/.env ]; then cp apps/auth-service/.env.example apps/auth-service/.env; echo "Created services/auth-service/.env"; fi
 	@echo "Environment files created. Please update them with your actual credentials."
