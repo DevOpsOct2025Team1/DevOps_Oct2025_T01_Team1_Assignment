@@ -99,3 +99,18 @@ func (u *UserStore) GetUserByUsername(username string) (*User, error) {
 
 	return user, nil
 }
+
+func (u *UserStore) DeleteUserByID(id string) error {
+	collection := u.database.Collection("users")
+
+	oid, err := bson.ObjectIDFromHex(id)
+	if err != nil {
+		return ErrUserNotFound
+	}
+
+	err = collection.FindOneAndDelete(context.Background(), bson.M{"_id": oid}).Err()
+	if errors.Is(err, mongo.ErrNoDocuments) {
+		return ErrUserNotFound
+	}
+	return err
+}

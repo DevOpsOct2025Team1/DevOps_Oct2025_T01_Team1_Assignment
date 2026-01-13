@@ -105,6 +105,21 @@ func (s *UserServiceServer) GetUserByUsername(ctx context.Context, req *userv1.G
 	}, nil
 }
 
+func (s *UserServiceServer) DeleteUserByUserId(ctx context.Context, req *userv1.DeleteUserByIdRequest) (*userv1.DeleteUserByIdResponse, error) {
+	if req.Id == "" {
+		return nil, status.Error(codes.InvalidArgument, "id is required")
+	}
+
+	err := s.store.DeleteUserByID(req.Id)
+	if err != nil {
+		if errors.Is(err, store.ErrUserNotFound) {
+			return nil, status.Error(codes.NotFound, "user not found")
+		}
+		return nil, status.Error(codes.Internal, "failed to delete user")
+	}
+	return &userv1.DeleteUserByIdResponse{Success: true}, nil
+}
+
 func roleToString(role userv1.Role) string {
 	switch role {
 	case userv1.Role_ROLE_ADMIN:

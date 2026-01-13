@@ -20,6 +20,7 @@ service UserService {
   rpc CreateUser(CreateUserRequest) returns (CreateUserResponse);
   rpc GetUser(GetUserRequest) returns (GetUserResponse);
   rpc GetUserByUsername(GetUserByUsernameRequest) returns (GetUserByUsernameResponse);
+  rpc DeleteUserByUserId(DeleteUserByIdRequest) returns (DeleteUserByIdResponse);
 }
 
 message CreateUserRequest {
@@ -47,4 +48,12 @@ message GetUserByUsernameRequest {
 message GetUserByUsernameResponse {
   User user = 1;
   string hashed_password = 2;
+}
+
+message DeleteUserByIdRequest {
+  string id = 1;
+}
+
+message DeleteUserByIdResponse {
+  bool success = 1;
 }
