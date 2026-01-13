@@ -1,22 +1,19 @@
 package handlers
 
 import (
-	"context"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	authv1 "github.com/provsalt/DOP_P01_Team1/common/auth/v1"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 )
 
 type AuthHandler struct {
-	authServiceAddr string
+	client AuthServiceClient
 }
 
-func NewAuthHandler(authServiceAddr string) *AuthHandler {
+func NewAuthHandler(client AuthServiceClient) *AuthHandler {
 	return &AuthHandler{
-		authServiceAddr: authServiceAddr,
+		client: client,
 	}
 }
 
@@ -31,15 +28,7 @@ func (h *AuthHandler) SignUp(c *gin.Context) {
 		return
 	}
 
-	conn, err := grpc.NewClient(h.authServiceAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to connect to auth service"})
-		return
-	}
-	defer conn.Close()
-
-	client := authv1.NewAuthServiceClient(conn)
-	resp, err := client.SignUp(context.Background(), &authv1.SignUpRequest{
+	resp, err := h.client.SignUp(c, &authv1.SignUpRequest{
 		Username: req.Username,
 		Password: req.Password,
 	})
@@ -69,15 +58,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
-	conn, err := grpc.NewClient(h.authServiceAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to connect to auth service"})
-		return
-	}
-	defer conn.Close()
-
-	client := authv1.NewAuthServiceClient(conn)
-	resp, err := client.Login(context.Background(), &authv1.LoginRequest{
+	resp, err := h.client.Login(c, &authv1.LoginRequest{
 		Username: req.Username,
 		Password: req.Password,
 	})
@@ -93,46 +74,5 @@ func (h *AuthHandler) Login(c *gin.Context) {
 			"role":     resp.User.Role,
 		},
 		"token": resp.Token,
-	})
-}
-
-func (h *AuthHandler) ValidateToken(c *gin.Context) {
-	var req struct {
-		Token string `json:"token" binding:"required"`
-	}
-
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	conn, err := grpc.NewClient(h.authServiceAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to connect to auth service"})
-		return
-	}
-	defer conn.Close()
-
-	client := authv1.NewAuthServiceClient(conn)
-	resp, err := client.ValidateToken(context.Background(), &authv1.ValidateTokenRequest{
-		Token: req.Token,
-	})
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	if !resp.Valid {
-		c.JSON(http.StatusUnauthorized, gin.H{"valid": false})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"valid": true,
-		"user": gin.H{
-			"id":       resp.User.Id,
-			"username": resp.User.Username,
-			"role":     resp.User.Role,
-		},
 	})
 }

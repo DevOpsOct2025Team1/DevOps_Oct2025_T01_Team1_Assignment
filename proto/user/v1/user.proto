@@ -4,10 +4,16 @@ package user.v1;
 
 option go_package = "user/v1;userv1";
 
+enum Role {
+  ROLE_UNSPECIFIED = 0;
+  ROLE_USER = 1;
+  ROLE_ADMIN = 2;
+}
+
 message User {
   string id = 1;
   string username = 2;
-  string role = 3;
+  Role role = 3;
 }
 
 service UserService {
@@ -19,7 +25,7 @@ service UserService {
 message CreateUserRequest {
   string username = 1;
   string hashed_password = 2;
-  string role = 3;
+  Role role = 3;
 }
 
 message CreateUserResponse {

@@ -30,14 +30,15 @@ func (s *UserServiceServer) CreateUser(ctx context.Context, req *userv1.CreateUs
 		return nil, status.Error(codes.InvalidArgument, "hashed_password is required")
 	}
 
+	role := req.Role
+	if role == userv1.Role_ROLE_UNSPECIFIED {
+		role = userv1.Role_ROLE_USER
+	}
+
 	user := &store.User{
 		Username:       req.Username,
 		HashedPassword: req.HashedPassword,
-		Role:           req.Role,
-	}
-
-	if user.Role == "" {
-		user.Role = "user"
+		Role:           roleToString(role),
 	}
 
 	id, err := s.store.CreateUser(user)
@@ -54,7 +55,7 @@ func (s *UserServiceServer) CreateUser(ctx context.Context, req *userv1.CreateUs
 		User: &userv1.User{
 			Id:       user.Id,
 			Username: user.Username,
-			Role:     user.Role,
+			Role:     role,
 		},
 	}, nil
 }
@@ -76,7 +77,7 @@ func (s *UserServiceServer) GetUser(ctx context.Context, req *userv1.GetUserRequ
 		User: &userv1.User{
 			Id:       user.Id,
 			Username: user.Username,
-			Role:     user.Role,
+			Role:     stringToRole(user.Role),
 		},
 	}, nil
 }
@@ -98,8 +99,30 @@ func (s *UserServiceServer) GetUserByUsername(ctx context.Context, req *userv1.G
 		User: &userv1.User{
 			Id:       user.Id,
 			Username: user.Username,
-			Role:     user.Role,
+			Role:     stringToRole(user.Role),
 		},
 		HashedPassword: user.HashedPassword,
 	}, nil
+}
+
+func roleToString(role userv1.Role) string {
+	switch role {
+	case userv1.Role_ROLE_ADMIN:
+		return "admin"
+	case userv1.Role_ROLE_USER:
+		return "user"
+	default:
+		return "user"
+	}
+}
+
+func stringToRole(role string) userv1.Role {
+	switch role {
+	case "admin":
+		return userv1.Role_ROLE_ADMIN
+	case "user":
+		return userv1.Role_ROLE_USER
+	default:
+		return userv1.Role_ROLE_USER
+	}
 }

@@ -38,12 +38,12 @@ func (s *AuthServiceServer) SignUp(ctx context.Context, req *authv1.SignUpReques
 		return nil, status.Error(codes.Internal, "failed to hash password")
 	}
 
-	user, err := s.userClient.CreateUser(ctx, req.Username, string(hashedPassword), "user")
+	user, err := s.userClient.CreateUser(ctx, req.Username, string(hashedPassword), userv1.Role_ROLE_USER)
 	if err != nil {
 		return nil, err
 	}
 
-	token, err := s.jwtManager.Generate(user.Id, user.Username, user.Role)
+	token, err := s.jwtManager.Generate(user.Id, user.Username, user.Role.String())
 	if err != nil {
 		return nil, status.Error(codes.Internal, "failed to generate token")
 	}
@@ -73,7 +73,7 @@ func (s *AuthServiceServer) Login(ctx context.Context, req *authv1.LoginRequest)
 		return nil, status.Error(codes.Unauthenticated, "invalid credentials")
 	}
 
-	token, err := s.jwtManager.Generate(user.Id, user.Username, user.Role)
+	token, err := s.jwtManager.Generate(user.Id, user.Username, user.Role.String())
 	if err != nil {
 		return nil, status.Error(codes.Internal, "failed to generate token")
 	}
@@ -100,7 +100,18 @@ func (s *AuthServiceServer) ValidateToken(ctx context.Context, req *authv1.Valid
 		User: &userv1.User{
 			Id:       claims.UserID,
 			Username: claims.Username,
-			Role:     claims.Role,
+			Role:     stringToRole(claims.Role),
 		},
 	}, nil
+}
+
+func stringToRole(role string) userv1.Role {
+	switch role {
+	case "ROLE_ADMIN":
+		return userv1.Role_ROLE_ADMIN
+	case "ROLE_USER":
+		return userv1.Role_ROLE_USER
+	default:
+		return userv1.Role_ROLE_USER
+	}
 }

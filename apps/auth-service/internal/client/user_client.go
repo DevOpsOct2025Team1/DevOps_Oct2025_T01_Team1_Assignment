@@ -32,7 +32,7 @@ func (c *UserServiceClient) Close() error {
 	return c.conn.Close()
 }
 
-func (c *UserServiceClient) CreateUser(ctx context.Context, username, hashedPassword, role string) (*userv1.User, error) {
+func (c *UserServiceClient) CreateUser(ctx context.Context, username, hashedPassword string, role userv1.Role) (*userv1.User, error) {
 	resp, err := c.client.CreateUser(ctx, &userv1.CreateUserRequest{
 		Username:       username,
 		HashedPassword: hashedPassword,
