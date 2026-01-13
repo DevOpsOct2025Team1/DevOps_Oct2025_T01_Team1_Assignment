@@ -74,7 +74,7 @@ func TestSignUp_Success(t *testing.T) {
 				User: &userv1.User{
 					Id:       "69654eb7a1135a809430d0b7",
 					Username: req.Username,
-					Role:     "user",
+					Role:     userv1.Role_ROLE_USER,
 				},
 				Token: "jwt-token-123",
 			}, nil
@@ -196,7 +196,7 @@ func TestLogin_Success(t *testing.T) {
 				User: &userv1.User{
 					Id:       "69654eb7a1135a809430d0b7",
 					Username: req.Username,
-					Role:     "user",
+					Role:     userv1.Role_ROLE_USER,
 				},
 				Token: "jwt-token-456",
 			}, nil

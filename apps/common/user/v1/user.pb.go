@@ -21,11 +21,60 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type Role int32
+
+const (
+	Role_ROLE_UNSPECIFIED Role = 0
+	Role_ROLE_USER        Role = 1
+	Role_ROLE_ADMIN       Role = 2
+)
+
+// Enum value maps for Role.
+var (
+	Role_name = map[int32]string{
+		0: "ROLE_UNSPECIFIED",
+		1: "ROLE_USER",
+		2: "ROLE_ADMIN",
+	}
+	Role_value = map[string]int32{
+		"ROLE_UNSPECIFIED": 0,
+		"ROLE_USER":        1,
+		"ROLE_ADMIN":       2,
+	}
+)
+
+func (x Role) Enum() *Role {
+	p := new(Role)
+	*p = x
+	return p
+}
+
+func (x Role) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (Role) Descriptor() protoreflect.EnumDescriptor {
+	return file_user_v1_user_proto_enumTypes[0].Descriptor()
+}
+
+func (Role) Type() protoreflect.EnumType {
+	return &file_user_v1_user_proto_enumTypes[0]
+}
+
+func (x Role) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use Role.Descriptor instead.
+func (Role) EnumDescriptor() ([]byte, []int) {
+	return file_user_v1_user_proto_rawDescGZIP(), []int{0}
+}
+
 type User struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	Username      string                 `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
-	Role          string                 `protobuf:"bytes,3,opt,name=role,proto3" json:"role,omitempty"`
+	Role          Role                   `protobuf:"varint,3,opt,name=role,proto3,enum=user.v1.Role" json:"role,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -74,18 +123,18 @@ func (x *User) GetUsername() string {
 	return ""
 }
 
-func (x *User) GetRole() string {
+func (x *User) GetRole() Role {
 	if x != nil {
 		return x.Role
 	}
-	return ""
+	return Role_ROLE_UNSPECIFIED
 }
 
 type CreateUserRequest struct {
 	state          protoimpl.MessageState `protogen:"open.v1"`
 	Username       string                 `protobuf:"bytes,1,opt,name=username,proto3" json:"username,omitempty"`
 	HashedPassword string                 `protobuf:"bytes,2,opt,name=hashed_password,json=hashedPassword,proto3" json:"hashed_password,omitempty"`
-	Role           string                 `protobuf:"bytes,3,opt,name=role,proto3" json:"role,omitempty"`
+	Role           Role                   `protobuf:"varint,3,opt,name=role,proto3,enum=user.v1.Role" json:"role,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
@@ -134,11 +183,11 @@ func (x *CreateUserRequest) GetHashedPassword() string {
 	return ""
 }
 
-func (x *CreateUserRequest) GetRole() string {
+func (x *CreateUserRequest) GetRole() Role {
 	if x != nil {
 		return x.Role
 	}
-	return ""
+	return Role_ROLE_UNSPECIFIED
 }
 
 type CreateUserResponse struct {
@@ -373,15 +422,15 @@ var File_user_v1_user_proto protoreflect.FileDescriptor
 
 const file_user_v1_user_proto_rawDesc = "" +
 	"\n" +
-	"\x12user/v1/user.proto\x12\auser.v1\"F\n" +
+	"\x12user/v1/user.proto\x12\auser.v1\"U\n" +
 	"\x04User\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1a\n" +
-	"\busername\x18\x02 \x01(\tR\busername\x12\x12\n" +
-	"\x04role\x18\x03 \x01(\tR\x04role\"l\n" +
+	"\busername\x18\x02 \x01(\tR\busername\x12!\n" +
+	"\x04role\x18\x03 \x01(\x0e2\r.user.v1.RoleR\x04role\"{\n" +
 	"\x11CreateUserRequest\x12\x1a\n" +
 	"\busername\x18\x01 \x01(\tR\busername\x12'\n" +
-	"\x0fhashed_password\x18\x02 \x01(\tR\x0ehashedPassword\x12\x12\n" +
-	"\x04role\x18\x03 \x01(\tR\x04role\"7\n" +
+	"\x0fhashed_password\x18\x02 \x01(\tR\x0ehashedPassword\x12!\n" +
+	"\x04role\x18\x03 \x01(\x0e2\r.user.v1.RoleR\x04role\"7\n" +
 	"\x12CreateUserResponse\x12!\n" +
 	"\x04user\x18\x01 \x01(\v2\r.user.v1.UserR\x04user\" \n" +
 	"\x0eGetUserRequest\x12\x0e\n" +
@@ -392,7 +441,12 @@ const file_user_v1_user_proto_rawDesc = "" +
 	"\busername\x18\x01 \x01(\tR\busername\"g\n" +
 	"\x19GetUserByUsernameResponse\x12!\n" +
 	"\x04user\x18\x01 \x01(\v2\r.user.v1.UserR\x04user\x12'\n" +
-	"\x0fhashed_password\x18\x02 \x01(\tR\x0ehashedPassword2\xee\x01\n" +
+	"\x0fhashed_password\x18\x02 \x01(\tR\x0ehashedPassword*;\n" +
+	"\x04Role\x12\x14\n" +
+	"\x10ROLE_UNSPECIFIED\x10\x00\x12\r\n" +
+	"\tROLE_USER\x10\x01\x12\x0e\n" +
+	"\n" +
+	"ROLE_ADMIN\x10\x022\xee\x01\n" +
 	"\vUserService\x12E\n" +
 	"\n" +
 	"CreateUser\x12\x1a.user.v1.CreateUserRequest\x1a\x1b.user.v1.CreateUserResponse\x12<\n" +
@@ -412,31 +466,35 @@ func file_user_v1_user_proto_rawDescGZIP() []byte {
 	return file_user_v1_user_proto_rawDescData
 }
 
+var file_user_v1_user_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
 var file_user_v1_user_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_user_v1_user_proto_goTypes = []any{
-	(*User)(nil),                      // 0: user.v1.User
-	(*CreateUserRequest)(nil),         // 1: user.v1.CreateUserRequest
-	(*CreateUserResponse)(nil),        // 2: user.v1.CreateUserResponse
-	(*GetUserRequest)(nil),            // 3: user.v1.GetUserRequest
-	(*GetUserResponse)(nil),           // 4: user.v1.GetUserResponse
-	(*GetUserByUsernameRequest)(nil),  // 5: user.v1.GetUserByUsernameRequest
-	(*GetUserByUsernameResponse)(nil), // 6: user.v1.GetUserByUsernameResponse
+	(Role)(0),                         // 0: user.v1.Role
+	(*User)(nil),                      // 1: user.v1.User
+	(*CreateUserRequest)(nil),         // 2: user.v1.CreateUserRequest
+	(*CreateUserResponse)(nil),        // 3: user.v1.CreateUserResponse
+	(*GetUserRequest)(nil),            // 4: user.v1.GetUserRequest
+	(*GetUserResponse)(nil),           // 5: user.v1.GetUserResponse
+	(*GetUserByUsernameRequest)(nil),  // 6: user.v1.GetUserByUsernameRequest
+	(*GetUserByUsernameResponse)(nil), // 7: user.v1.GetUserByUsernameResponse
 }
 var file_user_v1_user_proto_depIdxs = []int32{
-	0, // 0: user.v1.CreateUserResponse.user:type_name -> user.v1.User
-	0, // 1: user.v1.GetUserResponse.user:type_name -> user.v1.User
-	0, // 2: user.v1.GetUserByUsernameResponse.user:type_name -> user.v1.User
-	1, // 3: user.v1.UserService.CreateUser:input_type -> user.v1.CreateUserRequest
-	3, // 4: user.v1.UserService.GetUser:input_type -> user.v1.GetUserRequest
-	5, // 5: user.v1.UserService.GetUserByUsername:input_type -> user.v1.GetUserByUsernameRequest
-	2, // 6: user.v1.UserService.CreateUser:output_type -> user.v1.CreateUserResponse
-	4, // 7: user.v1.UserService.GetUser:output_type -> user.v1.GetUserResponse
-	6, // 8: user.v1.UserService.GetUserByUsername:output_type -> user.v1.GetUserByUsernameResponse
-	6, // [6:9] is the sub-list for method output_type
-	3, // [3:6] is the sub-list for method input_type
-	3, // [3:3] is the sub-list for extension type_name
-	3, // [3:3] is the sub-list for extension extendee
-	0, // [0:3] is the sub-list for field type_name
+	0, // 0: user.v1.User.role:type_name -> user.v1.Role
+	0, // 1: user.v1.CreateUserRequest.role:type_name -> user.v1.Role
+	1, // 2: user.v1.CreateUserResponse.user:type_name -> user.v1.User
+	1, // 3: user.v1.GetUserResponse.user:type_name -> user.v1.User
+	1, // 4: user.v1.GetUserByUsernameResponse.user:type_name -> user.v1.User
+	2, // 5: user.v1.UserService.CreateUser:input_type -> user.v1.CreateUserRequest
+	4, // 6: user.v1.UserService.GetUser:input_type -> user.v1.GetUserRequest
+	6, // 7: user.v1.UserService.GetUserByUsername:input_type -> user.v1.GetUserByUsernameRequest
+	3, // 8: user.v1.UserService.CreateUser:output_type -> user.v1.CreateUserResponse
+	5, // 9: user.v1.UserService.GetUser:output_type -> user.v1.GetUserResponse
+	7, // 10: user.v1.UserService.GetUserByUsername:output_type -> user.v1.GetUserByUsernameResponse
+	8, // [8:11] is the sub-list for method output_type
+	5, // [5:8] is the sub-list for method input_type
+	5, // [5:5] is the sub-list for extension type_name
+	5, // [5:5] is the sub-list for extension extendee
+	0, // [0:5] is the sub-list for field type_name
 }
 
 func init() { file_user_v1_user_proto_init() }
@@ -449,13 +507,14 @@ func file_user_v1_user_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_user_v1_user_proto_rawDesc), len(file_user_v1_user_proto_rawDesc)),
-			NumEnums:      0,
+			NumEnums:      1,
 			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_user_v1_user_proto_goTypes,
 		DependencyIndexes: file_user_v1_user_proto_depIdxs,
+		EnumInfos:         file_user_v1_user_proto_enumTypes,
 		MessageInfos:      file_user_v1_user_proto_msgTypes,
 	}.Build()
 	File_user_v1_user_proto = out.File

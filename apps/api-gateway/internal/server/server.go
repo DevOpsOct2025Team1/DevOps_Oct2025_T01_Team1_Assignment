@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/provsalt/DOP_P01_Team1/api-gateway/internal/handlers"
 	"github.com/provsalt/DOP_P01_Team1/api-gateway/middleware"
+	userv1 "github.com/provsalt/DOP_P01_Team1/common/user/v1"
 )
 
 type Server struct {
@@ -27,7 +28,7 @@ func (s *Server) setupRoutes() {
 	authHandler := handlers.NewAuthHandler(s.authClient)
 
 	s.Router.POST("/api/login", authHandler.Login)
-	s.Router.POST("/api/admin/create_user", middleware.ValidateRole(s.authClient, []string{"admin"}), authHandler.SignUp)
+	s.Router.POST("/api/admin/create_user", middleware.ValidateRole(s.authClient, []userv1.Role{userv1.Role_ROLE_ADMIN}), authHandler.SignUp)
 
 	s.Router.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{"status": "ok"})
