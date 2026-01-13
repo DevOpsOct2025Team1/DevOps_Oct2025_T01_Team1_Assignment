@@ -13,6 +13,7 @@
     },
     "serve": {
       "executor": "nx:run-commands",
+      "continuous": true,
       "options": {
         "command": "go run ./cmd/server",
         "cwd": "apps/api-gateway"
