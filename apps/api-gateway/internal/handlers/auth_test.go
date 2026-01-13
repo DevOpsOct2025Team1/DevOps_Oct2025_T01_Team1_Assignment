@@ -56,7 +56,10 @@ func setupTestRouter(handler *AuthHandler) *gin.Engine {
 func makeRequest(router *gin.Engine, method, path string, body interface{}) *httptest.ResponseRecorder {
 	var reqBody bytes.Buffer
 	if body != nil {
-		json.NewEncoder(&reqBody).Encode(body)
+		err := json.NewEncoder(&reqBody).Encode(body)
+		if err != nil {
+			t.Errorf("failed to encode request body: %v", err)
+		}
 	}
 
 	req, _ := http.NewRequest(method, path, &reqBody)
@@ -94,7 +97,9 @@ func TestSignUp_Success(t *testing.T) {
 	}
 
 	var response map[string]interface{}
-	json.Unmarshal(w.Body.Bytes(), &response)
+	if err := json.Unmarshal(w.Body.Bytes(), &response); err != nil {
+		t.Fatalf("failed to unmarshal response body: %v", err)
+	}
 
 	if response["token"] != "jwt-token-123" {
 		t.Errorf("expected token 'jwt-token-123', got %v", response["token"])
@@ -182,7 +187,10 @@ func TestSignUp_AuthServiceError(t *testing.T) {
 	}
 
 	var response map[string]interface{}
-	json.Unmarshal(w.Body.Bytes(), &response)
+	err := json.Unmarshal(w.Body.Bytes(), &response)
+	if err != nil {
+		t.Errorf("failed to unmarshal response body: %v", err)
+	}
 
 	if response["error"] != "user already exists" {
 		t.Errorf("expected error 'user already exists', got %v", response["error"])
@@ -216,7 +224,10 @@ func TestLogin_Success(t *testing.T) {
 	}
 
 	var response map[string]interface{}
-	json.Unmarshal(w.Body.Bytes(), &response)
+	err := json.Unmarshal(w.Body.Bytes(), &response)
+	if err != nil {
+		t.Errorf("failed to unmarshal response body: %v", err)
+	}
 
 	if response["token"] != "jwt-token-456" {
 		t.Errorf("expected token 'jwt-token-456', got %v", response["token"])

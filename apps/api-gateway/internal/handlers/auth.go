@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"context"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -29,7 +28,7 @@ func (h *AuthHandler) SignUp(c *gin.Context) {
 		return
 	}
 
-	resp, err := h.client.SignUp(context.Background(), &authv1.SignUpRequest{
+	resp, err := h.client.SignUp(c, &authv1.SignUpRequest{
 		Username: req.Username,
 		Password: req.Password,
 	})
