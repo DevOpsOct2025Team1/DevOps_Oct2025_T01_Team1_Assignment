@@ -50,7 +50,6 @@ func setupTestRouter(handler *AuthHandler) *gin.Engine {
 	router := gin.New()
 	router.POST("/api/signup", handler.SignUp)
 	router.POST("/api/login", handler.Login)
-	router.POST("/api/validate", handler.ValidateToken)
 	return router
 }
 
@@ -265,104 +264,6 @@ func TestLogin_InvalidCredentials(t *testing.T) {
 	w := makeRequest(router, "POST", "/api/login", map[string]string{
 		"username": "testing",
 		"password": "wrongpassword",
-	})
-
-	if w.Code != http.StatusInternalServerError {
-		t.Errorf("expected status %d, got %d", http.StatusInternalServerError, w.Code)
-	}
-}
-
-func TestValidateToken_ValidToken(t *testing.T) {
-	mock := &mockAuthClient{
-		validateTokenFunc: func(ctx context.Context, req *authv1.ValidateTokenRequest) (*authv1.ValidateTokenResponse, error) {
-			return &authv1.ValidateTokenResponse{
-				Valid: true,
-				User: &userv1.User{
-					Id:       "69654eb7a1135a809430d0b7",
-					Username: "testing",
-					Role:     "user",
-				},
-			}, nil
-		},
-	}
-
-	handler := NewAuthHandler(mock)
-	router := setupTestRouter(handler)
-
-	w := makeRequest(router, "POST", "/api/validate", map[string]string{
-		"token": "valid-jwt-token",
-	})
-
-	if w.Code != http.StatusOK {
-		t.Errorf("expected status %d, got %d", http.StatusOK, w.Code)
-	}
-
-	var response map[string]interface{}
-	json.Unmarshal(w.Body.Bytes(), &response)
-
-	if response["valid"] != true {
-		t.Errorf("expected valid to be true, got %v", response["valid"])
-	}
-
-	user := response["user"].(map[string]interface{})
-	if user["username"] != "testing" {
-		t.Errorf("expected username 'testing', got %v", user["username"])
-	}
-}
-
-func TestValidateToken_InvalidToken(t *testing.T) {
-	mock := &mockAuthClient{
-		validateTokenFunc: func(ctx context.Context, req *authv1.ValidateTokenRequest) (*authv1.ValidateTokenResponse, error) {
-			return &authv1.ValidateTokenResponse{
-				Valid: false,
-				User:  nil,
-			}, nil
-		},
-	}
-
-	handler := NewAuthHandler(mock)
-	router := setupTestRouter(handler)
-
-	w := makeRequest(router, "POST", "/api/validate", map[string]string{
-		"token": "invalid-jwt-token",
-	})
-
-	if w.Code != http.StatusUnauthorized {
-		t.Errorf("expected status %d, got %d", http.StatusUnauthorized, w.Code)
-	}
-
-	var response map[string]interface{}
-	json.Unmarshal(w.Body.Bytes(), &response)
-
-	if response["valid"] != false {
-		t.Errorf("expected valid to be false, got %v", response["valid"])
-	}
-}
-
-func TestValidateToken_MissingToken(t *testing.T) {
-	mock := &mockAuthClient{}
-	handler := NewAuthHandler(mock)
-	router := setupTestRouter(handler)
-
-	w := makeRequest(router, "POST", "/api/validate", map[string]string{})
-
-	if w.Code != http.StatusBadRequest {
-		t.Errorf("expected status %d, got %d", http.StatusBadRequest, w.Code)
-	}
-}
-
-func TestValidateToken_AuthServiceError(t *testing.T) {
-	mock := &mockAuthClient{
-		validateTokenFunc: func(ctx context.Context, req *authv1.ValidateTokenRequest) (*authv1.ValidateTokenResponse, error) {
-			return nil, errors.New("service unavailable")
-		},
-	}
-
-	handler := NewAuthHandler(mock)
-	router := setupTestRouter(handler)
-
-	w := makeRequest(router, "POST", "/api/validate", map[string]string{
-		"token": "some-token",
 	})
 
 	if w.Code != http.StatusInternalServerError {

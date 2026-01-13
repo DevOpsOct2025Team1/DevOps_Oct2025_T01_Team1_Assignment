@@ -6,11 +6,11 @@
 version: 2
 updates:
   - package-ecosystem: "gomod" # See documentation for possible values
-    directory: "/apps" # Location of package manifests
+    directory: "/apps/api-gateway" # Location of package manifests
     schedule:
       interval: "weekly"
 
   - package-ecosystem: "bun" # See documentation for possible values
-    directory: "/apps" # Location of package manifests
+    directory: "/apps/frontend" # Location of package manifests
     schedule:
       interval: "weekly"

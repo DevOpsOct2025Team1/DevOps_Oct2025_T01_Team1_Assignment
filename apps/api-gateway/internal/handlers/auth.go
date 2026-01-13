@@ -59,7 +59,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
-	resp, err := h.client.Login(context.Background(), &authv1.LoginRequest{
+	resp, err := h.client.Login(c, &authv1.LoginRequest{
 		Username: req.Username,
 		Password: req.Password,
 	})
@@ -75,38 +75,5 @@ func (h *AuthHandler) Login(c *gin.Context) {
 			"role":     resp.User.Role,
 		},
 		"token": resp.Token,
-	})
-}
-
-func (h *AuthHandler) ValidateToken(c *gin.Context) {
-	var req struct {
-		Token string `json:"token" binding:"required"`
-	}
-
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	resp, err := h.client.ValidateToken(context.Background(), &authv1.ValidateTokenRequest{
-		Token: req.Token,
-	})
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	if !resp.Valid {
-		c.JSON(http.StatusUnauthorized, gin.H{"valid": false})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"valid": true,
-		"user": gin.H{
-			"id":       resp.User.Id,
-			"username": resp.User.Username,
-			"role":     resp.User.Role,
-		},
 	})
 }
