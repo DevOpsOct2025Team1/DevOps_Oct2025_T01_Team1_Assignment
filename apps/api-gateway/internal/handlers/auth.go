@@ -6,17 +6,15 @@ import (
 
 	"github.com/gin-gonic/gin"
 	authv1 "github.com/provsalt/DOP_P01_Team1/common/auth/v1"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 )
 
 type AuthHandler struct {
-	authServiceAddr string
+	client AuthServiceClient
 }
 
-func NewAuthHandler(authServiceAddr string) *AuthHandler {
+func NewAuthHandler(client AuthServiceClient) *AuthHandler {
 	return &AuthHandler{
-		authServiceAddr: authServiceAddr,
+		client: client,
 	}
 }
 
@@ -31,15 +29,7 @@ func (h *AuthHandler) SignUp(c *gin.Context) {
 		return
 	}
 
-	conn, err := grpc.NewClient(h.authServiceAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to connect to auth service"})
-		return
-	}
-	defer conn.Close()
-
-	client := authv1.NewAuthServiceClient(conn)
-	resp, err := client.SignUp(context.Background(), &authv1.SignUpRequest{
+	resp, err := h.client.SignUp(context.Background(), &authv1.SignUpRequest{
 		Username: req.Username,
 		Password: req.Password,
 	})
@@ -69,15 +59,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
-	conn, err := grpc.NewClient(h.authServiceAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to connect to auth service"})
-		return
-	}
-	defer conn.Close()
-
-	client := authv1.NewAuthServiceClient(conn)
-	resp, err := client.Login(context.Background(), &authv1.LoginRequest{
+	resp, err := h.client.Login(context.Background(), &authv1.LoginRequest{
 		Username: req.Username,
 		Password: req.Password,
 	})
@@ -106,15 +88,7 @@ func (h *AuthHandler) ValidateToken(c *gin.Context) {
 		return
 	}
 
-	conn, err := grpc.NewClient(h.authServiceAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to connect to auth service"})
-		return
-	}
-	defer conn.Close()
-
-	client := authv1.NewAuthServiceClient(conn)
-	resp, err := client.ValidateToken(context.Background(), &authv1.ValidateTokenRequest{
+	resp, err := h.client.ValidateToken(context.Background(), &authv1.ValidateTokenRequest{
 		Token: req.Token,
 	})
 	if err != nil {
