@@ -27,7 +27,7 @@ func (h *UserHandler) DeleteAccount(c *gin.Context) {
 
 	resp, err := h.client.DeleteAccount(c, &userv1.DeleteUserByIdRequest{Id: req.Id})
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 

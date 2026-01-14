@@ -31,7 +31,7 @@ func NewGRPCUserClient(addr string) (UserServiceClient, error) {
 }
 
 func (c *grpcUserClient) DeleteAccount(ctx context.Context, req *userv1.DeleteUserByIdRequest) (*userv1.DeleteUserByIdResponse, error) {
-	return c.client.DeleteUserByUserId(ctx, req)
+	return c.client.DeleteUser(ctx, req)
 }
 
 func (c *grpcUserClient) Close() error {

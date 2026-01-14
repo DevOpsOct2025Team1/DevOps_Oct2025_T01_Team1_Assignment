@@ -62,14 +62,12 @@ func (s *AuthServiceServer) Login(ctx context.Context, req *authv1.LoginRequest)
 		return nil, status.Error(codes.InvalidArgument, "password is required")
 	}
 
-	user, hashedPassword, err := s.userClient.GetUserByUsername(ctx, req.Username)
-
+	user, valid, err := s.userClient.VerifyPassword(ctx, req.Username, req.Password)
 	if err != nil {
 		return nil, status.Error(codes.Unauthenticated, "invalid credentials")
 	}
 
-	err = bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(req.Password))
-	if err != nil {
+	if !valid {
 		return nil, status.Error(codes.Unauthenticated, "invalid credentials")
 	}
 

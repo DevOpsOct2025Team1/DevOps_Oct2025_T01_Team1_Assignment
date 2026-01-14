@@ -33,7 +33,7 @@ func (s *Server) setupRoutes() {
 	s.Router.POST("/api/login", authHandler.Login)
 
 	s.Router.POST("/api/admin/create_user", middleware.ValidateRole(s.authClient, []userv1.Role{userv1.Role_ROLE_ADMIN}), authHandler.SignUp)
-	s.Router.POST("/api/admin/delete_user", middleware.ValidateRole(s.authClient, []userv1.Role{userv1.Role_ROLE_ADMIN}), userHandler.DeleteAccount)
+	s.Router.DELETE("/api/admin/delete_user", middleware.ValidateRole(s.authClient, []userv1.Role{userv1.Role_ROLE_ADMIN}), userHandler.DeleteAccount)
 
 	s.Router.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{"status": "ok"})
@@ -45,11 +45,19 @@ func (s *Server) Run(addr string) error {
 }
 
 func (s *Server) Close() error {
+	var err error
+
 	if s.authClient != nil {
-		return s.authClient.Close()
+		if e := s.authClient.Close(); e != nil && err == nil {
+			err = e
+		}
 	}
+
 	if s.userClient != nil {
-		return s.userClient.Close()
+		if e := s.userClient.Close(); e != nil && err == nil {
+			err = e
+		}
 	}
-	return nil
+
+	return err
 }
