@@ -1,0 +1,76 @@
+name: Unit tests
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  detect-affected:
+    runs-on: ubuntu-latest
+    outputs:
+      projects: ${{ steps.affected.outputs.projects }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      # using node since nx isn't supported by native bun it seems
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+
+      - name: Get affected projects
+        id: affected
+        run: |
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            BASE="origin/${{ github.base_ref }}"
+          else
+            BASE="${{ github.event.before }}"
+          fi
+          
+          echo "Comparing against base: $BASE"
+
+          affected=$(./nx show projects --affected --base=$BASE)
+
+          json_array=$(echo "$affected" | jq -R -s -c 'split("\n") | map(select(length > 0))')
+
+          echo "Affected projects: $json_array"
+          echo "projects=$json_array" >> $GITHUB_OUTPUT
+
+  unit-tests:
+    needs: detect-affected
+    if: needs.detect-affected.outputs.projects != '[]'
+    strategy:
+      matrix:
+        service: ${{ fromJson(needs.detect-affected.outputs.projects) }}
+      fail-fast: false
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Go
+        if: matrix.service != 'frontend'
+        uses: actions/setup-go@v6
+        with:
+          go-version: '1.25.5'
+
+      - name: Setup Bun
+        if: matrix.service == 'frontend'
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install frontend dependencies
+        if: matrix.service == 'frontend'
+        run: |
+          cd apps/frontend
+          bun install
+
+      - name: Setup Node.js (for NX)
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+
+      - name: Run tests
+        run: ./nx test ${{ matrix.service }}
