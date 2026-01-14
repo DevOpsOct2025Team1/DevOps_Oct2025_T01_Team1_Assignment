@@ -15,6 +15,7 @@ func main() {
 	}
 
 	log.Printf("Using auth-service at: %s", cfg.AuthServiceAddr)
+	log.Printf("Using user-service at: %s", cfg.UserServiceAddr)
 
 	authClient, err := handlers.NewGRPCAuthClient(cfg.AuthServiceAddr)
 	if err != nil {
