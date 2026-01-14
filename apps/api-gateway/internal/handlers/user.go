@@ -17,7 +17,7 @@ func NewUserHandler(client UserServiceClient) *UserHandler {
 	return &UserHandler{client: client}
 }
 
-func (h *UserHandler) DeleteAccount(c *gin.Context) {
+func (h *UserHandler) DeleteUser(c *gin.Context) {
 	var req struct {
 		Id string `json:"id" binding:"required"`
 	}
