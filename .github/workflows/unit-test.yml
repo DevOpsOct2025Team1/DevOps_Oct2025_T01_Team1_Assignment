@@ -33,7 +33,7 @@ jobs:
           
           echo "Comparing against base: $BASE"
 
-          affected=$(./nx show projects --affected --base=$BASE)
+          affected=$(./nx show projects --affected --base=$BASE 2>&1 | grep -v "added\|audited\|packages are looking\|npm fund\|found.*vulnerabilities" || true)
 
           json_array=$(echo "$affected" | jq -R -s -c 'split("\n") | map(select(length > 0))')
 
