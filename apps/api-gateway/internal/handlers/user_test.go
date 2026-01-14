@@ -11,10 +11,20 @@ import (
 
 	"github.com/gin-gonic/gin"
 	userv1 "github.com/provsalt/DOP_P01_Team1/common/user/v1"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type mockUserClient struct {
+	getUserFunc       func(ctx context.Context, req *userv1.GetUserRequest) (*userv1.GetUserResponse, error)
 	deleteAccountFunc func(ctx context.Context, req *userv1.DeleteUserByIdRequest) (*userv1.DeleteUserByIdResponse, error)
+}
+
+func (m *mockUserClient) GetUser(ctx context.Context, req *userv1.GetUserRequest) (*userv1.GetUserResponse, error) {
+	if m.getUserFunc != nil {
+		return m.getUserFunc(ctx, req)
+	}
+	return nil, errors.New("not implemented")
 }
 
 func (m *mockUserClient) DeleteAccount(ctx context.Context, req *userv1.DeleteUserByIdRequest) (*userv1.DeleteUserByIdResponse, error) {
@@ -28,9 +38,15 @@ func (m *mockUserClient) Close() error {
 	return nil
 }
 
-func setupUserTestRouter(handler *UserHandler) *gin.Engine {
+func setupUserTestRouter(handler *UserHandler, currentUser *userv1.User) *gin.Engine {
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
+	router.Use(func(c *gin.Context) {
+		if currentUser != nil {
+			c.Set("user", currentUser)
+		}
+		c.Next()
+	})
 	router.DELETE("/api/admin/delete_user", handler.DeleteAccount)
 	return router
 }
@@ -54,7 +70,22 @@ func makeUserRequest(t *testing.T, router *gin.Engine, method, path string, body
 }
 
 func TestDeleteAccount_Success(t *testing.T) {
+	currentUser := &userv1.User{
+		Id:       "admin",
+		Username: "admin",
+		Role:     userv1.Role_ROLE_ADMIN,
+	}
+
 	mock := &mockUserClient{
+		getUserFunc: func(ctx context.Context, req *userv1.GetUserRequest) (*userv1.GetUserResponse, error) {
+			return &userv1.GetUserResponse{
+				User: &userv1.User{
+					Id:       req.Id,
+					Username: "regular-user",
+					Role:     userv1.Role_ROLE_USER,
+				},
+			}, nil
+		},
 		deleteAccountFunc: func(ctx context.Context, req *userv1.DeleteUserByIdRequest) (*userv1.DeleteUserByIdResponse, error) {
 			return &userv1.DeleteUserByIdResponse{
 				Success: true,
@@ -63,7 +94,7 @@ func TestDeleteAccount_Success(t *testing.T) {
 	}
 
 	handler := NewUserHandler(mock)
-	router := setupUserTestRouter(handler)
+	router := setupUserTestRouter(handler, currentUser)
 
 	w := makeUserRequest(t, router, "DELETE", "/api/admin/delete_user", map[string]string{
 		"id": "69654eb7a1135a809430d0b7",
@@ -84,9 +115,15 @@ func TestDeleteAccount_Success(t *testing.T) {
 }
 
 func TestDeleteAccount_MissingId(t *testing.T) {
+	currentUser := &userv1.User{
+		Id:       "admin",
+		Username: "admin",
+		Role:     userv1.Role_ROLE_ADMIN,
+	}
+
 	mock := &mockUserClient{}
 	handler := NewUserHandler(mock)
-	router := setupUserTestRouter(handler)
+	router := setupUserTestRouter(handler, currentUser)
 
 	w := makeUserRequest(t, router, "DELETE", "/api/admin/delete_user", map[string]string{})
 
@@ -96,9 +133,15 @@ func TestDeleteAccount_MissingId(t *testing.T) {
 }
 
 func TestDeleteAccount_EmptyId(t *testing.T) {
+	currentUser := &userv1.User{
+		Id:       "admin",
+		Username: "admin",
+		Role:     userv1.Role_ROLE_ADMIN,
+	}
+
 	mock := &mockUserClient{}
 	handler := NewUserHandler(mock)
-	router := setupUserTestRouter(handler)
+	router := setupUserTestRouter(handler, currentUser)
 
 	w := makeUserRequest(t, router, "DELETE", "/api/admin/delete_user", map[string]string{
 		"id": "",
@@ -110,9 +153,15 @@ func TestDeleteAccount_EmptyId(t *testing.T) {
 }
 
 func TestDeleteAccount_InvalidJSON(t *testing.T) {
+	currentUser := &userv1.User{
+		Id:       "admin",
+		Username: "admin",
+		Role:     userv1.Role_ROLE_ADMIN,
+	}
+
 	mock := &mockUserClient{}
 	handler := NewUserHandler(mock)
-	router := setupUserTestRouter(handler)
+	router := setupUserTestRouter(handler, currentUser)
 
 	req, _ := http.NewRequest("DELETE", "/api/admin/delete_user", bytes.NewBufferString("invalid json"))
 	req.Header.Set("Content-Type", "application/json")
@@ -125,43 +174,48 @@ func TestDeleteAccount_InvalidJSON(t *testing.T) {
 	}
 }
 
-func TestDeleteAccount_ServiceError(t *testing.T) {
+func TestDeleteAccount_UserNotFound(t *testing.T) {
+	currentUser := &userv1.User{
+		Id:       "admin",
+		Username: "admin",
+		Role:     userv1.Role_ROLE_ADMIN,
+	}
+
 	mock := &mockUserClient{
-		deleteAccountFunc: func(ctx context.Context, req *userv1.DeleteUserByIdRequest) (*userv1.DeleteUserByIdResponse, error) {
-			return nil, errors.New("user not found")
+		getUserFunc: func(ctx context.Context, req *userv1.GetUserRequest) (*userv1.GetUserResponse, error) {
+			return nil, status.Error(codes.NotFound, "user not found")
 		},
 	}
 
 	handler := NewUserHandler(mock)
-	router := setupUserTestRouter(handler)
+	router := setupUserTestRouter(handler, currentUser)
 
 	w := makeUserRequest(t, router, "DELETE", "/api/admin/delete_user", map[string]string{
 		"id": "nonexistent-id",
 	})
 
-	if w.Code != http.StatusInternalServerError {
-		t.Errorf("expected status %d, got %d", http.StatusInternalServerError, w.Code)
+	if w.Code != http.StatusNotFound {
+		t.Errorf("expected status %d, got %d", http.StatusNotFound, w.Code)
 	}
 }
 
-func TestDeleteAccount_ServiceReturnsFalse(t *testing.T) {
-	mock := &mockUserClient{
-		deleteAccountFunc: func(ctx context.Context, req *userv1.DeleteUserByIdRequest) (*userv1.DeleteUserByIdResponse, error) {
-			return &userv1.DeleteUserByIdResponse{
-				Success: false,
-			}, nil
-		},
+func TestDeleteAccount_SelfDeletion(t *testing.T) {
+	currentUser := &userv1.User{
+		Id:       "admin",
+		Username: "admin",
+		Role:     userv1.Role_ROLE_ADMIN,
 	}
 
+	mock := &mockUserClient{}
 	handler := NewUserHandler(mock)
-	router := setupUserTestRouter(handler)
+	router := setupUserTestRouter(handler, currentUser)
 
 	w := makeUserRequest(t, router, "DELETE", "/api/admin/delete_user", map[string]string{
-		"id": "69654eb7a1135a809430d0b7",
+		"id": "admin",
 	})
 
-	if w.Code != http.StatusOK {
-		t.Errorf("expected status %d, got %d", http.StatusOK, w.Code)
+	if w.Code != http.StatusForbidden {
+		t.Errorf("expected status %d, got %d", http.StatusForbidden, w.Code)
 	}
 
 	var response map[string]interface{}
@@ -169,7 +223,61 @@ func TestDeleteAccount_ServiceReturnsFalse(t *testing.T) {
 		t.Fatalf("failed to unmarshal response body: %v", err)
 	}
 
-	if response["success"] != false {
-		t.Errorf("expected success false, got %v", response["success"])
+	if response["error"] != "cannot delete your own account" {
+		t.Errorf("expected error 'cannot delete your own account', got %v", response["error"])
+	}
+}
+
+func TestDeleteAccount_AdminDeletion(t *testing.T) {
+	currentUser := &userv1.User{
+		Id:       "admin",
+		Username: "admin",
+		Role:     userv1.Role_ROLE_ADMIN,
+	}
+
+	mock := &mockUserClient{
+		getUserFunc: func(ctx context.Context, req *userv1.GetUserRequest) (*userv1.GetUserResponse, error) {
+			return &userv1.GetUserResponse{
+				User: &userv1.User{
+					Id:       "admin2",
+					Username: "admin2",
+					Role:     userv1.Role_ROLE_ADMIN,
+				},
+			}, nil
+		},
+	}
+
+	handler := NewUserHandler(mock)
+	router := setupUserTestRouter(handler, currentUser)
+
+	w := makeUserRequest(t, router, "DELETE", "/api/admin/delete_user", map[string]string{
+		"id": "admin2",
+	})
+
+	if w.Code != http.StatusForbidden {
+		t.Errorf("expected status %d, got %d", http.StatusForbidden, w.Code)
+	}
+
+	var response map[string]interface{}
+	if err := json.Unmarshal(w.Body.Bytes(), &response); err != nil {
+		t.Fatalf("failed to unmarshal response body: %v", err)
+	}
+
+	if response["error"] != "cannot delete admin accounts" {
+		t.Errorf("expected error 'cannot delete admin accounts', got %v", response["error"])
+	}
+}
+
+func TestDeleteAccount_NoUserInContext(t *testing.T) {
+	mock := &mockUserClient{}
+	handler := NewUserHandler(mock)
+	router := setupUserTestRouter(handler, nil)
+
+	w := makeUserRequest(t, router, "DELETE", "/api/admin/delete_user", map[string]string{
+		"id": "user",
+	})
+
+	if w.Code != http.StatusUnauthorized {
+		t.Errorf("expected status %d, got %d", http.StatusUnauthorized, w.Code)
 	}
 }

@@ -35,7 +35,10 @@ func ValidateRole(authService handlers.AuthServiceClient, roles []userv1.Role) g
 			c.Abort()
 			return
 		}
-		role := resp.GetUser().GetRole()
+		user := resp.GetUser()
+		role := user.GetRole()
+
+		c.Set("user", user)
 
 		for _, requiredRole := range roles {
 			if role == requiredRole {

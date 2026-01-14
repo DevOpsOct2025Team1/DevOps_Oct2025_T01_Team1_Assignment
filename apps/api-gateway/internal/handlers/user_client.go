@@ -9,6 +9,7 @@ import (
 )
 
 type UserServiceClient interface {
+	GetUser(ctx context.Context, req *userv1.GetUserRequest) (*userv1.GetUserResponse, error)
 	DeleteAccount(ctx context.Context, req *userv1.DeleteUserByIdRequest) (*userv1.DeleteUserByIdResponse, error)
 	Close() error
 }
@@ -28,6 +29,10 @@ func NewGRPCUserClient(addr string) (UserServiceClient, error) {
 		conn:   conn,
 		client: userv1.NewUserServiceClient(conn),
 	}, nil
+}
+
+func (c *grpcUserClient) GetUser(ctx context.Context, req *userv1.GetUserRequest) (*userv1.GetUserResponse, error) {
+	return c.client.GetUser(ctx, req)
 }
 
 func (c *grpcUserClient) DeleteAccount(ctx context.Context, req *userv1.DeleteUserByIdRequest) (*userv1.DeleteUserByIdResponse, error) {
