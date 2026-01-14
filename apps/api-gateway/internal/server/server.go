@@ -10,14 +10,16 @@ import (
 type Server struct {
 	Router     *gin.Engine
 	authClient handlers.AuthServiceClient
+	userClient handlers.UserServiceClient
 }
 
-func New(authClient handlers.AuthServiceClient) *Server {
+func New(authClient handlers.AuthServiceClient, userClient handlers.UserServiceClient) *Server {
 	router := gin.Default()
 
 	s := &Server{
 		Router:     router,
 		authClient: authClient,
+		userClient: userClient,
 	}
 
 	s.setupRoutes()
@@ -26,9 +28,12 @@ func New(authClient handlers.AuthServiceClient) *Server {
 
 func (s *Server) setupRoutes() {
 	authHandler := handlers.NewAuthHandler(s.authClient)
+	userHandler := handlers.NewUserHandler(s.userClient)
 
 	s.Router.POST("/api/login", authHandler.Login)
+
 	s.Router.POST("/api/admin/create_user", middleware.ValidateRole(s.authClient, []userv1.Role{userv1.Role_ROLE_ADMIN}), authHandler.SignUp)
+	s.Router.POST("/api/admin/delete_user", middleware.ValidateRole(s.authClient, []userv1.Role{userv1.Role_ROLE_ADMIN}), userHandler.DeleteAccount)
 
 	s.Router.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{"status": "ok"})
@@ -42,6 +47,9 @@ func (s *Server) Run(addr string) error {
 func (s *Server) Close() error {
 	if s.authClient != nil {
 		return s.authClient.Close()
+	}
+	if s.userClient != nil {
+		return s.userClient.Close()
 	}
 	return nil
 }
