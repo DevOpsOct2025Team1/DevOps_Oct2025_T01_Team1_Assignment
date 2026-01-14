@@ -17,11 +17,12 @@ func main() {
 	log.Printf("Using auth-service at: %s", cfg.AuthServiceAddr)
 
 	authClient, err := handlers.NewGRPCAuthClient(cfg.AuthServiceAddr)
+	userClient, err := handlers.NewGRPCUserClient(cfg.UserServiceAddr)
 	if err != nil {
 		log.Fatalf("Failed to create auth client: %v", err)
 	}
 
-	srv := server.New(authClient)
+	srv := server.New(authClient, userClient)
 	defer srv.Close()
 
 	log.Printf("API Gateway listening on :%s", cfg.Port)

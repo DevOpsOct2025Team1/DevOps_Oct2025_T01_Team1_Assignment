@@ -53,7 +53,8 @@ func setupTestRouter(handler *AuthHandler) *gin.Engine {
 	return router
 }
 
-func makeRequest(router *gin.Engine, method, path string, body interface{}) *httptest.ResponseRecorder {
+func makeRequest(t *testing.T, router *gin.Engine, method, path string, body interface{}) *httptest.ResponseRecorder {
+	t.Helper()
 	var reqBody bytes.Buffer
 	if body != nil {
 		err := json.NewEncoder(&reqBody).Encode(body)
@@ -87,7 +88,7 @@ func TestSignUp_Success(t *testing.T) {
 	handler := NewAuthHandler(mock)
 	router := setupTestRouter(handler)
 
-	w := makeRequest(router, "POST", "/api/signup", map[string]string{
+	w := makeRequest(t, router, "POST", "/api/signup", map[string]string{
 		"username": "testing",
 		"password": "password123",
 	})
@@ -116,7 +117,7 @@ func TestSignUp_MissingUsername(t *testing.T) {
 	handler := NewAuthHandler(mock)
 	router := setupTestRouter(handler)
 
-	w := makeRequest(router, "POST", "/api/signup", map[string]string{
+	w := makeRequest(t, router, "POST", "/api/signup", map[string]string{
 		"password": "password123",
 	})
 
@@ -130,7 +131,7 @@ func TestSignUp_MissingPassword(t *testing.T) {
 	handler := NewAuthHandler(mock)
 	router := setupTestRouter(handler)
 
-	w := makeRequest(router, "POST", "/api/signup", map[string]string{
+	w := makeRequest(t, router, "POST", "/api/signup", map[string]string{
 		"username": "testing",
 	})
 
@@ -144,7 +145,7 @@ func TestSignUp_EmptyBody(t *testing.T) {
 	handler := NewAuthHandler(mock)
 	router := setupTestRouter(handler)
 
-	w := makeRequest(router, "POST", "/api/signup", map[string]string{})
+	w := makeRequest(t, router, "POST", "/api/signup", map[string]string{})
 
 	if w.Code != http.StatusBadRequest {
 		t.Errorf("expected status %d, got %d", http.StatusBadRequest, w.Code)
@@ -177,7 +178,7 @@ func TestSignUp_AuthServiceError(t *testing.T) {
 	handler := NewAuthHandler(mock)
 	router := setupTestRouter(handler)
 
-	w := makeRequest(router, "POST", "/api/signup", map[string]string{
+	w := makeRequest(t, router, "POST", "/api/signup", map[string]string{
 		"username": "testing",
 		"password": "password123",
 	})
@@ -214,7 +215,7 @@ func TestLogin_Success(t *testing.T) {
 	handler := NewAuthHandler(mock)
 	router := setupTestRouter(handler)
 
-	w := makeRequest(router, "POST", "/api/login", map[string]string{
+	w := makeRequest(t, router, "POST", "/api/login", map[string]string{
 		"username": "testing",
 		"password": "password123",
 	})
@@ -239,7 +240,7 @@ func TestLogin_MissingUsername(t *testing.T) {
 	handler := NewAuthHandler(mock)
 	router := setupTestRouter(handler)
 
-	w := makeRequest(router, "POST", "/api/login", map[string]string{
+	w := makeRequest(t, router, "POST", "/api/login", map[string]string{
 		"password": "password123",
 	})
 
@@ -253,7 +254,7 @@ func TestLogin_MissingPassword(t *testing.T) {
 	handler := NewAuthHandler(mock)
 	router := setupTestRouter(handler)
 
-	w := makeRequest(router, "POST", "/api/login", map[string]string{
+	w := makeRequest(t, router, "POST", "/api/login", map[string]string{
 		"username": "testing",
 	})
 
@@ -272,7 +273,7 @@ func TestLogin_InvalidCredentials(t *testing.T) {
 	handler := NewAuthHandler(mock)
 	router := setupTestRouter(handler)
 
-	w := makeRequest(router, "POST", "/api/login", map[string]string{
+	w := makeRequest(t, router, "POST", "/api/login", map[string]string{
 		"username": "testing",
 		"password": "wrongpassword",
 	})
