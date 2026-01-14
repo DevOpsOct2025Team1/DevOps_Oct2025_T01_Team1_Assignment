@@ -6,7 +6,8 @@
     "build": "react-router build",
     "dev": "react-router dev",
     "start": "react-router-serve ./build/server/index.js",
-    "typecheck": "react-router typegen && tsc"
+    "typecheck": "react-router typegen && tsc",
+    "test:browser": "vitest --config=vitest.browser.config.ts"
   },
   "dependencies": {
     "@react-router/node": "7.12.0",
@@ -19,12 +20,23 @@
   "devDependencies": {
     "@react-router/dev": "7.12.0",
     "@tailwindcss/vite": "^4.1.13",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.1",
+    "@testing-library/user-event": "^14.6.1",
     "@types/node": "^25",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^5.1.2",
+    "@vitest/browser": "^4.0.17",
+    "@vitest/browser-playwright": "^4.0.17",
+    "@vitest/ui": "^4.0.17",
+    "jsdom": "^27.4.0",
+    "playwright": "^1.57.0",
     "tailwindcss": "^4.1.13",
     "typescript": "^5.9.2",
     "vite": "^7.1.7",
-    "vite-tsconfig-paths": "^6.0.4"
+    "vite-tsconfig-paths": "^6.0.4",
+    "vitest": "^4.0.17",
+    "vitest-browser-react": "^2.0.2"
   }
 }
