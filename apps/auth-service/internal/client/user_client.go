@@ -44,12 +44,13 @@ func (c *UserServiceClient) CreateUser(ctx context.Context, username, hashedPass
 	return resp.User, nil
 }
 
-func (c *UserServiceClient) GetUserByUsername(ctx context.Context, username string) (*userv1.User, string, error) {
-	resp, err := c.client.GetUserByUsername(ctx, &userv1.GetUserByUsernameRequest{
+func (c *UserServiceClient) VerifyPassword(ctx context.Context, username, password string) (*userv1.User, bool, error) {
+	resp, err := c.client.VerifyPassword(ctx, &userv1.VerifyPasswordRequest{
 		Username: username,
+		Password: password,
 	})
 	if err != nil {
-		return nil, "", err
+		return nil, false, err
 	}
-	return resp.User, resp.HashedPassword, nil
+	return resp.User, resp.Valid, nil
 }

@@ -6,6 +6,7 @@ import (
 
 	userv1 "github.com/provsalt/DOP_P01_Team1/common/user/v1"
 	"github.com/provsalt/DOP_P01_Team1/user-service/internal/store"
+	"golang.org/x/crypto/bcrypt"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -101,11 +102,41 @@ func (s *UserServiceServer) GetUserByUsername(ctx context.Context, req *userv1.G
 			Username: user.Username,
 			Role:     stringToRole(user.Role),
 		},
-		HashedPassword: user.HashedPassword,
 	}, nil
 }
 
-func (s *UserServiceServer) DeleteUserByUserId(ctx context.Context, req *userv1.DeleteUserByIdRequest) (*userv1.DeleteUserByIdResponse, error) {
+func (s *UserServiceServer) VerifyPassword(ctx context.Context, req *userv1.VerifyPasswordRequest) (*userv1.VerifyPasswordResponse, error) {
+	if req.Username == "" {
+		return nil, status.Error(codes.InvalidArgument, "username is required")
+	}
+	if req.Password == "" {
+		return nil, status.Error(codes.InvalidArgument, "password is required")
+	}
+
+	user, err := s.store.GetUserByUsername(req.Username)
+	if err != nil {
+		if errors.Is(err, store.ErrUserNotFound) {
+			return &userv1.VerifyPasswordResponse{Valid: false}, nil
+		}
+		return nil, status.Error(codes.Internal, "failed to get user")
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(user.HashedPassword), []byte(req.Password))
+	if err != nil {
+		return &userv1.VerifyPasswordResponse{Valid: false}, nil
+	}
+
+	return &userv1.VerifyPasswordResponse{
+		Valid: true,
+		User: &userv1.User{
+			Id:       user.Id,
+			Username: user.Username,
+			Role:     stringToRole(user.Role),
+		},
+	}, nil
+}
+
+func (s *UserServiceServer) DeleteUser(ctx context.Context, req *userv1.DeleteUserByIdRequest) (*userv1.DeleteUserByIdResponse, error) {
 	if req.Id == "" {
 		return nil, status.Error(codes.InvalidArgument, "id is required")
 	}
