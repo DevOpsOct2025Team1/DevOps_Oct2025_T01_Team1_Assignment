@@ -10,7 +10,9 @@ import (
 	"time"
 
 	"github.com/cucumber/godog"
-	"github.com/gin-gonic/gin"
+	"github.com/provsalt/DOP_P01_Team1/api-gateway/internal/server"
+	authv1 "github.com/provsalt/DOP_P01_Team1/common/auth/v1"
+	userv1 "github.com/provsalt/DOP_P01_Team1/common/user/v1"
 )
 
 type healthTestContext struct {
@@ -21,18 +23,48 @@ type healthTestContext struct {
 }
 
 func newHealthTestContext() *healthTestContext {
-	gin.SetMode(gin.TestMode)
+	mockAuthClient := &mockAuthClient{}
+	mockUserClient := &mockUserClient{}
 
-	router := gin.New()
-	router.GET("/health", func(c *gin.Context) {
-		c.JSON(200, gin.H{"status": "ok"})
-	})
-
-	server := httptest.NewServer(router)
+	srv := server.New(mockAuthClient, mockUserClient)
+	testServer := httptest.NewServer(srv.Router)
 
 	return &healthTestContext{
-		server: server,
+		server: testServer,
 	}
+}
+
+// mock clients are needed since health endpoint doesn't use them but server needs them for init
+type mockAuthClient struct{}
+
+func (m *mockAuthClient) SignUp(_ context.Context, _ *authv1.SignUpRequest) (*authv1.SignUpResponse, error) {
+	return nil, fmt.Errorf("not implemented")
+}
+
+func (m *mockAuthClient) Login(_ context.Context, _ *authv1.LoginRequest) (*authv1.LoginResponse, error) {
+	return nil, fmt.Errorf("not implemented")
+}
+
+func (m *mockAuthClient) ValidateToken(_ context.Context, _ *authv1.ValidateTokenRequest) (*authv1.ValidateTokenResponse, error) {
+	return nil, fmt.Errorf("not implemented")
+}
+
+func (m *mockAuthClient) Close() error {
+	return nil
+}
+
+type mockUserClient struct{}
+
+func (m *mockUserClient) GetUser(_ context.Context, _ *userv1.GetUserRequest) (*userv1.GetUserResponse, error) {
+	return nil, fmt.Errorf("not implemented")
+}
+
+func (m *mockUserClient) DeleteAccount(_ context.Context, _ *userv1.DeleteUserByIdRequest) (*userv1.DeleteUserByIdResponse, error) {
+	return nil, fmt.Errorf("not implemented")
+}
+
+func (m *mockUserClient) Close() error {
+	return nil
 }
 
 func (h *healthTestContext) iSendAGETRequestTo(endpoint string) error {
