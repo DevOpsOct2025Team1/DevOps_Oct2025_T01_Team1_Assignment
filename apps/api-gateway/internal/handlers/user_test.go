@@ -47,7 +47,7 @@ func setupUserTestRouter(handler *UserHandler, currentUser *userv1.User) *gin.En
 		}
 		c.Next()
 	})
-	router.DELETE("/api/admin/delete_user", handler.DeleteAccount)
+	router.DELETE("/api/admin/delete_user", handler.DeleteUser)
 	return router
 }
 
