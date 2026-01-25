@@ -30,12 +30,13 @@ func main() {
 	if cfg.AxiomToken == "" {
 		log.Printf("Tracing disabled: AXIOM_API_TOKEN is empty")
 	} else {
-		shutdown, err := telemetry.InitTracer(context.Background(), telemetry.Config{
-			ServiceName: "user-service",
-			Environment: cfg.Environment,
-			Token:       cfg.AxiomToken,
-			Endpoint:    cfg.AxiomEndpoint,
-			Dataset:     cfg.AxiomDataset,
+		shutdown, err := telemetry.InitTelemetry(context.Background(), telemetry.Config{
+			ServiceName:    "user-service",
+			Environment:    cfg.Environment,
+			Token:          cfg.AxiomToken,
+			Endpoint:       cfg.AxiomEndpoint,
+			Dataset:        cfg.AxiomDataset,
+			MetricsDataset: cfg.AxiomMetricsDataset,
 		})
 		if err != nil {
 			log.Printf("Tracing disabled: failed to initialize tracer: %v", err)
