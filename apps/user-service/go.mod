@@ -5,7 +5,8 @@ go 1.25.5
 require (
 	github.com/ilyakaznacheev/cleanenv v1.5.0
 	github.com/provsalt/DOP_P01_Team1/common v0.0.0-00010101000000-000000000000
-	go.mongodb.org/mongo-driver/v2 v2.4.1
+	go.mongodb.org/mongo-driver/v2 v2.4.2
+	golang.org/x/crypto v0.45.0
 	google.golang.org/grpc v1.78.0
 )
 
@@ -19,7 +20,6 @@ require (
 	github.com/xdg-go/scram v1.1.2 // indirect
 	github.com/xdg-go/stringprep v1.0.4 // indirect
 	github.com/youmark/pkcs8 v0.0.0-20240726163527-a2c0da244d78 // indirect
-	golang.org/x/crypto v0.45.0 // indirect
 	golang.org/x/net v0.47.0 // indirect
 	golang.org/x/sync v0.19.0 // indirect
 	golang.org/x/sys v0.39.0 // indirect
