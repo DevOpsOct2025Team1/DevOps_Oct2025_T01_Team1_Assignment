@@ -3,7 +3,9 @@ package telemetry
 import (
 	"context"
 	"crypto/tls"
+	"net/http"
 
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
@@ -67,6 +69,8 @@ func InitTracer(ctx context.Context, cfg Config) (func(context.Context) error, e
 		propagation.TraceContext{},
 		propagation.Baggage{},
 	))
+
+	http.DefaultTransport = otelhttp.NewTransport(http.DefaultTransport)
 
 	return tp.Shutdown, nil
 }
