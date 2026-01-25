@@ -30,15 +30,15 @@ func NewUserStore(database *mongo.Database) *UserStore {
 	}
 }
 
-func (u *UserStore) CreateUser(user *User) (string, error) {
+func (u *UserStore) CreateUser(ctx context.Context, user *User) (string, error) {
 	collection := u.database.Collection("users")
 
-	existing, _ := u.GetUserByUsername(user.Username)
+	existing, _ := u.GetUserByUsername(ctx, user.Username)
 	if existing != nil {
 		return "", ErrUserExists
 	}
 
-	result, err := collection.InsertOne(context.Background(), user)
+	result, err := collection.InsertOne(ctx, user)
 	if err != nil {
 		return "", err
 	}
@@ -51,7 +51,7 @@ func (u *UserStore) CreateUser(user *User) (string, error) {
 	return oid.Hex(), nil
 }
 
-func (u *UserStore) GetUserByID(id string) (*User, error) {
+func (u *UserStore) GetUserByID(ctx context.Context, id string) (*User, error) {
 	collection := u.database.Collection("users")
 
 	oid, err := bson.ObjectIDFromHex(id)
@@ -60,7 +60,7 @@ func (u *UserStore) GetUserByID(id string) (*User, error) {
 	}
 
 	var user User
-	err = collection.FindOne(context.Background(), bson.M{"_id": oid}).Decode(&user)
+	err = collection.FindOne(ctx, bson.M{"_id": oid}).Decode(&user)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
 			return nil, ErrUserNotFound
@@ -72,7 +72,7 @@ func (u *UserStore) GetUserByID(id string) (*User, error) {
 	return &user, nil
 }
 
-func (u *UserStore) GetUserByUsername(username string) (*User, error) {
+func (u *UserStore) GetUserByUsername(ctx context.Context, username string) (*User, error) {
 	collection := u.database.Collection("users")
 
 	var result struct {
@@ -82,7 +82,7 @@ func (u *UserStore) GetUserByUsername(username string) (*User, error) {
 		Role           string        `bson:"role"`
 	}
 
-	err := collection.FindOne(context.Background(), bson.M{"username": username}).Decode(&result)
+	err := collection.FindOne(ctx, bson.M{"username": username}).Decode(&result)
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			return nil, ErrUserNotFound
@@ -100,7 +100,7 @@ func (u *UserStore) GetUserByUsername(username string) (*User, error) {
 	return user, nil
 }
 
-func (u *UserStore) DeleteUserByID(id string) error {
+func (u *UserStore) DeleteUserByID(ctx context.Context, id string) error {
 	collection := u.database.Collection("users")
 
 	oid, err := bson.ObjectIDFromHex(id)
@@ -108,7 +108,7 @@ func (u *UserStore) DeleteUserByID(id string) error {
 		return ErrUserNotFound
 	}
 
-	err = collection.FindOneAndDelete(context.Background(), bson.M{"_id": oid}).Err()
+	err = collection.FindOneAndDelete(ctx, bson.M{"_id": oid}).Err()
 	if errors.Is(err, mongo.ErrNoDocuments) {
 		return ErrUserNotFound
 	}

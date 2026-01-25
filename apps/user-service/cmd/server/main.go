@@ -14,6 +14,7 @@ import (
 	"github.com/provsalt/DOP_P01_Team1/user-service/internal/store"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
+	"go.opentelemetry.io/contrib/instrumentation/go.mongodb.org/mongo-driver/v2/mongo/otelmongo"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health/grpc_health_v1"
@@ -43,7 +44,7 @@ func main() {
 		}
 	}
 
-	clientOptions := options.Client().ApplyURI(cfg.MongoDBURI)
+	clientOptions := options.Client().ApplyURI(cfg.MongoDBURI).SetMonitor(otelmongo.NewMonitor())
 	client, err := mongo.Connect(clientOptions)
 	if err != nil {
 		log.Fatalf("Failed to connect to MongoDB: %v", err)
