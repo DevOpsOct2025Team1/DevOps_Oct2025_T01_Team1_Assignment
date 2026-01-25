@@ -10,6 +10,18 @@ updates:
     schedule:
       interval: "weekly"
 
+  - package-ecosystem: "gomod" # See documentation for possible values
+    directory: "/apps/auth-service" # Location of package manifests
+    schedule:
+      interval: "weekly"
+  - package-ecosystem: "gomod" # See documentation for possible values
+    directory: "/apps/common" # Location of package manifests
+    schedule:
+      interval: "weekly"
+  - package-ecosystem: "gomod" # See documentation for possible values
+    directory: "/apps/user-service" # Location of package manifests
+    schedule:
+      interval: "weekly"
   - package-ecosystem: "bun" # See documentation for possible values
     directory: "/apps/frontend" # Location of package manifests
     schedule:
