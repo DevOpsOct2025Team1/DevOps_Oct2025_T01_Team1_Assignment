@@ -10,6 +10,10 @@ services:
       - PORT=8080
       - MONGODB_URI=${MONGODB_URI}
       - MONGODB_DATABASE=${MONGODB_DATABASE}
+      - AXIOM_API_TOKEN=${AXIOM_API_TOKEN}
+      - AXIOM_ENDPOINT=${AXIOM_ENDPOINT:-us-east-1.aws.edge.axiom.co}
+      - AXIOM_DATASET=${AXIOM_DATASET:-traces}
+      - ENVIRONMENT=${ENVIRONMENT:-production}
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "nc", "-z", "localhost", "8080"]
@@ -29,6 +33,10 @@ services:
       - USER_SERVICE_ADDR=user-service:8080
       - JWT_SECRET=${JWT_SECRET}
       - JWT_EXPIRY=${JWT_EXPIRY:-24h}
+      - AXIOM_API_TOKEN=${AXIOM_API_TOKEN}
+      - AXIOM_ENDPOINT=${AXIOM_ENDPOINT:-us-east-1.aws.edge.axiom.co}
+      - AXIOM_DATASET=${AXIOM_DATASET:-traces}
+      - ENVIRONMENT=${ENVIRONMENT:-production}
     depends_on:
       user-service:
         condition: service_healthy
@@ -49,6 +57,10 @@ services:
     environment:
       - PORT=3001
       - AUTH_SERVICE_ADDR=auth-service:8081
+      - AXIOM_API_TOKEN=${AXIOM_API_TOKEN}
+      - AXIOM_ENDPOINT=${AXIOM_ENDPOINT:-us-east-1.aws.edge.axiom.co}
+      - AXIOM_DATASET=${AXIOM_DATASET:-traces}
+      - ENVIRONMENT=${ENVIRONMENT:-production}
     depends_on:
       auth-service:
         condition: service_healthy

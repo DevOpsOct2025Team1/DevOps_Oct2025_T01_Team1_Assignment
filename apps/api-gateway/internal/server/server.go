@@ -5,6 +5,7 @@ import (
 	"github.com/provsalt/DOP_P01_Team1/api-gateway/internal/handlers"
 	"github.com/provsalt/DOP_P01_Team1/api-gateway/middleware"
 	userv1 "github.com/provsalt/DOP_P01_Team1/common/user/v1"
+	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
 )
 
 type Server struct {
@@ -15,6 +16,7 @@ type Server struct {
 
 func New(authClient handlers.AuthServiceClient, userClient handlers.UserServiceClient) *Server {
 	router := gin.Default()
+	router.Use(otelgin.Middleware("api-gateway"))
 
 	s := &Server{
 		Router:     router,

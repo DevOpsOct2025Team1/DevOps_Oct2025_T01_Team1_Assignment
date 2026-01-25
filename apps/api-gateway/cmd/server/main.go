@@ -1,17 +1,36 @@
 package main
 
 import (
+	"context"
 	"log"
 
 	"github.com/provsalt/DOP_P01_Team1/api-gateway/internal/config"
 	"github.com/provsalt/DOP_P01_Team1/api-gateway/internal/handlers"
 	"github.com/provsalt/DOP_P01_Team1/api-gateway/internal/server"
+	"github.com/provsalt/DOP_P01_Team1/common/telemetry"
 )
 
 func main() {
 	cfg, err := config.Load()
 	if err != nil {
 		log.Fatalf("Failed to load configuration: %v", err)
+	}
+
+	if cfg.AxiomToken == "" {
+		log.Printf("Tracing disabled: AXIOM_API_TOKEN is empty")
+	} else {
+		shutdown, err := telemetry.InitTracer(context.Background(), telemetry.Config{
+			ServiceName: "api-gateway",
+			Environment: cfg.Environment,
+			Token:       cfg.AxiomToken,
+			Endpoint:    cfg.AxiomEndpoint,
+			Dataset:     cfg.AxiomDataset,
+		})
+		if err != nil {
+			log.Printf("Tracing disabled: failed to initialize tracer: %v", err)
+		} else {
+			defer shutdown(context.Background())
+		}
 	}
 
 	log.Printf("Using auth-service at: %s", cfg.AuthServiceAddr)

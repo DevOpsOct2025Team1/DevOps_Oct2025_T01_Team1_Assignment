@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net"
@@ -11,6 +12,8 @@ import (
 	"github.com/provsalt/DOP_P01_Team1/auth-service/internal/jwt"
 	"github.com/provsalt/DOP_P01_Team1/auth-service/internal/service"
 	authv1 "github.com/provsalt/DOP_P01_Team1/common/auth/v1"
+	"github.com/provsalt/DOP_P01_Team1/common/telemetry"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/reflection"
@@ -20,6 +23,23 @@ func main() {
 	cfg, err := config.Load()
 	if err != nil {
 		log.Fatalf("Failed to load configuration: %v", err)
+	}
+
+	if cfg.AxiomToken == "" {
+		log.Printf("Tracing disabled: AXIOM_API_TOKEN is empty")
+	} else {
+		shutdown, err := telemetry.InitTracer(context.Background(), telemetry.Config{
+			ServiceName: "auth-service",
+			Environment: cfg.Environment,
+			Token:       cfg.AxiomToken,
+			Endpoint:    cfg.AxiomEndpoint,
+			Dataset:     cfg.AxiomDataset,
+		})
+		if err != nil {
+			log.Printf("Tracing disabled: failed to initialize tracer: %v", err)
+		} else {
+			defer shutdown(context.Background())
+		}
 	}
 
 	log.Printf("Using user-service at: %s", cfg.UserServiceAddr)
@@ -37,7 +57,9 @@ func main() {
 		log.Fatalf("Failed to listen: %v", err)
 	}
 
-	grpcServer := grpc.NewServer()
+	grpcServer := grpc.NewServer(
+		grpc.StatsHandler(otelgrpc.NewServerHandler()),
+	)
 	authv1.RegisterAuthServiceServer(grpcServer, service.NewAuthServiceServer(userClient, jwtManager))
 	grpc_health_v1.RegisterHealthServer(grpcServer, health.NewHealthServer())
 	reflection.Register(grpcServer)
