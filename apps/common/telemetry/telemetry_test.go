@@ -8,17 +8,17 @@ import (
 	"go.opentelemetry.io/otel/sdk/trace"
 )
 
-func TestInitTracerSetsProviderAndPropagator(t *testing.T) {
+func TestInitTelemetrySetsProviderAndPropagator(t *testing.T) {
 	shutdown, err := InitTelemetry(context.Background(), Config{
 		ServiceName: "test-service",
 		Token:       "test-token",
 		Dataset:     "test-dataset",
 	})
 	if err != nil {
-		t.Fatalf("InitTracer returned error: %v", err)
+		t.Fatalf("InitTelemetry returned error: %v", err)
 	}
 	if shutdown == nil {
-		t.Fatal("InitTracer returned nil shutdown")
+		t.Fatal("InitTelemetry returned nil shutdown")
 	}
 
 	if _, ok := otel.GetTracerProvider().(*trace.TracerProvider); !ok {
