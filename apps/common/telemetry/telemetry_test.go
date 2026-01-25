@@ -9,7 +9,7 @@ import (
 )
 
 func TestInitTracerSetsProviderAndPropagator(t *testing.T) {
-	shutdown, err := InitTracer(context.Background(), Config{
+	shutdown, err := InitTelemetry(context.Background(), Config{
 		ServiceName: "test-service",
 		Token:       "test-token",
 		Dataset:     "test-dataset",

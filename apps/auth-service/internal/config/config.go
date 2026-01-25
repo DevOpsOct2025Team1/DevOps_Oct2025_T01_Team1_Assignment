@@ -12,10 +12,11 @@ type Config struct {
 	JWTSecret       string        `env:"JWT_SECRET" env-required:"true"`
 	JWTExpiry       time.Duration `env:"JWT_EXPIRY" env-default:"24h"`
 	// Telemetry
-	AxiomToken    string `env:"AXIOM_API_TOKEN"`
-	AxiomEndpoint string `env:"AXIOM_ENDPOINT" env-default:"us-east-1.aws.edge.axiom.co"`
-	AxiomDataset  string `env:"AXIOM_DATASET" env-default:"traces"`
-	Environment   string `env:"ENVIRONMENT" env-default:"development"`
+	AxiomToken          string `env:"AXIOM_API_TOKEN"`
+	AxiomEndpoint       string `env:"AXIOM_ENDPOINT" env-default:"us-east-1.aws.edge.axiom.co"`
+	AxiomDataset        string `env:"AXIOM_DATASET" env-default:"traces"`
+	AxiomMetricsDataset string `env:"AXIOM_METRICS_DATASET" env-default:"metrics"`
+	Environment         string `env:"ENVIRONMENT" env-default:"development"`
 }
 
 func Load() (*Config, error) {
