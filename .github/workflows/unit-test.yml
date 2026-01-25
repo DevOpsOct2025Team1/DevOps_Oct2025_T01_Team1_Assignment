@@ -65,6 +65,7 @@ jobs:
         if: matrix.service == 'frontend'
         run: |
           cd apps/frontend
+          bunx playwright install
           bun install
 
       - name: Setup Node.js (for NX)
