@@ -32,6 +32,16 @@ type Config struct {
 // InitTelemetry initializes OpenTelemetry tracing and metrics with Axiom as the backend.
 // Returns a shutdown function that should be deferred in main().
 func InitTelemetry(ctx context.Context, cfg Config) (func(context.Context) error, error) {
+	if cfg.ServiceName == "" {
+		return nil, errors.New("telemetry: ServiceName is required")
+	}
+	if cfg.Token == "" {
+		return nil, errors.New("telemetry: Token is required")
+	}
+	if cfg.Dataset == "" {
+		return nil, errors.New("telemetry: Dataset is required")
+	}
+
 	endpoint := cfg.Endpoint
 	if endpoint == "" {
 		endpoint = "us-east-1.aws.edge.axiom.co"
@@ -100,7 +110,7 @@ func InitTelemetry(ctx context.Context, cfg Config) (func(context.Context) error
 
 	http.DefaultTransport = otelhttp.NewTransport(http.DefaultTransport)
 	if err := runtime.Start(runtime.WithMeterProvider(mp)); err != nil {
-		return nil, err
+		return nil, errors.Join(err, tp.Shutdown(ctx), mp.Shutdown(ctx))
 	}
 
 	return func(ctx context.Context) error {
