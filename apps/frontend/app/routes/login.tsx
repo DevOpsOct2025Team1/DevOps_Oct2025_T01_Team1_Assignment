@@ -32,11 +32,26 @@ export default function Login() {
     setLoading(true);
     try {
       const response = await authApi.login(username, password);
-      setAuth(response.user, response.token);
+      console.log('Login response:', response);
+      console.log('User role:', response.user.role);
       
-      if (response.user.role === 'admin') {
+      // Convert numeric role to string if needed
+      const userRole = typeof response.user.role === 'number' 
+        ? (response.user.role === 2 ? 'admin' : 'user')
+        : response.user.role;
+      
+      const normalizedUser = {
+        ...response.user,
+        role: userRole
+      };
+      
+      setAuth(normalizedUser, response.token);
+      
+      if (userRole === 'admin') {
+        console.log('Navigating to /admin');
         navigate('/admin');
       } else {
+        console.log('Navigating to /dashboard');
         navigate('/dashboard');
       }
     } catch (err: any) {
