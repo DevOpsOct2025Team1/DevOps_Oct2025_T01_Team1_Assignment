@@ -1,10 +1,15 @@
 package server
 
 import (
+	"log"
+
 	"github.com/gin-gonic/gin"
+	"github.com/provsalt/DOP_P01_Team1/api-gateway/internal/config"
 	"github.com/provsalt/DOP_P01_Team1/api-gateway/internal/handlers"
 	"github.com/provsalt/DOP_P01_Team1/api-gateway/middleware"
 	userv1 "github.com/provsalt/DOP_P01_Team1/common/user/v1"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
 )
 
@@ -40,6 +45,14 @@ func (s *Server) setupRoutes() {
 	s.Router.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{"status": "ok"})
 	})
+
+	cfg, err := config.Load()
+	if err != nil {
+		log.Fatal(err)
+	}
+	if cfg.Environment == "development" {
+		s.Router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	}
 }
 
 func (s *Server) Run(addr string) error {

@@ -8,7 +8,22 @@ import (
 	"github.com/provsalt/DOP_P01_Team1/api-gateway/internal/handlers"
 	"github.com/provsalt/DOP_P01_Team1/api-gateway/internal/server"
 	"github.com/provsalt/DOP_P01_Team1/common/telemetry"
+
+	_ "github.com/provsalt/DOP_P01_Team1/api-gateway/docs"
 )
+
+// @title           API Gateway
+// @version         1.0
+// @description     API Gateway for the DevOps microservices app.
+// @description     Provides authentication, user management, file management? and routing to backend services.
+
+// @host	localhost:3001
+// @BasePath  /
+
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description Enter your bearer token in the format: Bearer {token}
 
 func main() {
 	cfg, err := config.Load()
