@@ -20,6 +20,7 @@ func TestInitTelemetrySetsProviderAndPropagator(t *testing.T) {
 	if shutdown == nil {
 		t.Fatal("InitTelemetry returned nil shutdown")
 	}
+	defer shutdown(context.Background())
 
 	if _, ok := otel.GetTracerProvider().(*trace.TracerProvider); !ok {
 		t.Fatalf("unexpected tracer provider type: %T", otel.GetTracerProvider())
