@@ -3,6 +3,7 @@ module github.com/provsalt/DOP_P01_Team1/api-gateway
 go 1.25.5
 
 require (
+	github.com/gin-contrib/cors v1.7.2
 	github.com/gin-gonic/gin v1.11.0
 	github.com/ilyakaznacheev/cleanenv v1.5.0
 	google.golang.org/grpc v1.78.0

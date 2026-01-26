@@ -5,6 +5,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	authv1 "github.com/provsalt/DOP_P01_Team1/common/auth/v1"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type AuthHandler struct {
@@ -33,7 +35,22 @@ func (h *AuthHandler) SignUp(c *gin.Context) {
 		Password: req.Password,
 	})
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		statusCode := http.StatusInternalServerError
+		if st, ok := status.FromError(err); ok {
+			switch st.Code() {
+			case codes.InvalidArgument:
+				statusCode = http.StatusBadRequest
+			case codes.Unauthenticated:
+				statusCode = http.StatusUnauthorized
+			case codes.NotFound:
+				statusCode = http.StatusNotFound
+			case codes.AlreadyExists:
+				statusCode = http.StatusConflict
+			case codes.PermissionDenied:
+				statusCode = http.StatusForbidden
+			}
+		}
+		c.JSON(statusCode, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -63,7 +80,22 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		Password: req.Password,
 	})
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		statusCode := http.StatusInternalServerError
+		if st, ok := status.FromError(err); ok {
+			switch st.Code() {
+			case codes.InvalidArgument:
+				statusCode = http.StatusBadRequest
+			case codes.Unauthenticated:
+				statusCode = http.StatusUnauthorized
+			case codes.NotFound:
+				statusCode = http.StatusNotFound
+			case codes.AlreadyExists:
+				statusCode = http.StatusConflict
+			case codes.PermissionDenied:
+				statusCode = http.StatusForbidden
+			}
+		}
+		c.JSON(statusCode, gin.H{"error": err.Error()})
 		return
 	}
 
