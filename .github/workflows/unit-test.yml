@@ -8,37 +8,9 @@ on:
 
 jobs:
   detect-affected:
-    runs-on: ubuntu-latest
-    outputs:
-      projects: ${{ steps.affected.outputs.projects }}
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-
-      # using node since nx isn't supported by native bun it seems
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: "24"
-
-      - name: Get affected projects
-        id: affected
-        run: |
-          if [ "${{ github.event_name }}" == "pull_request" ]; then
-            BASE="origin/${{ github.base_ref }}"
-          else
-            BASE="${{ github.event.before }}"
-          fi
-          
-          echo "Comparing against base: $BASE"
-
-          affected=$(./nx show projects --affected --base=$BASE 2>&1 | grep -v "added\|audited\|packages are looking\|npm fund\|found.*vulnerabilities" || true)
-
-          json_array=$(echo "$affected" | jq -R -s -c 'split("\n") | map(select(length > 0))')
-
-          echo "Affected projects: $json_array"
-          echo "projects=$json_array" >> $GITHUB_OUTPUT
+    uses: ./.github/workflows/detect-affected.yml
+    with:
+      base: ${{ github.event_name == 'pull_request' && format('origin/{0}', github.base_ref) || github.event.before }}
 
   unit-tests:
     needs: detect-affected
