@@ -1,8 +1,6 @@
 package server
 
 import (
-	"log"
-
 	"github.com/gin-gonic/gin"
 	"github.com/provsalt/DOP_P01_Team1/api-gateway/internal/config"
 	"github.com/provsalt/DOP_P01_Team1/api-gateway/internal/handlers"
@@ -19,7 +17,7 @@ type Server struct {
 	userClient handlers.UserServiceClient
 }
 
-func New(authClient handlers.AuthServiceClient, userClient handlers.UserServiceClient) *Server {
+func New(authClient handlers.AuthServiceClient, userClient handlers.UserServiceClient, cfg *config.Config) *Server {
 	router := gin.Default()
 	router.Use(otelgin.Middleware("api-gateway"))
 
@@ -29,11 +27,11 @@ func New(authClient handlers.AuthServiceClient, userClient handlers.UserServiceC
 		userClient: userClient,
 	}
 
-	s.setupRoutes()
+	s.setupRoutes(cfg)
 	return s
 }
 
-func (s *Server) setupRoutes() {
+func (s *Server) setupRoutes(cfg *config.Config) {
 	authHandler := handlers.NewAuthHandler(s.authClient)
 	userHandler := handlers.NewUserHandler(s.userClient)
 
@@ -46,11 +44,7 @@ func (s *Server) setupRoutes() {
 		c.JSON(200, gin.H{"status": "ok"})
 	})
 
-	cfg, err := config.Load()
-	if err != nil {
-		log.Fatal(err)
-	}
-	if cfg.Environment == "development" {
+	if cfg != nil && cfg.Environment == "development" {
 		s.Router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	}
 }

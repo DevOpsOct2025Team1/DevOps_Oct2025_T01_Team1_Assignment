@@ -302,11 +302,11 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
-	Host:             "prod.ngeeann.zip",
+	Host:             "",
 	BasePath:         "/",
 	Schemes:          []string{},
 	Title:            "API Gateway",
-	Description:      "API Gateway for the DevOps microservices app.\nProvides authentication, user management, file management? and routing to backend services.",
+	Description:      "API Gateway for the DevOps microservices app.\nProvides authentication, user management, file management, and routing to backend services.",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

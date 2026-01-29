@@ -1,12 +1,11 @@
 {
     "swagger": "2.0",
     "info": {
-        "description": "API Gateway for the DevOps microservices app.\nProvides authentication, user management, file management? and routing to backend services.",
+        "description": "API Gateway for the DevOps microservices app.\nProvides authentication, user management, file management, and routing to backend services.",
         "title": "API Gateway",
         "contact": {},
         "version": "1.0"
     },
-    "host": "prod.ngeeann.zip",
     "basePath": "/",
     "paths": {
         "/api/admin/create_user": {

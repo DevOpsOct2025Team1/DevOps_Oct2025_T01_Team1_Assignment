@@ -64,12 +64,11 @@ definitions:
         example: testing
         type: string
     type: object
-host: prod.ngeeann.zip
 info:
   contact: {}
   description: |-
     API Gateway for the DevOps microservices app.
-    Provides authentication, user management, file management? and routing to backend services.
+    Provides authentication, user management, file management, and routing to backend services.
   title: API Gateway
   version: "1.0"
 paths:

@@ -35,7 +35,7 @@
     "swagger": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "swag init -g cmd/server/main.go -o docs --parseDependency --parseInternal",
+        "command": "go run github.com/swaggo/swag/cmd/swag@v1.16.6 init -g cmd/server/main.go -o docs --parseDependency --parseInternal",
         "cwd": "apps/api-gateway"
       }
     }
