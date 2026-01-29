@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
-import type { User } from '../utils/api';
-import { getStoredUser, isAuthenticated, isAdmin } from '../utils/auth';
+import { getStoredUser, isAuthenticated, isAdmin, type User } from '../utils/auth';
 
 export default function Dashboard() {
   const navigate = useNavigate();

@@ -1,12 +1,28 @@
-import { render } from '@testing-library/react';
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { BrowserRouter, useNavigate } from 'react-router';
 import Admin from '../app/routes/admin';
 import Dashboard from '../app/routes/dashboard';
+import { renderWithProviders } from './test-utils';
+
+const createUserMock = vi.fn();
+const deleteUserMock = vi.fn();
+
+vi.mock('../app/api/generated', () => ({
+  useCreateUser: () => ({
+    mutateAsync: createUserMock,
+    isPending: false,
+  }),
+  useDeleteUser: () => ({
+    mutateAsync: deleteUserMock,
+    isPending: false,
+  }),
+}));
 
 describe('Protected Routes', () => {
   beforeEach(() => {
     localStorage.clear();
+    createUserMock.mockReset();
+    deleteUserMock.mockReset();
   });
 
   it('redirects to login when not authenticated - admin', () => {
@@ -18,7 +34,7 @@ describe('Protected Routes', () => {
       return <Admin />;
     };
 
-    render(
+    renderWithProviders(
       <BrowserRouter>
         <TestWrapper />
       </BrowserRouter>
@@ -36,7 +52,7 @@ describe('Protected Routes', () => {
       return <Dashboard />;
     };
 
-    render(
+    renderWithProviders(
       <BrowserRouter>
         <TestWrapper />
       </BrowserRouter>
@@ -61,7 +77,7 @@ describe('Protected Routes', () => {
       return <Admin />;
     };
 
-    render(
+    renderWithProviders(
       <BrowserRouter>
         <TestWrapper />
       </BrowserRouter>

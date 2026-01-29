@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
-import { authApi } from '../utils/api';
-import type { User } from '../utils/api';
-import { getStoredUser, isAuthenticated, isAdmin } from '../utils/auth';
+import { useCreateUser, useDeleteUser } from '../api/generated';
+import { getStoredUser, isAuthenticated, isAdmin, type User } from '../utils/auth';
 
 interface Action {
   type: 'create' | 'delete';
@@ -14,15 +13,15 @@ export default function Admin() {
   const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
   const [actions, setActions] = useState<Action[]>([]);
+  const createUserMutation = useCreateUser();
+  const deleteUserMutation = useDeleteUser();
   
   const [createUsername, setCreateUsername] = useState('');
   const [createPassword, setCreatePassword] = useState('');
   const [createError, setCreateError] = useState('');
-  const [createLoading, setCreateLoading] = useState(false);
   
   const [deleteUserId, setDeleteUserId] = useState('');
   const [deleteError, setDeleteError] = useState('');
-  const [deleteLoading, setDeleteLoading] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -48,17 +47,20 @@ export default function Admin() {
       return;
     }
 
-    setCreateLoading(true);
     try {
-      const response = await authApi.createUser({
-        username: createUsername,
-        password: createPassword,
+      const response = await createUserMutation.mutateAsync({
+        data: {
+          username: createUsername,
+          password: createPassword,
+        },
       });
+      const createdUser =
+        response.data && 'user' in response.data ? response.data.user : undefined;
       
       setActions([
         {
           type: 'create',
-          username: response.user.username,
+          username: createdUser?.username || createUsername,
           timestamp: new Date(),
         },
         ...actions,
@@ -66,10 +68,8 @@ export default function Admin() {
       
       setCreateUsername('');
       setCreatePassword('');
-    } catch (err) {
-      setCreateError(err instanceof Error ? err.message : 'Failed to create user');
-    } finally {
-      setCreateLoading(false);
+    } catch (err: any) {
+      setCreateError(err?.message || 'Failed to create user');
     }
   };
 
@@ -82,9 +82,12 @@ export default function Admin() {
       return;
     }
 
-    setDeleteLoading(true);
     try {
-      await authApi.deleteUser(deleteUserId);
+      await deleteUserMutation.mutateAsync({
+        data: {
+          id: deleteUserId,
+        },
+      });
       
       setActions([
         {
@@ -96,10 +99,8 @@ export default function Admin() {
       ]);
       
       setDeleteUserId('');
-    } catch (err) {
-      setDeleteError(err instanceof Error ? err.message : 'Failed to delete user');
-    } finally {
-      setDeleteLoading(false);
+    } catch (err: any) {
+      setDeleteError(err?.message || 'Failed to delete user');
     }
   };
 
@@ -129,7 +130,7 @@ export default function Admin() {
                   value={createUsername}
                   onChange={(e) => setCreateUsername(e.target.value)}
                   className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                  disabled={createLoading}
+                  disabled={createUserMutation.isPending}
                 />
               </div>
 
@@ -143,7 +144,7 @@ export default function Admin() {
                   value={createPassword}
                   onChange={(e) => setCreatePassword(e.target.value)}
                   className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                  disabled={createLoading}
+                  disabled={createUserMutation.isPending}
                 />
               </div>
 
@@ -155,10 +156,10 @@ export default function Admin() {
 
               <button
                 type="submit"
-                disabled={createLoading}
+                disabled={createUserMutation.isPending}
                 className="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 disabled:bg-indigo-400 disabled:cursor-not-allowed transition-colors font-medium"
               >
-                {createLoading ? 'Creating...' : 'Create User'}
+                {createUserMutation.isPending ? 'Creating...' : 'Create User'}
               </button>
             </form>
           </div>
@@ -176,7 +177,7 @@ export default function Admin() {
                   value={deleteUserId}
                   onChange={(e) => setDeleteUserId(e.target.value)}
                   className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                  disabled={deleteLoading}
+                  disabled={deleteUserMutation.isPending}
                 />
               </div>
 
@@ -188,10 +189,10 @@ export default function Admin() {
 
               <button
                 type="submit"
-                disabled={deleteLoading}
+                disabled={deleteUserMutation.isPending}
                 className="w-full bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700 disabled:bg-red-400 disabled:cursor-not-allowed transition-colors font-medium"
               >
-                {deleteLoading ? 'Deleting...' : 'Delete User'}
+                {deleteUserMutation.isPending ? 'Deleting...' : 'Delete User'}
               </button>
             </form>
           </div>

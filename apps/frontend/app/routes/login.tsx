@@ -1,14 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
-import { authApi } from '../utils/api';
 import { setAuth, isAuthenticated, isAdmin } from '../utils/auth';
+import { useLogin } from '../api/generated';
 
 export default function Login() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const loginMutation = useLogin();
+  const isLoading = loginMutation.isPending;
 
   useEffect(() => {
     if (isAuthenticated()) {
@@ -29,23 +30,45 @@ export default function Login() {
       return;
     }
 
-    setLoading(true);
     try {
-      const response = await authApi.login(username, password);
-      console.log('Login response:', response);
-      console.log('User role:', response.user.role);
+      const response = await loginMutation.mutateAsync({
+        data: {
+          username,
+          password,
+        },
+      });
+      const authData = response.data;
+
+      if (
+        !authData ||
+        !('user' in authData) ||
+        !authData.user ||
+        !authData.user.id ||
+        !authData.user.username ||
+        !authData.user.role ||
+        !authData.token
+      ) {
+        throw new Error('Login failed. Please try again.');
+      }
+
+      console.log('Login response:', authData);
+      console.log('User role:', authData.user.role);
       
-      // Convert numeric role to string if needed
-      const userRole = typeof response.user.role === 'number' 
-        ? (response.user.role === 2 ? 'admin' : 'user')
-        : response.user.role;
+      // Normalize API roles into the UI-friendly values we already use.
+      const roleValue = authData.user.role as string | number;
+      const userRole = typeof roleValue === 'number'
+        ? (roleValue === 2 ? 'admin' : 'user')
+        : roleValue.toLowerCase().includes('admin')
+          ? 'admin'
+          : 'user';
       
       const normalizedUser = {
-        ...response.user,
+        id: authData.user.id,
+        username: authData.user.username,
         role: userRole
       };
       
-      setAuth(normalizedUser, response.token);
+      setAuth(normalizedUser, authData.token);
       
       if (userRole === 'admin') {
         console.log('Navigating to /admin');
@@ -55,15 +78,13 @@ export default function Login() {
         navigate('/dashboard');
       }
     } catch (err: any) {
-      if (err.status === 401) {
+      if (err?.status === 401) {
         setError('Incorrect Username or Password');
-      } else if (err.message) {
+      } else if (err?.message) {
         setError(err.message);
       } else {
         setError('Login failed. Please try again.');
       }
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -83,7 +104,7 @@ export default function Login() {
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-              disabled={loading}
+              disabled={isLoading}
             />
           </div>
 
@@ -97,7 +118,7 @@ export default function Login() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-              disabled={loading}
+              disabled={isLoading}
             />
           </div>
 
@@ -109,10 +130,10 @@ export default function Login() {
 
           <button
             type="submit"
-            disabled={loading}
+            disabled={loginMutation.isPending}
             className="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 disabled:bg-indigo-400 disabled:cursor-not-allowed transition-colors font-medium"
           >
-            {loading ? 'Logging in...' : 'Login'}
+            {loginMutation.isPending ? 'Logging in...' : 'Login'}
           </button>
         </form>
       </div>

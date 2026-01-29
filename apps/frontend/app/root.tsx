@@ -8,11 +8,12 @@ import {
   useLocation,
 } from "react-router";
 import { useState, useEffect } from "react";
+import { QueryClientProvider } from "@tanstack/react-query";
 
 import type { Route } from "./+types/root";
-import type { User } from "./utils/api";
 import "./app.css";
-import { getStoredUser, isAuthenticated } from "./utils/auth";
+import { createQueryClient } from "./api/query";
+import { getStoredUser, isAuthenticated, type User } from "./utils/auth";
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -99,11 +100,13 @@ function Navigation() {
 }
 
 export default function App() {
+  const [queryClient] = useState(() => createQueryClient());
+
   return (
-    <>
+    <QueryClientProvider client={queryClient}>
       <Navigation />
       <Outlet />
-    </>
+    </QueryClientProvider>
   );
 }
 

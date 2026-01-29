@@ -1,4 +1,8 @@
-import type { User } from './api';
+export type User = {
+  id: string;
+  username: string;
+  role: string | number;
+};
 
 function isBrowser(): boolean {
   return typeof window !== 'undefined';
@@ -38,5 +42,13 @@ export function isAuthenticated(): boolean {
 
 export function isAdmin(): boolean {
   const user = getStoredUser();
-  return user?.role === 'admin';
+  if (!user) {
+    return false;
+  }
+
+  if (typeof user.role === 'number') {
+    return user.role === 2;
+  }
+
+  return user.role.toLowerCase().includes('admin');
 }
