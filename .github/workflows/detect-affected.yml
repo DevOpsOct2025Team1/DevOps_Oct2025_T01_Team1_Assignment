@@ -4,12 +4,16 @@ on:
   workflow_call:
     inputs:
       base:
-        description: 'Base commit/ref to compare against'
+        description: "Base commit/ref to compare against"
         required: true
+        type: string
+      ref:
+        description: "Git ref to checkout (defaults to triggering ref)"
+        required: false
         type: string
     outputs:
       projects:
-        description: 'JSON array of affected project names'
+        description: "JSON array of affected project names"
         value: ${{ jobs.detect.outputs.projects }}
 
 jobs:
@@ -20,6 +24,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
+          ref: ${{ inputs.ref }}
           fetch-depth: 0
 
       - name: Setup Node.js
