@@ -1,0 +1,47 @@
+syntax = "proto3";
+
+package file.v1;
+
+service FileService {
+  rpc CreateFile(CreateFileRequest) returns (FileResponse);
+  rpc ListFiles(ListFilesRequest) returns (ListFilesResponse);
+  rpc GetFile(GetFileRequest) returns (FileResponse);
+  rpc DeleteFile(DeleteFileRequest) returns (DeleteFileResponse);
+}
+
+message File {
+  string id = 1;
+  string user_id = 2;
+  string filename = 3;
+  int64 size = 4;
+  string content_type = 5;
+  int64 created_at = 6;
+}
+
+message CreateFileRequest {
+  string filename = 1;
+  int64 size = 2;
+  string content_type = 3;
+}
+
+message GetFileRequest {
+  string id = 1;
+}
+
+message ListFilesRequest {}
+
+message ListFilesResponse {
+  repeated File files = 1;
+}
+
+message FileResponse {
+  File file = 1;
+}
+
+message DeleteFileRequest {
+  string id = 1;
+}
+
+message DeleteFileResponse {
+  bool success = 1;
+}
