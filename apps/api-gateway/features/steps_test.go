@@ -59,9 +59,18 @@ func (h *healthTestContext) sendJSON(method, endpoint, body string) error {
 	}
 
 	h.responseTime = time.Since(start)
+
+	// Close any previous response body before overwriting h.response to avoid leaks
+	if h.response != nil && h.response.Body != nil {
+		_ = h.response.Body.Close()
+	}
 	h.response = resp
 
 	raw, _ := io.ReadAll(resp.Body)
+	// Close the original body now that it has been fully read
+	_ = resp.Body.Close()
+	// Replace the body with a new reader over the captured bytes so it remains usable
+	resp.Body = io.NopCloser(bytes.NewReader(raw))
 	h.responseRaw = raw
 
 	var m map[string]interface{}
