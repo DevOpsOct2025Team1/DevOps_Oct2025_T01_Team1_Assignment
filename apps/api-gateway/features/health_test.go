@@ -59,16 +59,19 @@ func (m *mockAuthClient) ValidateToken(_ context.Context, req *authv1.ValidateTo
 	switch req.Token {
 	case "admin-token":
 		return &authv1.ValidateTokenResponse{
-			User: &userv1.User{Id: "a1", Username: "admin", Role: userv1.Role_ROLE_ADMIN},
+			Valid: true,
+			User:  &userv1.User{Id: "a1", Username: "admin", Role: userv1.Role_ROLE_ADMIN},
 		}, nil
 	case "user-token":
 		return &authv1.ValidateTokenResponse{
-			User: &userv1.User{Id: "u1", Username: "user", Role: userv1.Role_ROLE_USER},
+			Valid: true,
+			User:  &userv1.User{Id: "u1", Username: "user", Role: userv1.Role_ROLE_USER},
 		}, nil
 	default:
-		// return non-admin so middleware denies with 401 (instead of 500)
+		// simulate failed validation: invalid token => Valid=false and no User
 		return &authv1.ValidateTokenResponse{
-			User: &userv1.User{Id: "x", Username: "x", Role: userv1.Role_ROLE_USER},
+			Valid: false,
+			User:  nil,
 		}, nil
 	}
 }

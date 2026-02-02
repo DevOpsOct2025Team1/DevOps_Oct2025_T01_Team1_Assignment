@@ -14,16 +14,28 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Start API Gateway (only)
-      - name: Start API Gateway
+      # Start API Gateway and its dependencies
+      - name: Start API Gateway and dependencies
         run: |
-          docker compose up -d api-gateway
-          sleep 30
+          docker compose up -d api-gateway auth-service user-service
+          echo "Waiting for API Gateway to be ready on http://localhost:3001..."
+          for i in {1..30}; do
+            if curl -sSf http://localhost:3001 >/dev/null 2>&1; then
+              echo "API Gateway is ready."
+              break
+            fi
+            echo "Attempt $i: API Gateway not ready yet, waiting 2 seconds..."
+            sleep 2
+          done
+          if ! curl -sSf http://localhost:3001 >/dev/null 2>&1; then
+            echo "API Gateway did not become ready in time." >&2
+            exit 1
+          fi
 
       - name: OWASP ZAP Baseline Scan
         uses: zaproxy/action-baseline@v0.10.0
         with:
-          target: "http://localhost:3000"
+          target: "http://localhost:3001"
           fail_action: true
 
       - name: Stop containers

@@ -3,6 +3,7 @@ package integration
 import (
 	"context"
 	"fmt"
+	"net"
 	"testing"
 	"time"
 
@@ -30,7 +31,7 @@ func SetupMongoContainer(t *testing.T) *MongoContainer {
 			"MONGO_INITDB_DATABASE": "testdb",
 		},
 		// Avoid tailing logs; just wait until the port is listening.
-		WaitingFor: wait.ForListeningPort("27017/tcp").WithStartupTimeout(90 * time.Second),
+		WaitingFor: wait.ForListeningPort("27017/tcp").WithStartupTimeout(2 * time.Minute),
 	}
 
 	container, err := tc.GenericContainer(ctx, tc.GenericContainerRequest{
@@ -76,4 +77,20 @@ func (mc *MongoContainer) Teardown(t *testing.T) {
 	if err := mc.Container.Terminate(termCtx); err != nil {
 		t.Fatalf("failed to terminate mongo container: %v", err)
 	}
+}
+
+// waitForPortReady waits for a port to be ready.
+func waitForPortReady(addr string, timeout time.Duration) error {
+	deadline := time.Now().Add(timeout)
+	var lastErr error
+	for time.Now().Before(deadline) {
+		conn, err := net.DialTimeout("tcp", addr, 500*time.Millisecond)
+		if err == nil {
+			conn.Close()
+			return nil
+		}
+		lastErr = err
+		time.Sleep(200 * time.Millisecond)
+	}
+	return fmt.Errorf("port %s not ready: %v", addr, lastErr)
 }

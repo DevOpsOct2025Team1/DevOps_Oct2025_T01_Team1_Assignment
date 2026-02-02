@@ -19,7 +19,7 @@ Scenario: Login with wrong password
     """
     {"username":"testuser","password":"wrongpass"}
     """
-  Then the response status code should be 500
+  Then the response status code should be 401
 
 Scenario: Login with empty body
   When I send a POST request to "/api/login" with json:

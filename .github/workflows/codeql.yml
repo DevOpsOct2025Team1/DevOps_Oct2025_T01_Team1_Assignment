@@ -22,8 +22,28 @@ jobs:
         with:
           languages: ${{ matrix.language }}
 
-      - name: Autobuild
-        uses: github/codeql-action/autobuild@v3
+      - name: Setup Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: "1.25.5"
+
+      - name: Build Go workspace
+        if: matrix.language == 'go'
+        run: |
+          go work sync
+          go test ./... -run TestNonExistent
+
+      - name: Setup Node.js
+        if: matrix.language == 'javascript'
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+
+      - name: Install frontend deps
+        if: matrix.language == 'javascript'
+        run: |
+          cd apps/frontend
+          npm install
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3

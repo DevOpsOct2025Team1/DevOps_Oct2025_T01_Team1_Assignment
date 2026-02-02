@@ -19,6 +19,8 @@ import (
 func startUserService(t *testing.T, dbURI string) (addr string, stop func()) {
 	t.Helper()
 
+	// Seed randomness to reduce port collisions across runs
+	rand.Seed(time.Now().UnixNano())
 	port := 18080 + rand.Intn(1000)
 	address := fmt.Sprintf("localhost:%d", port)
 
@@ -35,21 +37,31 @@ func startUserService(t *testing.T, dbURI string) (addr string, stop func()) {
 		t.Fatalf("failed to start user-service: %v", err)
 	}
 
-	// Give service time to boot
-	time.Sleep(2 * time.Second)
+	// Wait for the gRPC port to be ready instead of a fixed sleep
+	if err := waitForPortReady(address, 15*time.Second); err != nil {
+		stopFn := func() {
+			if cmd.Process != nil {
+				_ = cmd.Process.Signal(os.Interrupt)
+				time.Sleep(500 * time.Millisecond)
+				_ = cmd.Process.Kill()
+				_, _ = cmd.Process.Wait()
+			}
+		}
+		stopFn()
+		t.Fatalf("user-service didn't become ready on %s: %v", address, err)
+	}
 
 	stopFn := func() {
 		if cmd.Process != nil {
 			_ = cmd.Process.Signal(os.Interrupt)
 			time.Sleep(500 * time.Millisecond)
 			_ = cmd.Process.Kill()
-			_, _ = cmd.Process.Wait() 
+			_, _ = cmd.Process.Wait()
 		}
 	}
 
 	return address, stopFn
 }
-
 
 func TestAuthService_SignUpLoginValidate(t *testing.T) {
 	// 1) Start MongoDB testcontainer
