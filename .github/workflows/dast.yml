@@ -1,0 +1,31 @@
+name: DAST - OWASP ZAP Scan
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  zap_scan:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Start API Gateway (only)
+      - name: Start API Gateway
+        run: |
+          docker compose up -d api-gateway
+          sleep 30
+
+      - name: OWASP ZAP Baseline Scan
+        uses: zaproxy/action-baseline@v0.10.0
+        with:
+          target: "http://localhost:3000"
+          fail_action: true
+
+      - name: Stop containers
+        if: always()
+        run: docker compose down

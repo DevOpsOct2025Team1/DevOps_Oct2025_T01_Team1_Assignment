@@ -133,6 +133,20 @@ func TestLogin_InvalidCredentials(t *testing.T) {
 	}
 }
 
+func TestLogin_WrongPassword(t *testing.T) {
+	svc := setupAuthService()
+
+	_, err := svc.Login(context.Background(), &authv1.LoginRequest{
+		Username: "testuser",
+		Password: "wrongpass",
+	})
+
+	if err == nil {
+		t.Fatal("expected error for wrong password")
+	}
+}
+
+
 // --------------------
 // Validate Token Tests
 // --------------------
@@ -172,5 +186,35 @@ func TestValidateToken_Invalid(t *testing.T) {
 	}
 	if resp.Valid {
 		t.Fatal("expected invalid token")
+	}
+}
+
+func TestValidateToken_EmptyToken(t *testing.T) {
+	svc := setupAuthService()
+
+	_, err := svc.ValidateToken(context.Background(), &authv1.ValidateTokenRequest{
+		Token: "",
+	})
+
+	if err == nil {
+		t.Fatal("expected error for empty token")
+	}
+}
+
+func TestValidateToken_ExpiredToken(t *testing.T) {
+	jwtManager := jwt.NewJWTManager("testsecret", -1*time.Hour) // expired
+	svc := NewAuthServiceServer(&mockUserClient{}, jwtManager)
+
+	token, _ := jwtManager.Generate("u1", "user", "ROLE_USER")
+
+	resp, err := svc.ValidateToken(context.Background(), &authv1.ValidateTokenRequest{
+		Token: token,
+	})
+
+	if err != nil {
+		t.Fatalf("unexpected error")
+	}
+	if resp.Valid {
+		t.Fatal("expected token to be invalid")
 	}
 }
