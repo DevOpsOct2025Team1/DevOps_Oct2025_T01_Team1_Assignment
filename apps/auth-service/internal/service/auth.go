@@ -14,11 +14,11 @@ import (
 
 type AuthServiceServer struct {
 	authv1.UnimplementedAuthServiceServer
-	userClient *client.UserServiceClient
+	userClient client.UserClient
 	jwtManager *jwt.Manager
 }
 
-func NewAuthServiceServer(userClient *client.UserServiceClient, jwtManager *jwt.Manager) *AuthServiceServer {
+func NewAuthServiceServer(userClient client.UserClient, jwtManager *jwt.Manager) *AuthServiceServer {
 	return &AuthServiceServer{
 		userClient: userClient,
 		jwtManager: jwtManager,
