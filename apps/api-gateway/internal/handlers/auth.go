@@ -19,6 +19,20 @@ func NewAuthHandler(client AuthServiceClient) *AuthHandler {
 	}
 }
 
+// SignUp godoc
+// @Summary      Create a new user
+// @Description  Admin-only endpoint to create a new user account
+// @Tags         admin
+// @Accept       json
+// @Produce      json
+// @Param        request body SignUpRequest true "User credentials"
+// @Success      200 {object} AuthResponse "User created successfully"
+// @Failure      400 {object} ErrorResponse "Invalid request body"
+// @Failure      401 {object} ErrorResponse "Unauthorized - missing or invalid token"
+// @Failure      403 {object} ErrorResponse "Forbidden - admin role required"
+// @Failure      500 {object} ErrorResponse "Internal server error"
+// @Security     BearerAuth
+// @Router       /api/admin/create_user [post]
 func (h *AuthHandler) SignUp(c *gin.Context) {
 	var req struct {
 		Username string `json:"username" binding:"required"`
@@ -64,6 +78,17 @@ func (h *AuthHandler) SignUp(c *gin.Context) {
 	})
 }
 
+// Login godoc
+// @Summary      User login
+// @Description  Authenticate a user and receive a JWT token
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Param        request body LoginRequest true "User credentials"
+// @Success      200 {object} AuthResponse "Login successful"
+// @Failure      400 {object} ErrorResponse "Invalid request body"
+// @Failure      500 {object} ErrorResponse "Invalid credentials or server error"
+// @Router       /api/login [post]
 func (h *AuthHandler) Login(c *gin.Context) {
 	var req struct {
 		Username string `json:"username" binding:"required"`

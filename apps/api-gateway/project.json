@@ -31,6 +31,13 @@
       "options": {
         "command": "docker build -t api-gateway:latest -f apps/api-gateway/Dockerfile ."
       }
+    },
+    "swagger": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "go run github.com/swaggo/swag/cmd/swag@v1.16.6 init -g cmd/server/main.go -o docs --parseDependency --parseInternal",
+        "cwd": "apps/api-gateway"
+      }
     }
   },
   "tags": ["type:gateway", "lang:go", "http"]

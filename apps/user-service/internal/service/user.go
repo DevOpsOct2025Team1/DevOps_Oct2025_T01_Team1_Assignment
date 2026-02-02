@@ -42,7 +42,7 @@ func (s *UserServiceServer) CreateUser(ctx context.Context, req *userv1.CreateUs
 		Role:           roleToString(role),
 	}
 
-	id, err := s.store.CreateUser(user)
+	id, err := s.store.CreateUser(ctx, user)
 	if err != nil {
 		if errors.Is(err, store.ErrUserExists) {
 			return nil, status.Error(codes.AlreadyExists, "username already exists")
@@ -66,7 +66,7 @@ func (s *UserServiceServer) GetUser(ctx context.Context, req *userv1.GetUserRequ
 		return nil, status.Error(codes.InvalidArgument, "id is required")
 	}
 
-	user, err := s.store.GetUserByID(req.Id)
+	user, err := s.store.GetUserByID(ctx, req.Id)
 	if err != nil {
 		if errors.Is(err, store.ErrUserNotFound) {
 			return nil, status.Error(codes.NotFound, "user not found")
@@ -88,7 +88,7 @@ func (s *UserServiceServer) GetUserByUsername(ctx context.Context, req *userv1.G
 		return nil, status.Error(codes.InvalidArgument, "username is required")
 	}
 
-	user, err := s.store.GetUserByUsername(req.Username)
+	user, err := s.store.GetUserByUsername(ctx, req.Username)
 	if err != nil {
 		if errors.Is(err, store.ErrUserNotFound) {
 			return nil, status.Error(codes.NotFound, "user not found")
@@ -113,7 +113,7 @@ func (s *UserServiceServer) VerifyPassword(ctx context.Context, req *userv1.Veri
 		return nil, status.Error(codes.InvalidArgument, "password is required")
 	}
 
-	user, err := s.store.GetUserByUsername(req.Username)
+	user, err := s.store.GetUserByUsername(ctx, req.Username)
 	if err != nil {
 		if errors.Is(err, store.ErrUserNotFound) {
 			return &userv1.VerifyPasswordResponse{Valid: false}, nil
@@ -141,7 +141,7 @@ func (s *UserServiceServer) DeleteUser(ctx context.Context, req *userv1.DeleteUs
 		return nil, status.Error(codes.InvalidArgument, "id is required")
 	}
 
-	err := s.store.DeleteUserByID(req.Id)
+	err := s.store.DeleteUserByID(ctx, req.Id)
 	if err != nil {
 		if errors.Is(err, store.ErrUserNotFound) {
 			return nil, status.Error(codes.NotFound, "user not found")

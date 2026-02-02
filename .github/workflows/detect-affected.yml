@@ -1,0 +1,46 @@
+name: Detect Affected Projects
+
+on:
+  workflow_call:
+    inputs:
+      base:
+        description: "Base commit/ref to compare against"
+        required: true
+        type: string
+      ref:
+        description: "Git ref to checkout (defaults to triggering ref)"
+        required: false
+        type: string
+    outputs:
+      projects:
+        description: "JSON array of affected project names"
+        value: ${{ jobs.detect.outputs.projects }}
+
+jobs:
+  detect:
+    runs-on: ubuntu-latest
+    outputs:
+      projects: ${{ steps.affected.outputs.projects }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.ref }}
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+
+      - name: Get affected projects
+        id: affected
+        run: |
+          BASE="${{ inputs.base }}"
+          echo "Comparing against base: $BASE"
+
+          affected=$(./nx show projects --affected --base=$BASE 2>&1 | grep -v "added\|audited\|packages are looking\|npm fund\|found.*vulnerabilities" || true)
+
+          json_array=$(echo "$affected" | jq -R -s -c 'split("\n") | map(select(length > 0))')
+
+          echo "Affected projects: $json_array"
+          echo "projects=$json_array" >> $GITHUB_OUTPUT

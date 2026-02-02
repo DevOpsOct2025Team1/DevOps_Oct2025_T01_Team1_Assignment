@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/cucumber/godog"
+	"github.com/provsalt/DOP_P01_Team1/api-gateway/internal/config"
 	"github.com/provsalt/DOP_P01_Team1/api-gateway/internal/server"
 	authv1 "github.com/provsalt/DOP_P01_Team1/common/auth/v1"
 	userv1 "github.com/provsalt/DOP_P01_Team1/common/user/v1"
@@ -26,7 +27,8 @@ func newHealthTestContext() *healthTestContext {
 	mockAuthClient := &mockAuthClient{}
 	mockUserClient := &mockUserClient{}
 
-	srv := server.New(mockAuthClient, mockUserClient)
+	cfg := &config.Config{Environment: "test"}
+	srv := server.New(mockAuthClient, mockUserClient, cfg)
 	testServer := httptest.NewServer(srv.Router)
 
 	return &healthTestContext{

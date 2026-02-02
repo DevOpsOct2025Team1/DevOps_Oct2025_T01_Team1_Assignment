@@ -1,0 +1,103 @@
+name: Container Images
+
+on:
+  workflow_run:
+    workflows: ["Unit tests"]
+    types:
+      - completed
+    branches:
+      - main
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: ${{ github.repository }}
+
+jobs:
+  detect-affected:
+    if: github.event.workflow_run.conclusion == 'success'
+    uses: ./.github/workflows/detect-affected.yml
+    with:
+      ref: ${{ github.event.workflow_run.head_sha }}
+      base: ${{ github.event.workflow_run.head_sha }}~1
+
+  build-dev:
+    needs: detect-affected
+    if: needs.detect-affected.outputs.projects != '[]'
+    strategy:
+      matrix:
+        service: ${{ fromJson(needs.detect-affected.outputs.projects) }}
+      fail-fast: false
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        run: |
+          SERVICE="${{ matrix.service }}"
+          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
+
+          IMAGE_NAME="${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/${SERVICE}"
+
+          # to lowercase
+          IMAGE_NAME=$(echo "$IMAGE_NAME" | tr '[:upper:]' '[:lower:]')
+
+          echo "image-name=${IMAGE_NAME}" >> $GITHUB_OUTPUT
+          echo "short-sha=${SHORT_SHA}" >> $GITHUB_OUTPUT
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/${{ matrix.service }}/Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: |
+            ${{ steps.meta.outputs.image-name }}:dev
+            ${{ steps.meta.outputs.image-name }}:main-${{ steps.meta.outputs.short-sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@0.33.1
+        with:
+          image-ref: ${{ steps.meta.outputs.image-name }}:dev
+          format: 'sarif'
+          output: 'trivy-results-${{ matrix.service }}.sarif'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Upload Trivy results
+        uses: github/codeql-action/upload-sarif@v4
+        if: always()
+        with:
+          sarif_file: 'trivy-results-${{ matrix.service }}.sarif'
+          category: 'trivy-${{ matrix.service }}'
+
+      - name: Output Trivy scanner table
+        uses: aquasecurity/trivy-action@0.33.1
+        with:
+          image-ref: ${{ steps.meta.outputs.image-name }}:dev
+          format: 'table'
+          exit-code: '1'
+          severity: 'CRITICAL'
+
+      - name: Image published
+        run: |
+          echo "Published images for ${{ matrix.service }}:"
+          echo "- ${{ steps.meta.outputs.image-name }}:dev"
+          echo "- ${{ steps.meta.outputs.image-name }}:main-${{ steps.meta.outputs.short-sha }}"

@@ -1,0 +1,196 @@
+basePath: /
+definitions:
+  internal_handlers.AuthResponse:
+    properties:
+      token:
+        example: jwt-token-123
+        type: string
+      user:
+        $ref: '#/definitions/internal_handlers.UserResponse'
+    type: object
+  internal_handlers.DeleteUserRequest:
+    properties:
+      id:
+        example: 69654eb7a1135a809430d0b7
+        type: string
+    required:
+    - id
+    type: object
+  internal_handlers.DeleteUserResponse:
+    properties:
+      success:
+        example: true
+        type: boolean
+    type: object
+  internal_handlers.ErrorResponse:
+    properties:
+      error:
+        example: error message
+        type: string
+    type: object
+  internal_handlers.LoginRequest:
+    properties:
+      password:
+        example: password123
+        type: string
+      username:
+        example: testing
+        type: string
+    required:
+    - password
+    - username
+    type: object
+  internal_handlers.SignUpRequest:
+    properties:
+      password:
+        example: password123
+        type: string
+      username:
+        example: testing
+        type: string
+    required:
+    - password
+    - username
+    type: object
+  internal_handlers.UserResponse:
+    properties:
+      id:
+        example: 69654eb7a1135a809430d0b7
+        type: string
+      role:
+        example: ROLE_USER
+        type: string
+      username:
+        example: testing
+        type: string
+    type: object
+info:
+  contact: {}
+  description: |-
+    API Gateway for the DevOps microservices app.
+    Provides authentication, user management, file management, and routing to backend services.
+  title: API Gateway
+  version: "1.0"
+paths:
+  /api/admin/create_user:
+    post:
+      consumes:
+      - application/json
+      description: Admin-only endpoint to create a new user account
+      parameters:
+      - description: User credentials
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handlers.SignUpRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User created successfully
+          schema:
+            $ref: '#/definitions/internal_handlers.AuthResponse'
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "401":
+          description: Unauthorized - missing or invalid token
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "403":
+          description: Forbidden - admin role required
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a new user
+      tags:
+      - admin
+  /api/admin/delete_user:
+    delete:
+      consumes:
+      - application/json
+      description: Admin-only endpoint to delete a user account. Cannot delete own
+        account or other admin accounts.
+      parameters:
+      - description: User ID to delete
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handlers.DeleteUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User deleted successfully
+          schema:
+            $ref: '#/definitions/internal_handlers.DeleteUserResponse'
+        "400":
+          description: Invalid request body or invalid user ID
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "401":
+          description: Unauthorized - missing or invalid token
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "403":
+          description: Forbidden - cannot delete own account or admin accounts
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete a user
+      tags:
+      - admin
+  /api/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate a user and receive a JWT token
+      parameters:
+      - description: User credentials
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handlers.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Login successful
+          schema:
+            $ref: '#/definitions/internal_handlers.AuthResponse'
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "500":
+          description: Invalid credentials or server error
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+      summary: User login
+      tags:
+      - auth
+securityDefinitions:
+  BearerAuth:
+    description: 'Enter your bearer token in the format: Bearer {token}'
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

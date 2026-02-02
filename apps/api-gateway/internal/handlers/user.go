@@ -17,6 +17,21 @@ func NewUserHandler(client UserServiceClient) *UserHandler {
 	return &UserHandler{client: client}
 }
 
+// DeleteUser godoc
+// @Summary      Delete a user
+// @Description  Admin-only endpoint to delete a user account. Cannot delete own account or other admin accounts.
+// @Tags         admin
+// @Accept       json
+// @Produce      json
+// @Param        request body DeleteUserRequest true "User ID to delete"
+// @Success      200 {object} DeleteUserResponse "User deleted successfully"
+// @Failure      400 {object} ErrorResponse "Invalid request body or invalid user ID"
+// @Failure      401 {object} ErrorResponse "Unauthorized - missing or invalid token"
+// @Failure      403 {object} ErrorResponse "Forbidden - cannot delete own account or admin accounts"
+// @Failure      404 {object} ErrorResponse "User not found"
+// @Failure      500 {object} ErrorResponse "Internal server error"
+// @Security     BearerAuth
+// @Router       /api/admin/delete_user [delete]
 func (h *UserHandler) DeleteUser(c *gin.Context) {
 	var req struct {
 		Id string `json:"id" binding:"required"`
