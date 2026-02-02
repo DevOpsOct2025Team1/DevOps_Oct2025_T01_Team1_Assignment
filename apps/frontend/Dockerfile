@@ -1,22 +1,30 @@
-FROM node:20-alpine AS development-dependencies-env
-COPY . /app
-WORKDIR /app
-RUN npm ci
+# https://bun.com/docs/guides/ecosystem/docker
+FROM oven/bun:1-alpine AS base
+WORKDIR /usr/src/app
 
-FROM node:20-alpine AS production-dependencies-env
-COPY ./package.json package-lock.json /app/
-WORKDIR /app
-RUN npm ci --omit=dev
+FROM base AS install
+RUN mkdir -p /temp/dev
+COPY apps/frontend/package.json apps/frontend/bun.lock /temp/dev/
+RUN cd /temp/dev && bun ci
 
-FROM node:20-alpine AS build-env
-COPY . /app/
-COPY --from=development-dependencies-env /app/node_modules /app/node_modules
-WORKDIR /app
-RUN npm run build
+RUN mkdir -p /temp/prod
+COPY apps/frontend/package.json apps/frontend/bun.lock /temp/prod/
+RUN cd /temp/prod && bun ci --production
 
-FROM node:20-alpine
-COPY ./package.json package-lock.json /app/
-COPY --from=production-dependencies-env /app/node_modules /app/node_modules
-COPY --from=build-env /app/build /app/build
-WORKDIR /app
-CMD ["npm", "run", "start"]
+FROM base AS prerelease
+COPY --from=install /temp/dev/node_modules node_modules
+COPY apps/frontend/ .
+
+ENV NODE_ENV=production
+RUN bun run build
+
+# wtf react router is not compatible with bun? that's so lame
+FROM node:24-alpine AS release
+WORKDIR /usr/src/app
+COPY --from=install /temp/prod/node_modules node_modules
+COPY --from=prerelease /usr/src/app/build ./build
+COPY --from=prerelease /usr/src/app/package.json .
+
+USER node
+EXPOSE 3000/tcp
+ENTRYPOINT ["npm", "run", "start"]
