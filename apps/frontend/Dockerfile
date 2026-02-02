@@ -4,16 +4,16 @@ WORKDIR /usr/src/app
 
 FROM base AS install
 RUN mkdir -p /temp/dev
-COPY package.json bun.lock /temp/dev/
+COPY apps/frontend/package.json apps/frontend/bun.lock /temp/dev/
 RUN cd /temp/dev && bun ci
 
 RUN mkdir -p /temp/prod
-COPY package.json bun.lock /temp/prod/
+COPY apps/frontend/package.json apps/frontend/bun.lock /temp/prod/
 RUN cd /temp/prod && bun ci --production
 
 FROM base AS prerelease
 COPY --from=install /temp/dev/node_modules node_modules
-COPY . .
+COPY apps/frontend/ .
 
 ENV NODE_ENV=production
 RUN bun run build
