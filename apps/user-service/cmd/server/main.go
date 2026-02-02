@@ -60,6 +60,11 @@ func main() {
 	database := client.Database(cfg.MongoDBDatabase)
 	userStore := store.NewUserStore(database)
 
+	if err := userStore.EnsureDefaultAdmin(context.Background(), cfg.DefaultAdminUsername, cfg.DefaultAdminPassword); err != nil {
+		log.Fatalf("Failed to initialize default admin: %v", err)
+	}
+	log.Printf("Database initialization complete (username: %s)", cfg.DefaultAdminUsername)
+
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%s", cfg.Port))
 	if err != nil {
 		log.Fatalf("Failed to listen: %v", err)
