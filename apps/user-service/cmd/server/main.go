@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"time"
 
 	"github.com/provsalt/DOP_P01_Team1/common/telemetry"
 	userv1 "github.com/provsalt/DOP_P01_Team1/common/user/v1"
@@ -59,6 +60,16 @@ func main() {
 
 	database := client.Database(cfg.MongoDBDatabase)
 	userStore := store.NewUserStore(database)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if cfg.DefaultAdminUsername != "" || cfg.DefaultAdminPassword != "" {
+		if err := userStore.EnsureDefaultAdmin(ctx, cfg.DefaultAdminUsername, cfg.DefaultAdminPassword); err != nil {
+			log.Fatalf("Failed to initialize default admin: %v", err)
+		}
+	} else {
+		log.Printf("No default admin username or default admin password. Skipping creating admin user")
+	}
+	log.Printf("Database initialization complete")
 
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%s", cfg.Port))
 	if err != nil {

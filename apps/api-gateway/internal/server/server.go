@@ -1,6 +1,7 @@
 package server
 
 import (
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/provsalt/DOP_P01_Team1/api-gateway/internal/config"
 	"github.com/provsalt/DOP_P01_Team1/api-gateway/internal/handlers"
@@ -20,6 +21,14 @@ type Server struct {
 func New(authClient handlers.AuthServiceClient, userClient handlers.UserServiceClient, cfg *config.Config) *Server {
 	router := gin.Default()
 	router.Use(otelgin.Middleware("api-gateway"))
+
+	router.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"http://localhost:5173", "http://localhost:3000"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+	}))
 
 	s := &Server{
 		Router:     router,
