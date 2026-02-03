@@ -4,36 +4,53 @@ export type User = {
   role: string | number;
 };
 
+let cachedUser: User | null | undefined = undefined;
+let cachedToken: string | null | undefined = undefined;
+
 function isBrowser(): boolean {
   return typeof window !== "undefined";
 }
 
 export function getStoredUser(): User | null {
   if (!isBrowser()) return null;
+  if (cachedUser !== undefined) return cachedUser;
+
   const userStr = localStorage.getItem("user");
-  if (!userStr) return null;
+  if (!userStr) {
+    cachedUser = null;
+    return null;
+  }
   try {
-    return JSON.parse(userStr);
+    cachedUser = JSON.parse(userStr);
+    return cachedUser;
   } catch {
+    cachedUser = null;
     return null;
   }
 }
 
 export function getStoredToken(): string | null {
   if (!isBrowser()) return null;
-  return localStorage.getItem("token");
+  if (cachedToken !== undefined) return cachedToken;
+
+  cachedToken = localStorage.getItem("token");
+  return cachedToken;
 }
 
 export function setAuth(user: User, token: string): void {
   if (!isBrowser()) return;
   localStorage.setItem("user", JSON.stringify(user));
   localStorage.setItem("token", token);
+  cachedUser = user;
+  cachedToken = token;
 }
 
 export function clearAuth(): void {
   if (!isBrowser()) return;
   localStorage.removeItem("user");
   localStorage.removeItem("token");
+  cachedUser = null;
+  cachedToken = null;
 }
 
 export function isAuthenticated(): boolean {

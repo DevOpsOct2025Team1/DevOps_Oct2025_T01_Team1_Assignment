@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
-import { setAuth, isAuthenticated, isAdmin } from "../utils/auth";
+import { useAuth } from "../contexts/AuthContext";
 import { useLogin } from "../api/generated";
 
 export default function Login() {
@@ -8,14 +8,16 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const navigate = useNavigate();
+  const { setAuth, isAuthenticated } = useAuth();
   const loginMutation = useLogin();
   const isLoading = loginMutation.isPending;
 
   useEffect(() => {
-    if (isAuthenticated()) {
+    if (isAuthenticated) {
       navigate("/dashboard");
     }
-  }, [navigate]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,21 +51,13 @@ export default function Login() {
 
       console.log("Login response:", authData);
       console.log("User role:", authData.user.role);
-      
-      // Normalize API roles into the UI-friendly values we already use.
-      const roleValue = authData.user.role as string | number;
-      const userRole = typeof roleValue === "number"
-        ? (roleValue === 2 ? "admin" : "user")
-        : roleValue.toLowerCase().includes("admin")
-          ? "admin"
-          : "user";
-      
+
       const normalizedUser = {
         id: authData.user.id,
         username: authData.user.username,
-        role: userRole
+        role: authData.user.role
       };
-      
+
       setAuth(normalizedUser, authData.token);
       navigate("/dashboard");
     } catch (err: unknown) {
@@ -77,8 +71,8 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
-      <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
+    <div className="flex-1 flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
+      <div className="bg-gray-50 p-8 rounded-lg shadow-lg w-full max-w-md">
         <h1 className="text-3xl font-bold text-gray-800 mb-6 text-center">Login</h1>
         
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -91,7 +85,7 @@ export default function Login() {
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 text-gray-900 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               disabled={isLoading}
             />
           </div>
@@ -105,7 +99,7 @@ export default function Login() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 text-gray-900 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               disabled={isLoading}
             />
           </div>

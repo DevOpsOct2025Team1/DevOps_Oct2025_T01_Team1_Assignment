@@ -1,30 +1,31 @@
-import { useState, useEffect } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { useNavigate } from "react-router";
-import { getStoredUser, isAuthenticated, isAdmin, type User } from "../utils/auth";
-import AdminPanel from "../components/AdminPanel";
-import UserPanel from "../components/UserPanel";
+import { useAuth } from "../contexts/AuthContext";
+
+const AdminPanel = lazy(() => import("../components/AdminPanel"));
+const UserPanel = lazy(() => import("../components/UserPanel"));
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const [user, setUser] = useState<User | null>(null);
-  const userIsAdmin = isAdmin();
+  const { user, isAuthenticated } = useAuth();
 
   useEffect(() => {
-    if (!isAuthenticated()) {
+    if (!isAuthenticated) {
       navigate("/login");
-      return;
     }
-
-    const storedUser = getStoredUser();
-    setUser(storedUser);
-  }, [navigate]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated]);
 
   if (!user) {
     return null;
   }
 
+  const userIsAdmin = typeof user.role === "number"
+    ? user.role === 2
+    : user.role.toLowerCase().includes("admin");
+
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="flex-1 bg-gray-50 py-8">
       <div className="max-w-5xl mx-auto px-4">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">
@@ -33,7 +34,9 @@ export default function Dashboard() {
           <p className="text-gray-600 mt-1">Welcome, {user.username}</p>
         </div>
 
-        {userIsAdmin ? <AdminPanel /> : <UserPanel />}
+        <Suspense fallback={<div className="text-center py-8 text-gray-600">Loading...</div>}>
+          {userIsAdmin ? <AdminPanel /> : <UserPanel />}
+        </Suspense>
       </div>
     </div>
   );
