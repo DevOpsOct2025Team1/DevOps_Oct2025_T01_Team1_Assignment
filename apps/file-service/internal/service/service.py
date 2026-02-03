@@ -2,12 +2,16 @@ import time
 from bson import ObjectId
 import grpc
 
-from proto.file.v1 import file_pb2, file_pb2_grpc
+from file.v1 import file_pb2, file_pb2_grpc
 from internal.store.db import files_collection
 
 def get_user_id(context):
     #get user id from context metadata
-    return dict(context.invocation_metadata()).get("user-id")
+    metadata = dict(context.invocation_metadata())
+    user_id = metadata.get("user-id")
+    if user_id is None:
+        context.abort(grpc.StatusCode.UNAUTHENTICATED, "Missing user-id in metadata")
+    return user_id
 
 class FileService(file_pb2_grpc.FileServiceServicer):
     #implementing the File Service
@@ -61,7 +65,11 @@ class FileService(file_pb2_grpc.FileServiceServicer):
     def GetFile(self, request, context):
         user_id = get_user_id(context)
 
-        doc = files_collection.find_one({"_id": ObjectId(request.id), "user_id": user_id})
+        try:
+            doc = files_collection.find_one({"_id": ObjectId(request.id), "user_id": user_id})
+        except:
+            context.abort(grpc.StatusCode.INVALID_ARGUMENT, "Invalid file id format")
+            
         if not doc:
             context.abort(grpc.StatusCode.NOT_FOUND, "File not found")
 
@@ -80,5 +88,8 @@ class FileService(file_pb2_grpc.FileServiceServicer):
     def DeleteFile(self, request, context):
         user_id = get_user_id(context)
 
-        res = files_collection.delete_one({"_id": ObjectId(request.id), "user_id": user_id})
+        try:
+            res = files_collection.delete_one({"_id": ObjectId(request.id), "user_id": user_id})
+        except:
+            context.abort(grpc.StatusCode.INVALID_ARGUMENT, "Invalid file id format")
         return file_pb2.DeleteFileResponse(success=res.deleted_count == 1)

@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package file.v1;
 
+option go_package="file/v1;filev1"
+
 service FileService {
   rpc CreateFile(CreateFileRequest) returns (FileResponse);
   rpc ListFiles(ListFilesRequest) returns (ListFilesResponse);
