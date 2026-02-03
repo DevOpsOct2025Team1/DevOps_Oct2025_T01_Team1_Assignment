@@ -19,9 +19,9 @@ WORKDIR /apps
 COPY --from=builder /install /usr/local
 COPY --from=builder /build .
 
-EXPOSE 50051
+EXPOSE 50054
 
 ENV PYTHONPATH=/apps
 
 # Run the server
-CMD ["python", "-m", "cmd.server.main", "-u"]
+CMD ["python", "-u", "-m", "cmd.server.main"]
