@@ -5,12 +5,13 @@ from file.v1 import file_pb2_grpc
 from internal.health.health import register_health
 from internal.config.config import SERVICE_PORT
 from telemetry import init_telemetry
+import os
 
 SERVICE_NAME = "file-service"
-ENVIRONMENT = "development"
-OTLP_ENDPOINT = "https://us-east-1.aws.edge.axiom.co"
-AXIOM_TOKEN = "YOUR_AXIOM_TOKEN"
-DATASET = "your_dataset"
+ENVIRONMENT = os.getenv("ENVIRONMENT", "development")
+OTLP_ENDPOINT = os.getenv("OTLP_ENDPOINT", "https://us-east-1.aws.edge.axiom.co")
+AXIOM_TOKEN = os.getenv("AXIOM_TOKEN", "")
+DATASET = os.getenv("DATASET", "")
 
 def serve():
     # Initialize telemetry first
