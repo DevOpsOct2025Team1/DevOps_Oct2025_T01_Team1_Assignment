@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"github.com/provsalt/DOP_P01_Team1/auth-service/internal/client"
-	"github.com/provsalt/DOP_P01_Team1/auth-service/internal/jwt"			
+	"github.com/provsalt/DOP_P01_Team1/auth-service/internal/jwt"
 	authsvc "github.com/provsalt/DOP_P01_Team1/auth-service/internal/service"
 	authv1 "github.com/provsalt/DOP_P01_Team1/common/auth/v1"
 )

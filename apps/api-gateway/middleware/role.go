@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"context"
 	"net/http"
 	"strings"
 
@@ -26,7 +25,7 @@ func ValidateRole(authService handlers.AuthServiceClient, roles []userv1.Role) g
 			return
 		}
 
-		resp, err := authService.ValidateToken(context.Background(), &authv1.ValidateTokenRequest{
+		resp, err := authService.ValidateToken(c.Request.Context(), &authv1.ValidateTokenRequest{
 			Token: auth[1],
 		})
 		if err != nil {

@@ -29,7 +29,7 @@
     "integration-test": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "go test -v -tags=integration ./internal/integration/...",
+        "command": "go test -v -count=1 -tags=integration ./internal/integration/...",
         "cwd": "apps/auth-service"
       }
     },
