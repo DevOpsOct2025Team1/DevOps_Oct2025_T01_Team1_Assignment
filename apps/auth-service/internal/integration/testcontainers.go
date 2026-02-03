@@ -21,6 +21,7 @@ type MongoContainer struct {
 }
 
 // SetupMongoContainer starts a MongoDB docker container for tests and returns its URI.
+// Note: This function registers t.Cleanup to terminate the container automatically.
 func SetupMongoContainer(t *testing.T) *MongoContainer {
 	t.Helper()
 
@@ -67,19 +68,6 @@ func SetupMongoContainer(t *testing.T) *MongoContainer {
 	uri := fmt.Sprintf("mongodb://%s:%d", host, port.Int())
 
 	return &MongoContainer{Container: container, URI: uri}
-}
-
-// Teardown stops and removes the MongoDB container.
-func (mc *MongoContainer) Teardown(t *testing.T) {
-	t.Helper()
-	if mc == nil || mc.Container == nil {
-		return
-	}
-	termCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
-	defer cancel()
-	if err := mc.Container.Terminate(termCtx); err != nil {
-		t.Fatalf("failed to terminate mongo container: %v", err)
-	}
 }
 
 // waitForPortReady waits for a port to be ready.

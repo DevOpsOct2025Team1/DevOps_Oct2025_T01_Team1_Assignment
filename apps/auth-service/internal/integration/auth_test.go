@@ -9,6 +9,7 @@ import (
 	"net"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -31,7 +32,14 @@ func startUserService(t *testing.T, dbURI string) (addr string, stop func()) {
 	address := fmt.Sprintf("127.0.0.1:%d", port)
 	_ = l.Close()
 
-	cmd := exec.Command("go", "run", "github.com/provsalt/DOP_P01_Team1/user-service/cmd/server")
+	// Run the local user-service entrypoint to avoid module path/network resolution.
+	wd, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("failed to get working dir: %v", err)
+	}
+	repoRoot := filepath.Clean(filepath.Join(wd, "..", "..", "..", ".."))
+	cmd := exec.Command("go", "run", "./cmd/server")
+	cmd.Dir = filepath.Join(repoRoot, "apps", "user-service")
 	cmd.Env = append(os.Environ(),
 		fmt.Sprintf("PORT=%d", port),
 		fmt.Sprintf("MONGODB_URI=%s", dbURI),
@@ -73,7 +81,7 @@ func startUserService(t *testing.T, dbURI string) (addr string, stop func()) {
 func TestAuthService_SignUpLoginValidate(t *testing.T) {
 	// 1) Start MongoDB testcontainer
 	mongoC := SetupMongoContainer(t)
-	defer mongoC.Teardown(t)
+	// Rely on t.Cleanup in SetupMongoContainer; no manual teardown.
 
 	// 2) Start in-process user-service backed by the container DB
 	userAddr, stopUser := startUserService(t, mongoC.URI)
