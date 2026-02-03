@@ -45,7 +45,7 @@ jobs:
         if: matrix.service == 'file-service'
         run: |
           cd apps/file-service
-          uv sync
+          uv sync --group dev
 
       - name: Setup Bun
         if: matrix.service == 'frontend'
