@@ -13,8 +13,8 @@ type Config struct {
 	AxiomDataset         string `env:"AXIOM_DATASET" env-default:"traces"`
 	AxiomMetricsDataset  string `env:"AXIOM_METRICS_DATASET" env-default:"metrics"`
 	Environment          string `env:"ENVIRONMENT" env-default:"development"`
-	DefaultAdminUsername string `env:"DEFAULT_ADMIN_USERNAME" env-default:"admin"`
-	DefaultAdminPassword string `env:"DEFAULT_ADMIN_PASSWORD" env-default:"changeme"`
+	DefaultAdminUsername string `env:"DEFAULT_ADMIN_USERNAME"`
+	DefaultAdminPassword string `env:"DEFAULT_ADMIN_PASSWORD"`
 }
 
 func Load() (*Config, error) {

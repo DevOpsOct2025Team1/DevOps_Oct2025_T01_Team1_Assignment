@@ -12,6 +12,9 @@ import (
 // EnsureDefaultAdmin creates a default admin user if the database is empty.
 // This should be called during service startup to ensure there's always an admin user available.
 func (u *UserStore) EnsureDefaultAdmin(ctx context.Context, username, password string) error {
+	if username == "" || password == "" {
+		return errors.New("username or password is empty")
+	}
 	collection := u.database.Collection("users")
 
 	err := collection.FindOne(ctx, bson.M{}).Err()
@@ -35,6 +38,10 @@ func (u *UserStore) EnsureDefaultAdmin(ctx context.Context, username, password s
 		HashedPassword: string(hashedPassword),
 		Role:           "admin",
 	})
+
+	if errors.Is(err, ErrUserNotFound) {
+		return nil
+	}
 
 	return err
 }
