@@ -1,5 +1,6 @@
 import time
 from bson import ObjectId
+from bson.errors import InvalidId
 import grpc
 
 from file.v1 import file_pb2, file_pb2_grpc
@@ -67,7 +68,7 @@ class FileService(file_pb2_grpc.FileServiceServicer):
 
         try:
             doc = files_collection.find_one({"_id": ObjectId(request.id), "user_id": user_id})
-        except:
+        except InvalidId:
             context.abort(grpc.StatusCode.INVALID_ARGUMENT, "Invalid file id format")
             
         if not doc:
@@ -90,6 +91,6 @@ class FileService(file_pb2_grpc.FileServiceServicer):
 
         try:
             res = files_collection.delete_one({"_id": ObjectId(request.id), "user_id": user_id})
-        except:
+        except InvalidId:
             context.abort(grpc.StatusCode.INVALID_ARGUMENT, "Invalid file id format")
         return file_pb2.DeleteFileResponse(success=res.deleted_count == 1)

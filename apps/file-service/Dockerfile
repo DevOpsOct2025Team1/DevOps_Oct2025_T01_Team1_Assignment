@@ -14,12 +14,14 @@ FROM python:3.11-slim
 RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-WORKDIR /app
+WORKDIR /apps
 
 COPY --from=builder /install /usr/local
 COPY --from=builder /build .
 
 EXPOSE 50051
 
+ENV PYTHONPATH=/apps
+
 # Run the server
-CMD ["python", "-u", "main.py"]
+CMD ["python", "-m", "cmd.server.main", "-u"]
