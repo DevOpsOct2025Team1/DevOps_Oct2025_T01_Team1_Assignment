@@ -1,6 +1,8 @@
+import os
 from pymongo import MongoClient
 from internal.config.config import MONGO_URI
 
 client = MongoClient(MONGO_URI)
-db = client["file_service"]
+DB_NAME = os.getenv("MONGODB_DATABASE", "file_service")
+db = client[DB_NAME]
 files_collection = db["files"]
