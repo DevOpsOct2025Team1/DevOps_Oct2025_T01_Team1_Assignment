@@ -7,7 +7,7 @@ require (
 	github.com/ilyakaznacheev/cleanenv v1.5.0
 	github.com/provsalt/DOP_P01_Team1/common v0.0.0-00010101000000-000000000000
 	github.com/testcontainers/testcontainers-go v0.40.0
-	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.64.0
+	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.65.0
 	golang.org/x/crypto v0.47.0
 	google.golang.org/grpc v1.78.0
 )
