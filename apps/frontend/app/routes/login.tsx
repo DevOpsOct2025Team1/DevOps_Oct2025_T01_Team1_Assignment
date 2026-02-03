@@ -64,7 +64,7 @@ export default function Login() {
       setAuth(normalizedUser, authData.token);
       navigate("/dashboard");
     } catch (err: unknown) {
-      const err2 = err as Error
+      const err2 = err as Error;
       if (err2.message) {
         setError(err2.message);
       } else {
