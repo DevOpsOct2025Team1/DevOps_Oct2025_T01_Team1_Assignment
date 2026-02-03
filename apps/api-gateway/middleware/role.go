@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"context"
 	"net/http"
 	"strings"
 
@@ -11,7 +10,6 @@ import (
 	userv1 "github.com/provsalt/DOP_P01_Team1/common/user/v1"
 )
 
-// ValidateRole validates the user's role before allowing requests to pass to other handlers
 func ValidateRole(authService handlers.AuthServiceClient, roles []userv1.Role) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authorization := c.GetHeader("Authorization")
@@ -27,7 +25,7 @@ func ValidateRole(authService handlers.AuthServiceClient, roles []userv1.Role) g
 			return
 		}
 
-		resp, err := authService.ValidateToken(context.Background(), &authv1.ValidateTokenRequest{
+		resp, err := authService.ValidateToken(c.Request.Context(), &authv1.ValidateTokenRequest{
 			Token: auth[1],
 		})
 		if err != nil {
@@ -35,6 +33,13 @@ func ValidateRole(authService handlers.AuthServiceClient, roles []userv1.Role) g
 			c.Abort()
 			return
 		}
+
+		if !resp.Valid || resp.GetUser() == nil {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid or expired token"})
+			c.Abort()
+			return
+		}
+
 		user := resp.GetUser()
 		role := user.GetRole()
 
@@ -46,6 +51,7 @@ func ValidateRole(authService handlers.AuthServiceClient, roles []userv1.Role) g
 				return
 			}
 		}
+
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 		c.Abort()
 	}

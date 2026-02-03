@@ -1,0 +1,58 @@
+name: Integration Tests
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  integration-tests:
+    strategy:
+      matrix:
+        service: [api-gateway, auth-service, user-service, frontend]
+      fail-fast: false
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Go
+        if: matrix.service != 'frontend'
+        uses: actions/setup-go@v6
+        with:
+          go-version: '1.25.5'
+
+      - name: Setup Bun
+        if: matrix.service == 'frontend'
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install frontend dependencies
+        if: matrix.service == 'frontend'
+        run: |
+          cd apps/frontend
+          bun install
+          bunx playwright install
+
+      - name: Setup Node.js (for NX)
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+
+      - name: Check integration-test target
+        id: has_integration
+        shell: bash
+        run: |
+          file="apps/${{ matrix.service }}/project.json"
+          if [ -f "$file" ]; then
+            if jq -e '.targets | has("integration-test")' "$file" > /dev/null; then
+              echo "has=true" >> $GITHUB_OUTPUT
+            else
+              echo "has=false" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "has=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Run integration tests
+        if: steps.has_integration.outputs.has == 'true'
+        run: ./nx run ${{ matrix.service }}:integration-test

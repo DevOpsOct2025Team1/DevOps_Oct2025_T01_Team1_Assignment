@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"net/http"
-
+	"strings"
 	"github.com/gin-gonic/gin"
 	authv1 "github.com/provsalt/DOP_P01_Team1/common/auth/v1"
 	"google.golang.org/grpc/codes"
@@ -87,7 +87,8 @@ func (h *AuthHandler) SignUp(c *gin.Context) {
 // @Param        request body LoginRequest true "User credentials"
 // @Success      200 {object} AuthResponse "Login successful"
 // @Failure      400 {object} ErrorResponse "Invalid request body"
-// @Failure      500 {object} ErrorResponse "Invalid credentials or server error"
+// @Failure      401 {object} ErrorResponse "Invalid credentials"
+// @Failure      500 {object} ErrorResponse "Server error"
 // @Router       /api/login [post]
 func (h *AuthHandler) Login(c *gin.Context) {
 	var req struct {
@@ -118,6 +119,11 @@ func (h *AuthHandler) Login(c *gin.Context) {
 				statusCode = http.StatusConflict
 			case codes.PermissionDenied:
 				statusCode = http.StatusForbidden
+			}
+		} else {
+			// Map common non-gRPC error for invalid credentials to 401
+			if strings.Contains(strings.ToLower(err.Error()), "invalid credentials") {
+				statusCode = http.StatusUnauthorized
 			}
 		}
 		c.JSON(statusCode, gin.H{"error": err.Error()})
