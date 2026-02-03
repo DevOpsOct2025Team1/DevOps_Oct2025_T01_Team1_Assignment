@@ -1,5 +1,9 @@
 .env
 
+__pycache__/
+*.py[cod]
+*.pyo
+
 .nx/installation
 .nx/cache
 .nx/workspace-data
