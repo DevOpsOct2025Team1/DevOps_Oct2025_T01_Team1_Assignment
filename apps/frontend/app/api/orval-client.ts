@@ -1,16 +1,16 @@
-﻿const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
+﻿const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3001";
 
 export type ApiError = {
   message: string;
   status?: number;
 };
 
-const isBrowser = typeof window !== 'undefined';
+const isBrowser = typeof window !== "undefined";
 
 const getAuthHeaders = (): HeadersInit => {
-  const token = isBrowser ? localStorage.getItem('token') : null;
+  const token = isBrowser ? localStorage.getItem("token") : null;
   const headers: HeadersInit = {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   };
 
   if (token) {
@@ -21,14 +21,14 @@ const getAuthHeaders = (): HeadersInit => {
 };
 
 const resolveUrl = (url: string): string => {
-  if (url.startsWith('http://') || url.startsWith('https://')) {
+  if (url.startsWith("http://") || url.startsWith("https://")) {
     return url;
   }
 
-  const trimmedBaseUrl = API_BASE_URL.endsWith('/')
+  const trimmedBaseUrl = API_BASE_URL.endsWith("/")
     ? API_BASE_URL.slice(0, -1) // get rid of trailing /
     : API_BASE_URL;
-  const normalizedPath = url.startsWith('/') ? url : `/${url}`;
+  const normalizedPath = url.startsWith("/") ? url : `/${url}`;
 
   return `${trimmedBaseUrl}${normalizedPath}`;
 };
@@ -60,15 +60,15 @@ export const customFetch = async <T>(
 
     if (response.status === 401 && isBrowser) {
       const currentPath = window.location.pathname;
-      if (currentPath !== '/login') {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        window.location.href = '/login';
+      if (currentPath !== "/login") {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        window.location.href = "/login";
       }
     }
 
     throw {
-      message: errorData?.error || errorData?.message || 'Request failed',
+      message: errorData?.error || errorData?.message || "Request failed",
       status: response.status,
     } satisfies ApiError;
   }

@@ -60,7 +60,7 @@ function Navigation() {
     }
   }, [location.pathname]);
 
-  if (!mounted || location.pathname === '/login') {
+  if (!mounted || location.pathname === "/login") {
     return null;
   }
 
@@ -73,15 +73,9 @@ function Navigation() {
       <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
         <div className="flex items-center space-x-4">
           <span className="font-semibold text-gray-900">DevOps App</span>
-          {user.role === 'admin' ? (
-            <a href="/admin" className="text-indigo-600 hover:text-indigo-800 font-medium">
-              Admin Dashboard
-            </a>
-          ) : (
-            <a href="/dashboard" className="text-indigo-600 hover:text-indigo-800 font-medium">
-              Dashboard
-            </a>
-          )}
+          <a href="/dashboard" className="text-indigo-600 hover:text-indigo-800 font-medium">
+            {user.role === "admin" ? "Admin Dashboard" : "Dashboard"}
+          </a>
         </div>
         <div className="flex items-center space-x-4">
           <span className="text-sm text-gray-600">

@@ -1,4 +1,4 @@
-﻿import { QueryClient } from '@tanstack/react-query';
+﻿import { QueryClient } from "@tanstack/react-query";
 
 export const defaultQueryOptions = {
   queries: {
@@ -18,10 +18,10 @@ export const createQueryClient = () =>
 
 export const queryKeys = {
   auth: {
-    login: () => ['auth', 'login'] as const,
+    login: () => ["auth", "login"] as const,
   },
   admin: {
-    createUser: () => ['admin', 'create-user'] as const,
-    deleteUser: (id: string) => ['admin', 'delete-user', id] as const,
+    createUser: () => ["admin", "create-user"] as const,
+    deleteUser: (id: string) => ["admin", "delete-user", id] as const,
   },
 };

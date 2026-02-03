@@ -1,32 +1,28 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router';
-import { setAuth, isAuthenticated, isAdmin } from '../utils/auth';
-import { useLogin } from '../api/generated';
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router";
+import { setAuth, isAuthenticated, isAdmin } from "../utils/auth";
+import { useLogin } from "../api/generated";
 
 export default function Login() {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
   const navigate = useNavigate();
   const loginMutation = useLogin();
   const isLoading = loginMutation.isPending;
 
   useEffect(() => {
     if (isAuthenticated()) {
-      if (isAdmin()) {
-        navigate('/admin');
-      } else {
-        navigate('/dashboard');
-      }
+      navigate("/dashboard");
     }
   }, [navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setError("");
 
     if (!username.trim() || !password.trim()) {
-      setError('Username and password are required');
+      setError("Username and password are required");
       return;
     }
 
@@ -41,26 +37,26 @@ export default function Login() {
 
       if (
         !authData ||
-        !('user' in authData) ||
+        !("user" in authData) ||
         !authData.user ||
         !authData.user.id ||
         !authData.user.username ||
         !authData.user.role ||
         !authData.token
       ) {
-        throw new Error('Login failed. Please try again.');
+        throw new Error("Login failed. Please try again.");
       }
 
-      console.log('Login response:', authData);
-      console.log('User role:', authData.user.role);
+      console.log("Login response:", authData);
+      console.log("User role:", authData.user.role);
       
       // Normalize API roles into the UI-friendly values we already use.
       const roleValue = authData.user.role as string | number;
-      const userRole = typeof roleValue === 'number'
-        ? (roleValue === 2 ? 'admin' : 'user')
-        : roleValue.toLowerCase().includes('admin')
-          ? 'admin'
-          : 'user';
+      const userRole = typeof roleValue === "number"
+        ? (roleValue === 2 ? "admin" : "user")
+        : roleValue.toLowerCase().includes("admin")
+          ? "admin"
+          : "user";
       
       const normalizedUser = {
         id: authData.user.id,
@@ -69,21 +65,13 @@ export default function Login() {
       };
       
       setAuth(normalizedUser, authData.token);
-      
-      if (userRole === 'admin') {
-        console.log('Navigating to /admin');
-        navigate('/admin');
+      navigate("/dashboard");
+    } catch (err: unknown) {
+      const err2 = err as Error
+      if (err2.message) {
+        setError(err2.message);
       } else {
-        console.log('Navigating to /dashboard');
-        navigate('/dashboard');
-      }
-    } catch (err: any) {
-      if (err?.status === 401) {
-        setError('Incorrect Username or Password');
-      } else if (err?.message) {
-        setError(err.message);
-      } else {
-        setError('Login failed. Please try again.');
+        setError("Login failed. Please try again.");
       }
     }
   };
@@ -133,7 +121,7 @@ export default function Login() {
             disabled={loginMutation.isPending}
             className="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 disabled:bg-indigo-400 disabled:cursor-not-allowed transition-colors font-medium"
           >
-            {loginMutation.isPending ? 'Logging in...' : 'Login'}
+            {loginMutation.isPending ? "Logging in..." : "Login"}
           </button>
         </form>
       </div>

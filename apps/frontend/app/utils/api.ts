@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3001";
 
 interface ApiError {
   message: string;
@@ -13,12 +13,12 @@ class ApiClient {
   }
 
   private getAuthHeaders(): HeadersInit {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
     const headers: HeadersInit = {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     };
     if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
+      headers["Authorization"] = `Bearer ${token}`;
     }
     return headers;
   }
@@ -42,17 +42,17 @@ class ApiClient {
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         
-        if (response.status === 401 && typeof window !== 'undefined') {
+        if (response.status === 401 && typeof window !== "undefined") {
           const currentPath = window.location.pathname;
-          if (currentPath !== '/login') {
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
-            window.location.href = '/login';
+          if (currentPath !== "/login") {
+            localStorage.removeItem("token");
+            localStorage.removeItem("user");
+            window.location.href = "/login";
           }
         }
         
         throw {
-          message: errorData.error || errorData.message || 'Request failed',
+          message: errorData.error || errorData.message || "Request failed",
           status: response.status,
         } as ApiError;
       }
@@ -64,19 +64,19 @@ class ApiClient {
   }
 
   async get<T>(endpoint: string): Promise<T> {
-    return this.request<T>(endpoint, { method: 'GET' });
+    return this.request<T>(endpoint, { method: "GET" });
   }
 
   async post<T>(endpoint: string, body?: unknown): Promise<T> {
     return this.request<T>(endpoint, {
-      method: 'POST',
+      method: "POST",
       body: JSON.stringify(body),
     });
   }
 
   async delete<T>(endpoint: string, body?: unknown): Promise<T> {
     return this.request<T>(endpoint, {
-      method: 'DELETE',
+      method: "DELETE",
       body: body ? JSON.stringify(body) : undefined,
     });
   }
@@ -115,13 +115,13 @@ export type DeleteUserResponse = {
 
 export const authApi = {
   login: (username: string, password: string) =>
-    api.post<LoginResponse>('/api/login', { username, password }),
+    api.post<LoginResponse>("/api/login", { username, password }),
   
   createUser: (data: CreateUserRequest) =>
-    api.post<CreateUserResponse>('/api/admin/create_user', data),
+    api.post<CreateUserResponse>("/api/admin/create_user", data),
   
   deleteUser: (id: string) =>
-    api.delete<DeleteUserResponse>('/api/admin/delete_user', { id }),
+    api.delete<DeleteUserResponse>("/api/admin/delete_user", { id }),
   
-  health: () => api.get<{ status: string }>('/health'),
+  health: () => api.get<{ status: string }>("/health"),
 };

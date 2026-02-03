@@ -1,7 +1,7 @@
-import { useEffect } from 'react';
-import { useNavigate } from 'react-router';
+import { useEffect } from "react";
+import { useNavigate } from "react-router";
 import type { Route } from "./+types/home";
-import { isAuthenticated, isAdmin } from "../utils/auth";
+import { isAuthenticated } from "../utils/auth";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -15,13 +15,9 @@ export default function Home() {
 
   useEffect(() => {
     if (isAuthenticated()) {
-      if (isAdmin()) {
-        navigate('/admin');
-      } else {
-        navigate('/dashboard');
-      }
+      navigate("/dashboard");
     } else {
-      navigate('/login');
+      navigate("/login");
     }
   }, [navigate]);
 

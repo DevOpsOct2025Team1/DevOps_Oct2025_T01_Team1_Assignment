@@ -1,13 +1,13 @@
-import { useEffect } from 'react';
-import { useNavigate } from 'react-router';
-import { clearAuth } from '../utils/auth';
+import { useEffect } from "react";
+import { useNavigate } from "react-router";
+import { clearAuth } from "../utils/auth";
 
 export default function Logout() {
   const navigate = useNavigate();
 
   useEffect(() => {
     clearAuth();
-    navigate('/login');
+    navigate("/login");
   }, [navigate]);
 
   return (

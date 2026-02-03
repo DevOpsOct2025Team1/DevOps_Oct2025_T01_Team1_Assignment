@@ -83,6 +83,6 @@ describe('Login Page', () => {
     await user.type(passwordInput, 'wrongpassword');
     await user.click(loginButton);
 
-    expect(await screen.findByText(/incorrect username or password/i)).toBeDefined();
+    expect(await screen.findByText(/unauthorized/i)).toBeDefined();
   });
 });

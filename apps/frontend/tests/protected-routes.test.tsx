@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { BrowserRouter, useNavigate } from 'react-router';
-import Admin from '../app/routes/admin';
 import Dashboard from '../app/routes/dashboard';
 import { renderWithProviders } from './test-utils';
 
@@ -25,27 +24,9 @@ describe('Protected Routes', () => {
     deleteUserMock.mockReset();
   });
 
-  it('redirects to login when not authenticated - admin', () => {
+  it('redirects to login when not authenticated', () => {
     let navigatedTo = '';
-    
-    const TestWrapper = () => {
-      const navigate = useNavigate();
-      navigatedTo = '/login';
-      return <Admin />;
-    };
 
-    renderWithProviders(
-      <BrowserRouter>
-        <TestWrapper />
-      </BrowserRouter>
-    );
-
-    expect(navigatedTo).toBe('/login');
-  });
-
-  it('redirects to login when not authenticated - dashboard', () => {
-    let navigatedTo = '';
-    
     const TestWrapper = () => {
       const navigate = useNavigate();
       navigatedTo = '/login';
@@ -61,28 +42,39 @@ describe('Protected Routes', () => {
     expect(navigatedTo).toBe('/login');
   });
 
-  it('redirects non-admin to dashboard when accessing admin route', () => {
+  it('shows admin dashboard for admin users', () => {
     localStorage.setItem('token', 'fake-token');
-    localStorage.setItem('user', JSON.stringify({ 
-      id: '1', 
-      username: 'user', 
-      role: 'user' 
+    localStorage.setItem('user', JSON.stringify({
+      id: '1',
+      username: 'admin',
+      role: 'admin'
     }));
 
-    let navigatedTo = '';
-    
-    const TestWrapper = () => {
-      const navigate = useNavigate();
-      navigatedTo = '/dashboard';
-      return <Admin />;
-    };
-
-    renderWithProviders(
+    const { getByRole } = renderWithProviders(
       <BrowserRouter>
-        <TestWrapper />
+        <Dashboard />
       </BrowserRouter>
     );
 
-    expect(navigatedTo).toBe('/dashboard');
+    expect(getByRole('heading', { name: /admin dashboard/i })).toBeTruthy();
+    expect(getByRole('heading', { name: /create user/i })).toBeTruthy();
+  });
+
+  it('shows user dashboard for regular users', () => {
+    localStorage.setItem('token', 'fake-token');
+    localStorage.setItem('user', JSON.stringify({
+      id: '1',
+      username: 'user',
+      role: 'user'
+    }));
+
+    const { getByText } = renderWithProviders(
+      <BrowserRouter>
+        <Dashboard />
+      </BrowserRouter>
+    );
+
+    expect(getByText('Dashboard')).toBeTruthy();
+    expect(getByText('Upload File')).toBeTruthy();
   });
 });
