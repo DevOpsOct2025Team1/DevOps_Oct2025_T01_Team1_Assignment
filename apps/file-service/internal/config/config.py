@@ -3,5 +3,6 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017")
-SERVICE_PORT = int(os.getenv("FILE_SERVICE_PORT", 50054))
+MONGODB_URI = os.getenv("MONGODB_URI", "mongodb://localhost:27017")
+MONGODB_DATABASE = os.getenv("MONGODB_DATABASE", "file_service")
+SERVICE_PORT = int(os.getenv("PORT", 50054))
