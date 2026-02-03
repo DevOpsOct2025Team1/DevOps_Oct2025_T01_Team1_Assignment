@@ -2,9 +2,12 @@ package handlers
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	authv1 "github.com/provsalt/DOP_P01_Team1/common/auth/v1"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type AuthHandler struct {
@@ -88,6 +91,16 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		Password: req.Password,
 	})
 	if err != nil {
+		if st, ok := status.FromError(err); ok {
+			if st.Code() == codes.Unauthenticated {
+				c.JSON(http.StatusUnauthorized, gin.H{"error": st.Message()})
+				return
+			}
+		}
+		if strings.Contains(strings.ToLower(err.Error()), "invalid credentials") {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+			return
+		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
