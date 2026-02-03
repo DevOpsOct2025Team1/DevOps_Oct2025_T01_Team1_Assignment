@@ -30,9 +30,12 @@ message CreateFileRequest {
 message GetFileRequest {
   string id = 1;
 <<<<<<< HEAD
+<<<<<<< HEAD
   string user_id = 2;
 =======
 >>>>>>> main
+=======
+>>>>>>> 4dac2dfc412403b4fbba1d53f1c21176feadedf8
 }
 
 message ListFilesRequest {
@@ -50,9 +53,12 @@ message FileResponse {
 message DeleteFileRequest {
   string id = 1;
 <<<<<<< HEAD
+<<<<<<< HEAD
   string user_id = 2;
 =======
 >>>>>>> main
+=======
+>>>>>>> 4dac2dfc412403b4fbba1d53f1c21176feadedf8
 }
 
 message DeleteFileResponse {
