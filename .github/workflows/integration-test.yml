@@ -7,17 +7,10 @@ on:
       - main
 
 jobs:
-  detect-affected:
-    uses: ./.github/workflows/detect-affected.yml
-    with:
-      base: ${{ github.event_name == 'pull_request' && format('origin/{0}', github.base_ref) || github.event.before }}
-
   integration-tests:
-    needs: detect-affected
-    if: needs.detect-affected.outputs.projects != '[]'
     strategy:
       matrix:
-        service: ${{ fromJson(needs.detect-affected.outputs.projects) }}
+        service: [api-gateway, auth-service, user-service, frontend]
       fail-fast: false
     runs-on: ubuntu-latest
     steps:
