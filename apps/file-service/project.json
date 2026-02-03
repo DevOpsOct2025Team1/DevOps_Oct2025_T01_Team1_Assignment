@@ -30,7 +30,7 @@
     "test": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "uv run pytest",
+        "command": "uv run --group dev pytest",
         "cwd": "apps/file-service"
       }
     },
