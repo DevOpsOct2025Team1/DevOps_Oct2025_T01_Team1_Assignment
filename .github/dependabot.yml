@@ -26,3 +26,7 @@ updates:
     directory: "/apps/frontend" # Location of package manifests
     schedule:
       interval: "weekly"
+  - package-ecosystem: "uv"
+    directory: "/apps/file-service" # Location of package manifests
+    schedule:
+      interval: "weekly"
