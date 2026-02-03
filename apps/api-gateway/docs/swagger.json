@@ -15,6 +15,7 @@
                         "BearerAuth": []
                     }
                 ],
+                "operationId": "createUser",
                 "description": "Admin-only endpoint to create a new user account",
                 "consumes": [
                     "application/json"
@@ -78,6 +79,7 @@
                         "BearerAuth": []
                     }
                 ],
+                "operationId": "deleteUser",
                 "description": "Admin-only endpoint to delete a user account. Cannot delete own account or other admin accounts.",
                 "consumes": [
                     "application/json"
@@ -142,6 +144,7 @@
         },
         "/api/login": {
             "post": {
+                "operationId": "login",
                 "description": "Authenticate a user and receive a JWT token",
                 "consumes": [
                     "application/json"

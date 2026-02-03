@@ -50,7 +50,22 @@ func (h *AuthHandler) SignUp(c *gin.Context) {
 		Password: req.Password,
 	})
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		statusCode := http.StatusInternalServerError
+		if st, ok := status.FromError(err); ok {
+			switch st.Code() {
+			case codes.InvalidArgument:
+				statusCode = http.StatusBadRequest
+			case codes.Unauthenticated:
+				statusCode = http.StatusUnauthorized
+			case codes.NotFound:
+				statusCode = http.StatusNotFound
+			case codes.AlreadyExists:
+				statusCode = http.StatusConflict
+			case codes.PermissionDenied:
+				statusCode = http.StatusForbidden
+			}
+		}
+		c.JSON(statusCode, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -91,17 +106,22 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		Password: req.Password,
 	})
 	if err != nil {
+		statusCode := http.StatusInternalServerError
 		if st, ok := status.FromError(err); ok {
-			if st.Code() == codes.Unauthenticated {
-				c.JSON(http.StatusUnauthorized, gin.H{"error": st.Message()})
-				return
+			switch st.Code() {
+			case codes.InvalidArgument:
+				statusCode = http.StatusBadRequest
+			case codes.Unauthenticated:
+				statusCode = http.StatusUnauthorized
+			case codes.NotFound:
+				statusCode = http.StatusNotFound
+			case codes.AlreadyExists:
+				statusCode = http.StatusConflict
+			case codes.PermissionDenied:
+				statusCode = http.StatusForbidden
 			}
 		}
-		if strings.Contains(strings.ToLower(err.Error()), "invalid credentials") {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
-			return
-		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(statusCode, gin.H{"error": err.Error()})
 		return
 	}
 
