@@ -110,10 +110,34 @@ func TestValidateRole_ValidateTokenError_Returns500(t *testing.T) {
 	}
 }
 
+func TestValidateRole_InvalidToken_Returns401(t *testing.T) {
+	authSvc := &mockAuthService{
+		validateTokenFn: func(ctx context.Context, req *authv1.ValidateTokenRequest) (*authv1.ValidateTokenResponse, error) {
+			return &authv1.ValidateTokenResponse{
+				Valid: false,
+				User:  nil,
+			}, nil
+		},
+	}
+
+	r := setupProtectedRoute(authSvc, []userv1.Role{userv1.Role_ROLE_ADMIN})
+
+	req, _ := http.NewRequest("GET", "/admin", nil)
+	req.Header.Set("Authorization", "Bearer bad-token")
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	if w.Code != http.StatusUnauthorized {
+		t.Fatalf("expected 401, got %d", w.Code)
+	}
+}
+
+
 func TestValidateRole_WrongRole_Returns401(t *testing.T) {
 	authSvc := &mockAuthService{
 		validateTokenFn: func(ctx context.Context, req *authv1.ValidateTokenRequest) (*authv1.ValidateTokenResponse, error) {
 			return &authv1.ValidateTokenResponse{
+				Valid: true,
 				User: &userv1.User{
 					Id:       "u1",
 					Username: "normal",
@@ -142,6 +166,7 @@ func TestValidateRole_AdminRole_Allows200AndSetsUser(t *testing.T) {
 				return nil, errors.New("wrong token passed to auth service")
 			}
 			return &authv1.ValidateTokenResponse{
+				Valid: true, 
 				User: &userv1.User{
 					Id:       "a1",
 					Username: "admin",

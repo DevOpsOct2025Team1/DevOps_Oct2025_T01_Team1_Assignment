@@ -26,6 +26,13 @@
         "cwd": "apps/auth-service"
       }
     },
+    "integration-test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "go test -v -tags=integration ./internal/integration/...",
+        "cwd": "apps/auth-service"
+      }
+    },
     "docker-build": {
       "executor": "nx:run-commands",
       "options": {

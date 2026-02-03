@@ -17,12 +17,13 @@ import (
 )
 
 type healthTestContext struct {
-	server       *httptest.Server
-	response     *http.Response
-	responseBody map[string]interface{}
-	responseRaw  []byte
-	responseTime time.Duration
-	authToken    string
+	server           *httptest.Server
+	response         *http.Response
+	responseBody     map[string]interface{}
+	responseRaw      []byte
+	responseTime     time.Duration
+	authToken        string
+	customAuthHeader string
 }
 
 func newHealthTestContext() *healthTestContext {
@@ -178,6 +179,7 @@ func InitializeScenario(ctx *godog.ScenarioContext) {
 	ctx.Step(`^I send a POST request to "([^"]*)" with json:$`, h.iSendAPOSTRequestToWithJSON)
 	ctx.Step(`^I send a DELETE request to "([^"]*)" with json:$`, h.iSendADELETERequestToWithJSON)
 	ctx.Step(`^I am authenticated as "([^"]*)"$`, h.iAmAuthenticatedAs)
+	ctx.Step(`^I set headers:$`, h.iSetHeaders)
 }
 
 func TestFeatures(t *testing.T) {

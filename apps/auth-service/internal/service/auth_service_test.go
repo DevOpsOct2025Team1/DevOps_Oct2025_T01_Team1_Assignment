@@ -154,10 +154,13 @@ func TestLogin_WrongPassword(t *testing.T) {
 func TestValidateToken_Valid(t *testing.T) {
 	svc := setupAuthService()
 
-	loginResp, _ := svc.Login(context.Background(), &authv1.LoginRequest{
+	loginResp, err := svc.Login(context.Background(), &authv1.LoginRequest{
 		Username: "testuser",
 		Password: "password123",
 	})
+	if err != nil {
+		t.Fatalf("unexpected login error: %v", err)
+	}
 
 	resp, err := svc.ValidateToken(context.Background(), &authv1.ValidateTokenRequest{
 		Token: loginResp.Token,

@@ -1,28 +1,35 @@
+//go:build integration
+// +build integration
+
 package integration
 
 import (
 	"context"
 	"fmt"
-	"math/rand"
+	"net"
 	"os"
 	"os/exec"
 	"testing"
 	"time"
 
 	"github.com/provsalt/DOP_P01_Team1/auth-service/internal/client"
-	"github.com/provsalt/DOP_P01_Team1/auth-service/internal/jwt"
+	"github.com/provsalt/DOP_P01_Team1/auth-service/internal/jwt"			
 	authsvc "github.com/provsalt/DOP_P01_Team1/auth-service/internal/service"
 	authv1 "github.com/provsalt/DOP_P01_Team1/common/auth/v1"
 )
 
-// startUserService starts an in-process gRPC user service bound to a random port.
+// startUserService starts an in-process gRPC user service bound to an OS-assigned free port.
 func startUserService(t *testing.T, dbURI string) (addr string, stop func()) {
 	t.Helper()
 
-	// Seed randomness to reduce port collisions across runs
-	rand.Seed(time.Now().UnixNano())
-	port := 18080 + rand.Intn(1000)
-	address := fmt.Sprintf("localhost:%d", port)
+	// Ask OS for a free port, then release it for the child process to bind.
+	l, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatalf("failed to acquire free port: %v", err)
+	}
+	port := l.Addr().(*net.TCPAddr).Port
+	address := fmt.Sprintf("127.0.0.1:%d", port)
+	_ = l.Close()
 
 	cmd := exec.Command("go", "run", "github.com/provsalt/DOP_P01_Team1/user-service/cmd/server")
 	cmd.Env = append(os.Environ(),

@@ -34,6 +34,32 @@ func (h *healthTestContext) iAmAuthenticatedAs(role string) error {
 	return nil
 }
 
+// And I set headers:
+// """
+// Authorization: Basic abc123
+// X-Trace-Id: 123
+// """
+func (h *healthTestContext) iSetHeaders(headers string) error {
+	// reset any previously set custom header
+	h.customAuthHeader = ""
+
+	// Very small parser: lines in the form `Key: Value`
+	for _, line := range strings.Split(headers, "\n") {
+		line = strings.TrimSpace(line)
+		if line == "" { // skip blanks
+			continue
+		}
+		// Only support Authorization explicitly for now
+		if strings.HasPrefix(strings.ToLower(line), "authorization:") {
+			parts := strings.SplitN(line, ":", 2)
+			if len(parts) == 2 {
+				h.customAuthHeader = strings.TrimSpace(parts[1])
+			}
+		}
+	}
+	return nil
+}
+
 // Shared request helper
 func (h *healthTestContext) sendJSON(method, endpoint, body string) error {
 	start := time.Now()
@@ -49,11 +75,16 @@ func (h *healthTestContext) sendJSON(method, endpoint, body string) error {
 	}
 	req.Header.Set("Content-Type", "application/json")
 
-	if h.authToken != "" {
+	if h.customAuthHeader != "" {
+		req.Header.Set("Authorization", h.customAuthHeader)
+	} else if h.authToken != "" {
 		req.Header.Set("Authorization", "Bearer "+h.authToken)
 	}
 
-	resp, err := (&http.Client{}).Do(req)
+	client := &http.Client{
+		Timeout: 5 * time.Second,
+	}
+	resp, err := client.Do(req)
 	if err != nil {
 		return err
 	}
