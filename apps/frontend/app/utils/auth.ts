@@ -13,7 +13,7 @@ function isBrowser(): boolean {
 
 export function getStoredUser(): User | null {
   if (!isBrowser()) return null;
-  if (cachedUser !== undefined) return cachedUser;
+  if (cachedUser !== undefined) return cachedUser as User | null;
 
   const userStr = localStorage.getItem("user");
   if (!userStr) {
@@ -21,7 +21,7 @@ export function getStoredUser(): User | null {
     return null;
   }
   try {
-    cachedUser = JSON.parse(userStr);
+    cachedUser = JSON.parse(userStr) as User;
     return cachedUser;
   } catch {
     cachedUser = null;

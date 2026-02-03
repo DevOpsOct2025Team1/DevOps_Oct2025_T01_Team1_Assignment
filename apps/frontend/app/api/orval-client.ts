@@ -1,4 +1,6 @@
-﻿const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3001";
+import { getStoredToken, clearAuth } from "../utils/auth";
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3001";
 
 export type ApiError = {
   message: string;
@@ -8,7 +10,7 @@ export type ApiError = {
 const isBrowser = typeof window !== "undefined";
 
 const getAuthHeaders = (): HeadersInit => {
-  const token = isBrowser ? localStorage.getItem("token") : null;
+  const token = getStoredToken();
   const headers: HeadersInit = {
     "Content-Type": "application/json",
   };
@@ -61,8 +63,7 @@ export const customFetch = async <T>(
     if (response.status === 401 && isBrowser) {
       const currentPath = window.location.pathname;
       if (currentPath !== "/login") {
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
+        clearAuth();
         window.location.href = "/login";
       }
     }
