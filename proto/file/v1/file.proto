@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package file.v1;
 
-option go_package="file/v1;filev1"
+option go_package="file/v1;filev1";
 
 service FileService {
   rpc CreateFile(CreateFileRequest) returns (FileResponse);
@@ -29,7 +29,10 @@ message CreateFileRequest {
 
 message GetFileRequest {
   string id = 1;
+<<<<<<< HEAD
   string user_id = 2;
+=======
+>>>>>>> main
 }
 
 message ListFilesRequest {
@@ -46,7 +49,10 @@ message FileResponse {
 
 message DeleteFileRequest {
   string id = 1;
+<<<<<<< HEAD
   string user_id = 2;
+=======
+>>>>>>> main
 }
 
 message DeleteFileResponse {

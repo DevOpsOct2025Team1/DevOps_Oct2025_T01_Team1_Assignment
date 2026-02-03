@@ -4,10 +4,17 @@
   "projectType": "application",
   "sourceRoot": "apps/file-service",
   "targets": {
+    "install": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "uv sync",
+        "cwd": "apps/file-service"
+      }
+    },
     "build": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "python -m compileall .",
+        "command": "python -m compileall file_service",
         "cwd": "apps/file-service"
       }
     },
@@ -15,15 +22,15 @@
       "executor": "nx:run-commands",
       "continuous": true,
       "options": {
-        "command": "python -m cmd.server.main",
+        "command": "uv run python -m file_service",
         "cwd": "apps/file-service",
-        "envFile": "../../.env"
+        "envFile": ".env"
       }
     },
     "test": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "pytest",
+        "command": "uv run --group dev pytest",
         "cwd": "apps/file-service"
       }
     },
