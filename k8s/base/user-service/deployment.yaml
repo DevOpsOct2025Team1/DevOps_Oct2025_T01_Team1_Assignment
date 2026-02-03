@@ -1,0 +1,87 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-service
+  labels:
+    app: user-service
+    tier: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: user-service
+  template:
+    metadata:
+      labels:
+        app: user-service
+        tier: backend
+    spec:
+      containers:
+      - name: user-service
+        image: ghcr.io/devopsoct2025team1/devops_oct2025_t01_team1_assignment/user-service:latest
+        ports:
+        - containerPort: 8080
+          name: grpc
+          protocol: TCP
+        env:
+        - name: PORT
+          value: "8080"
+        - name: MONGODB_URI
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: MONGODB_URI
+        - name: MONGODB_DATABASE
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: MONGODB_DATABASE
+        - name: DEFAULT_ADMIN_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: USER_SERVICE_DEFAULT_ADMIN_USERNAME
+        - name: DEFAULT_ADMIN_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: USER_SERVICE_DEFAULT_ADMIN_PASSWORD
+        - name: AXIOM_API_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: AXIOM_API_TOKEN
+        - name: AXIOM_ENDPOINT
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: AXIOM_ENDPOINT
+        - name: AXIOM_DATASET
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: AXIOM_DATASET
+        - name: AXIOM_METRICS_DATASET
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: AXIOM_METRICS_DATASET
+        - name: ENVIRONMENT
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: ENVIRONMENT
+        livenessProbe:
+          tcpSocket:
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          tcpSocket:
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
