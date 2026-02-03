@@ -4,21 +4,19 @@ from bson.errors import InvalidId
 import grpc
 
 from file.v1 import file_pb2, file_pb2_grpc
-from internal.store.db import files_collection
+from file_service.store import files_collection
+
 
 def get_user_id(context):
-    #get user id from context metadata
     metadata = dict(context.invocation_metadata())
     user_id = metadata.get("user-id")
     if user_id is None:
         context.abort(grpc.StatusCode.UNAUTHENTICATED, "Missing user-id in metadata")
     return user_id
 
+
 class FileService(file_pb2_grpc.FileServiceServicer):
-    #implementing the File Service
 
-
-    # Create File
     def CreateFile(self, request, context):
         user_id = get_user_id(context)
 
@@ -40,10 +38,9 @@ class FileService(file_pb2_grpc.FileServiceServicer):
                 size=doc["size"],
                 content_type=doc["content_type"],
                 created_at=doc["created_at"]
-            ) #return success message
+            )
         )
 
-    #get list of files for user
     def ListFiles(self, request, context):
         user_id = get_user_id(context)
 
@@ -62,7 +59,6 @@ class FileService(file_pb2_grpc.FileServiceServicer):
             ]
         )
 
-    #get a specific file for user by id
     def GetFile(self, request, context):
         user_id = get_user_id(context)
 
@@ -70,7 +66,7 @@ class FileService(file_pb2_grpc.FileServiceServicer):
             doc = files_collection.find_one({"_id": ObjectId(request.id), "user_id": user_id})
         except InvalidId:
             context.abort(grpc.StatusCode.INVALID_ARGUMENT, "Invalid file id format")
-            
+
         if not doc:
             context.abort(grpc.StatusCode.NOT_FOUND, "File not found")
 
@@ -85,7 +81,6 @@ class FileService(file_pb2_grpc.FileServiceServicer):
             )
         )
 
-    #delete a specific file for user by id
     def DeleteFile(self, request, context):
         user_id = get_user_id(context)
 

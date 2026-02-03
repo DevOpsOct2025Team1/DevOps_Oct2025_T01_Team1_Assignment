@@ -1,4 +1,4 @@
-# telemetry.py
+"""OpenTelemetry configuration for distributed tracing and metrics."""
 from opentelemetry import trace, metrics
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
@@ -25,7 +25,6 @@ def init_telemetry(
 
     resource = Resource.create({"service.name": service_name, "environment": environment})
 
-
     trace_headers = {
         "Authorization": f"Bearer {token}",
         "X-AXIOM-DATASET": dataset,
@@ -35,7 +34,7 @@ def init_telemetry(
     tracer_provider.add_span_processor(BatchSpanProcessor(trace_exporter))
     trace.set_tracer_provider(tracer_provider)
 
-
+    # Configure metrics exporter
     metrics_headers = {
         "Authorization": f"Bearer {token}",
         "X-AXIOM-DATASET": metrics_dataset,
@@ -46,7 +45,6 @@ def init_telemetry(
         metric_readers=[PeriodicExportingMetricReader(metric_exporter)]
     )
     metrics.set_meter_provider(meter_provider)
-
 
     propagator = TraceContextTextMapPropagator()
     set_global_textmap(propagator)

@@ -1,20 +1,14 @@
+import os
 from concurrent import futures
 import grpc
-from internal.service.service import FileService
-from file.v1 import file_pb2_grpc
-from internal.health.health import register_health
-from internal.config.config import SERVICE_PORT
-from telemetry import init_telemetry
-import os
 
-SERVICE_NAME = "file-service"
-ENVIRONMENT = os.getenv("ENVIRONMENT", "development")
-OTLP_ENDPOINT = os.getenv("OTLP_ENDPOINT", "https://us-east-1.aws.edge.axiom.co")
-AXIOM_TOKEN = os.getenv("AXIOM_TOKEN", "")
-DATASET = os.getenv("DATASET", "")
+from file_service.service import FileService
+from file.v1 import file_pb2_grpc
+from file_service.health import register_health
+from file_service.config import SERVICE_PORT, SERVICE_NAME, ENVIRONMENT, OTLP_ENDPOINT, AXIOM_TOKEN, DATASET
+from file_service.telemetry import init_telemetry
 
 def serve():
-    # Initialize telemetry first
     init_telemetry(
         service_name=SERVICE_NAME,
         environment=ENVIRONMENT,
@@ -24,7 +18,6 @@ def serve():
         metrics_dataset="metrics",
     )
 
-    # Start gRPC server
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     file_pb2_grpc.add_FileServiceServicer_to_server(FileService(), server)
     register_health(server)
