@@ -53,6 +53,11 @@ export function clearAuth(): void {
   cachedToken = null;
 }
 
+export function clearAuthCache(): void {
+  cachedUser = undefined;
+  cachedToken = undefined;
+}
+
 export function isAuthenticated(): boolean {
   return !!getStoredToken();
 }

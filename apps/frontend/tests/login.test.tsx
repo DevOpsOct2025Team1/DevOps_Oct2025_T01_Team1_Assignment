@@ -4,6 +4,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import Login from '../app/routes/login';
 import { BrowserRouter } from 'react-router';
 import { renderWithProviders } from './test-utils';
+import { clearAuthCache } from '../app/utils/auth';
 
 const mutateAsyncMock = vi.fn();
 let loginIsPending = false;
@@ -17,6 +18,7 @@ vi.mock('../app/api/generated', () => ({
 
 describe('Login Page', () => {
   beforeEach(() => {
+    clearAuthCache();
     localStorage.clear();
     mutateAsyncMock.mockReset();
     loginIsPending = false;
@@ -29,7 +31,7 @@ describe('Login Page', () => {
       </BrowserRouter>
     );
 
-    expect(screen.getByRole('heading', { name: /login/i })).toBeDefined();
+    expect(screen.getByText('Enter your credentials to access your account')).toBeDefined();
     expect(screen.getByLabelText(/username/i)).toBeDefined();
     expect(screen.getByLabelText(/password/i)).toBeDefined();
     expect(screen.getByRole('button', { name: /login/i })).toBeDefined();

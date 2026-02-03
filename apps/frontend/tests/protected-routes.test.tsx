@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { BrowserRouter, useNavigate } from 'react-router';
 import Dashboard from '../app/routes/dashboard';
 import { renderWithProviders } from './test-utils';
+import { clearAuthCache } from '../app/utils/auth';
 
 const createUserMock = vi.fn();
 const deleteUserMock = vi.fn();
@@ -19,6 +20,7 @@ vi.mock('../app/api/generated', () => ({
 
 describe('Protected Routes', () => {
   beforeEach(() => {
+    clearAuthCache();
     localStorage.clear();
     createUserMock.mockReset();
     deleteUserMock.mockReset();
@@ -42,7 +44,7 @@ describe('Protected Routes', () => {
     expect(navigatedTo).toBe('/login');
   });
 
-  it('shows admin dashboard for admin users', () => {
+  it('shows admin dashboard for admin users', async () => {
     localStorage.setItem('token', 'fake-token');
     localStorage.setItem('user', JSON.stringify({
       id: '1',
@@ -50,17 +52,19 @@ describe('Protected Routes', () => {
       role: 'admin'
     }));
 
-    const { getByRole } = renderWithProviders(
+    const { getByRole, findByText } = renderWithProviders(
       <BrowserRouter>
         <Dashboard />
       </BrowserRouter>
     );
 
     expect(getByRole('heading', { name: /admin dashboard/i })).toBeTruthy();
-    expect(getByRole('heading', { name: /create user/i })).toBeTruthy();
+    // Wait for lazy-loaded AdminPanel component - use unique description text
+    expect(await findByText('Add a new user to the system')).toBeTruthy();
+    expect(await findByText('Remove a user from the system')).toBeTruthy();
   });
 
-  it('shows user dashboard for regular users', () => {
+  it('shows user dashboard for regular users', async () => {
     localStorage.setItem('token', 'fake-token');
     localStorage.setItem('user', JSON.stringify({
       id: '1',
@@ -68,13 +72,14 @@ describe('Protected Routes', () => {
       role: 'user'
     }));
 
-    const { getByText } = renderWithProviders(
+    const { getByText, findByText } = renderWithProviders(
       <BrowserRouter>
         <Dashboard />
       </BrowserRouter>
     );
 
     expect(getByText('Dashboard')).toBeTruthy();
-    expect(getByText('Upload File')).toBeTruthy();
+    expect(await findByText('My Files')).toBeTruthy();
+    expect(await findByText('No files uploaded yet')).toBeTruthy();
   });
 });
