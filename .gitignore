@@ -3,3 +3,10 @@
 .nx/installation
 .nx/cache
 .nx/workspace-data
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
