@@ -14,7 +14,7 @@ DATASET = "your_dataset"
 
 def serve():
     # Initialize telemetry first
-    tracer, meter_provider = init_telemetry(
+    init_telemetry(
         service_name=SERVICE_NAME,
         environment=ENVIRONMENT,
         endpoint=OTLP_ENDPOINT,

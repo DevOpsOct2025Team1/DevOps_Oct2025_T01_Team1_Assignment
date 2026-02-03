@@ -22,15 +22,19 @@ message File {
 
 message CreateFileRequest {
   string filename = 1;
-  int64 size = 2;
-  string content_type = 3;
+  string user_id = 2;
+  int64 size = 3;
+  string content_type = 4;
 }
 
 message GetFileRequest {
   string id = 1;
+  string user_id = 2;
 }
 
-message ListFilesRequest {}
+message ListFilesRequest {
+  string user_id = 1;
+}
 
 message ListFilesResponse {
   repeated File files = 1;
@@ -42,6 +46,7 @@ message FileResponse {
 
 message DeleteFileRequest {
   string id = 1;
+  string user_id = 2;
 }
 
 message DeleteFileResponse {
