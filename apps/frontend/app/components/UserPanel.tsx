@@ -1,4 +1,5 @@
 import { FileText } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 
 export default function UserPanel() {
   return (
@@ -47,14 +48,19 @@ export default function UserPanel() {
         {/*</div>*/}
       {/*</div>*/}
 
-      <div className="mt-8 bg-white p-6 rounded-lg shadow">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">My Files</h2>
-        <div className="text-center py-8 text-gray-500">
-          <FileText className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-          <p>No files uploaded yet</p>
-          <p className="text-xs mt-2">TODO: connect API endpoint for file listing</p>
-        </div>
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>My Files</CardTitle>
+          <CardDescription>Manage your uploaded files</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8 text-muted-foreground">
+            <FileText className="w-16 h-16 mx-auto mb-4" />
+            <p>No files uploaded yet</p>
+            <p className="text-xs mt-2">TODO: connect API endpoint for file listing</p>
+          </div>
+        </CardContent>
+      </Card>
 
       {/*<div className="mt-6 bg-blue-50 border border-blue-200 p-4 rounded-lg">*/}
       {/*  <h3 className="text-sm font-semibold text-blue-900 mb-2">Note</h3>*/}

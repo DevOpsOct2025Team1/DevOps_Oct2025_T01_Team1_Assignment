@@ -1,5 +1,9 @@
 import { useState } from "react";
 import { useCreateUser, useDeleteUser } from "../api/generated";
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
+import { Badge } from "./ui/badge";
 
 interface Action {
   type: "create" | "delete";
@@ -88,113 +92,125 @@ export default function AdminPanel() {
   return (
     <>
       <div className="grid gap-6 md:grid-cols-2">
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Create User</h2>
-          <form onSubmit={handleCreateUser} className="space-y-4">
-            <div>
-              <label htmlFor="create-username" className="block text-sm font-medium text-gray-700 mb-1">
-                Username
-              </label>
-              <input
-                id="create-username"
-                type="text"
-                value={createUsername}
-                onChange={(e) => setCreateUsername(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                disabled={createUserMutation.isPending}
-              />
-            </div>
-
-            <div>
-              <label htmlFor="create-password" className="block text-sm font-medium text-gray-700 mb-1">
-                Password
-              </label>
-              <input
-                id="create-password"
-                type="password"
-                value={createPassword}
-                onChange={(e) => setCreatePassword(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                disabled={createUserMutation.isPending}
-              />
-            </div>
-
-            {createError && (
-              <div className="text-red-600 text-sm bg-red-50 p-3 rounded-md">
-                {createError}
+        <Card>
+          <CardHeader>
+            <CardTitle>Create User</CardTitle>
+            <CardDescription>Add a new user to the system</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleCreateUser} className="space-y-4">
+              <div className="space-y-2">
+                <label htmlFor="create-username" className="text-sm font-medium">
+                  Username
+                </label>
+                <Input
+                  id="create-username"
+                  type="text"
+                  value={createUsername}
+                  onChange={(e) => setCreateUsername(e.target.value)}
+                  disabled={createUserMutation.isPending}
+                  placeholder="Enter username"
+                />
               </div>
-            )}
 
-            <button
-              type="submit"
-              disabled={createUserMutation.isPending}
-              className="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 disabled:bg-indigo-400 disabled:cursor-not-allowed transition-colors font-medium"
-            >
-              {createUserMutation.isPending ? "Creating..." : "Create User"}
-            </button>
-          </form>
-        </div>
-
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Delete User</h2>
-          <form onSubmit={handleDeleteUser} className="space-y-4">
-            <div>
-              <label htmlFor="delete-id" className="block text-sm font-medium text-gray-700 mb-1">
-                User ID
-              </label>
-              <input
-                id="delete-id"
-                type="text"
-                value={deleteUserId}
-                onChange={(e) => setDeleteUserId(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                disabled={deleteUserMutation.isPending}
-              />
-            </div>
-
-            {deleteError && (
-              <div className="text-red-600 text-sm bg-red-50 p-3 rounded-md">
-                {deleteError}
+              <div className="space-y-2">
+                <label htmlFor="create-password" className="text-sm font-medium">
+                  Password
+                </label>
+                <Input
+                  id="create-password"
+                  type="password"
+                  value={createPassword}
+                  onChange={(e) => setCreatePassword(e.target.value)}
+                  disabled={createUserMutation.isPending}
+                  placeholder="Enter password"
+                />
               </div>
-            )}
 
-            <button
-              type="submit"
-              disabled={deleteUserMutation.isPending}
-              className="w-full bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700 disabled:bg-red-400 disabled:cursor-not-allowed transition-colors font-medium"
-            >
-              {deleteUserMutation.isPending ? "Deleting..." : "Delete User"}
-            </button>
-          </form>
-        </div>
-      </div>
-
-      <div className="mt-8 bg-white p-6 rounded-lg shadow">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">Recent Actions</h2>
-        {actions.length === 0 ? (
-          <p className="text-gray-500 text-center py-4">No actions yet</p>
-        ) : (
-          <div className="space-y-2">
-            {actions.map((action, idx) => (
-              <div key={idx} className="flex items-center justify-between py-2 px-4 bg-gray-50 rounded">
-                <div className="flex items-center space-x-3">
-                  <span className={`px-2 py-1 text-xs font-medium rounded ${
-                    action.type === "create"
-                      ? "bg-green-100 text-green-800"
-                      : "bg-red-100 text-red-800"
-                  }`}>
-                    {action.type.toUpperCase()}
-                  </span>
-                  <span className="text-gray-700">{action.username}</span>
+              {createError && (
+                <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-md">
+                  {createError}
                 </div>
-                <span className="text-sm text-gray-500">
-                  {action.timestamp.toLocaleTimeString()}
-                </span>
+              )}
+
+              <Button
+                type="submit"
+                disabled={createUserMutation.isPending}
+                className="w-full"
+              >
+                {createUserMutation.isPending ? "Creating..." : "Create User"}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Delete User</CardTitle>
+            <CardDescription>Remove a user from the system</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleDeleteUser} className="space-y-4">
+              <div className="space-y-2">
+                <label htmlFor="delete-id" className="text-sm font-medium">
+                  User ID
+                </label>
+                <Input
+                  id="delete-id"
+                  type="text"
+                  value={deleteUserId}
+                  onChange={(e) => setDeleteUserId(e.target.value)}
+                  disabled={deleteUserMutation.isPending}
+                  placeholder="Enter user ID"
+                />
               </div>
-            ))}
-          </div>
-        )}
+
+              {deleteError && (
+                <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-md">
+                  {deleteError}
+                </div>
+              )}
+
+              <Button
+                type="submit"
+                disabled={deleteUserMutation.isPending}
+                variant="destructive"
+                className="w-full"
+              >
+                {deleteUserMutation.isPending ? "Deleting..." : "Delete User"}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
       </div>
+
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle>Recent Actions</CardTitle>
+          <CardDescription>View recent user management activities</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {actions.length === 0 ? (
+            <p className="text-muted-foreground text-center py-4">No actions yet</p>
+          ) : (
+            <div className="space-y-2">
+              {actions.map((action, idx) => (
+                <div key={idx} className="flex items-center justify-between py-2 px-4 bg-muted/50 rounded">
+                  <div className="flex items-center space-x-3">
+                    <Badge variant={action.type === "create" ? "default" : "destructive"}>
+                      {action.type.toUpperCase()}
+                    </Badge>
+                    <span>{action.username}</span>
+                  </div>
+                  <span className="text-sm text-muted-foreground">
+                    {action.timestamp.toLocaleTimeString()}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </>
   );
 }
