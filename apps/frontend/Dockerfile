@@ -13,6 +13,7 @@ RUN cd /temp/prod && bun ci --production
 
 FROM base AS prerelease
 COPY --from=install /temp/dev/node_modules node_modules
+COPY apps/api-gateway/docs/swagger.json ../api-gateway/docs/swagger.json
 COPY apps/frontend/ .
 
 ENV NODE_ENV=production
