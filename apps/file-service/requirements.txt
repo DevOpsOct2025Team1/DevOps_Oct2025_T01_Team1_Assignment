@@ -1,5 +1,6 @@
 grpcio==1.76.0                
-grpcio-tools==1.76.0           
+grpcio-tools==1.76.0
+grpcio-health-checking==1.76.0          
 protobuf>=4.21.6,<5.0          
 pymongo==4.16.0                
 python-dotenv>=1.2.1,<2.0   

@@ -16,7 +16,8 @@
       "continuous": true,
       "options": {
         "command": "python -m cmd.server.main",
-        "cwd": "apps/file-service"
+        "cwd": "apps/file-service",
+        "envFile": "../../.env"
       }
     },
     "test": {
