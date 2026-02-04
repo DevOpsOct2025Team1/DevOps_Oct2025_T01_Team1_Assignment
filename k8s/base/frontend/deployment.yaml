@@ -20,7 +20,7 @@ spec:
       - name: frontend
         image: ghcr.io/devopsoct2025team1/devops_oct2025_t01_team1_assignment/frontend:latest
         ports:
-        - containerPort: 5173
+        - containerPort: 3000
           name: http
           protocol: TCP
         env:
@@ -29,7 +29,7 @@ spec:
         livenessProbe:
           httpGet:
             path: /
-            port: 5173
+            port: 3000
           initialDelaySeconds: 10
           periodSeconds: 10
           timeoutSeconds: 5
@@ -37,7 +37,7 @@ spec:
         readinessProbe:
           httpGet:
             path: /
-            port: 5173
+            port: 3000
           initialDelaySeconds: 10
           periodSeconds: 10
           timeoutSeconds: 5
