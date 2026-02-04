@@ -28,6 +28,8 @@ spec:
           value: "3001"
         - name: AUTH_SERVICE_ADDR
           value: "auth-service:8081"
+        - name: USER_SERVICE_ADDR
+          value: "user-service:8080"
         - name: AXIOM_API_TOKEN
           valueFrom:
             secretKeyRef:
