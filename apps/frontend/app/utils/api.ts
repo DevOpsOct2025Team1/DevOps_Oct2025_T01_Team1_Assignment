@@ -141,9 +141,9 @@ export const authApi = {
   createUser: (data: CreateUserRequest) =>
     api.post<CreateUserResponse>('/api/admin/create_user', data),
   
-  // DELETE /api/admin/delete_user/:id - Delete user by ID (admin only)
+  // DELETE /api/admin/delete_user - Delete user by ID (admin only)
   deleteUser: (id: string) =>
-    api.delete<DeleteUserResponse>(`/api/admin/delete_user/${encodeURIComponent(id)}`),
+    api.delete<DeleteUserResponse>('/api/admin/delete_user', { id }),
   
   // GET /api/admin - List all users (admin only, currently not implemented in backend)
   listUsers: () =>
