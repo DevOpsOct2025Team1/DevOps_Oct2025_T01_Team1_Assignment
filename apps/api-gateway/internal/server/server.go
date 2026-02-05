@@ -48,7 +48,7 @@ func (s *Server) setupRoutes(cfg *config.Config) {
 
 	s.Router.GET("/api/admin", middleware.ValidateRole(s.authClient, []userv1.Role{userv1.Role_ROLE_ADMIN}), userHandler.ListUsers)
 	s.Router.POST("/api/admin/create_user", middleware.ValidateRole(s.authClient, []userv1.Role{userv1.Role_ROLE_ADMIN}), authHandler.SignUp)
-	s.Router.DELETE("/api/admin/delete_user/:id", middleware.ValidateRole(s.authClient, []userv1.Role{userv1.Role_ROLE_ADMIN}), userHandler.DeleteUser)
+	s.Router.DELETE("/api/admin/delete_user", middleware.ValidateRole(s.authClient, []userv1.Role{userv1.Role_ROLE_ADMIN}), userHandler.DeleteUser)
 
 	s.Router.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{"status": "ok"})

@@ -23,7 +23,7 @@ func NewUserHandler(client UserServiceClient) *UserHandler {
 // @Tags         admin
 // @Accept       json
 // @Produce      json
-// @Param        id path string true "User ID to delete"
+// @Param        request body object true "Delete user request" example({"id":"user123"})
 // @Success      200 {object} DeleteUserResponse "User deleted successfully"
 // @Failure      400 {object} ErrorResponse "Invalid request body or invalid user ID"
 // @Failure      401 {object} ErrorResponse "Unauthorized - missing or invalid token"
@@ -31,20 +31,24 @@ func NewUserHandler(client UserServiceClient) *UserHandler {
 // @Failure      404 {object} ErrorResponse "User not found"
 // @Failure      500 {object} ErrorResponse "Internal server error"
 // @Security     BearerAuth
-// @Router       /api/admin/delete_user/{id} [delete]
+// @Router       /api/admin/delete_user [delete]
 func (h *UserHandler) DeleteUser(c *gin.Context) {
-	id := c.Param("id")
-	if id == "" {
+	var req struct {
+		Id string `json:"id"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
+		return
+	}
+
+	if req.Id == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "user id is required"})
 		return
 	}
 
 	// Log the ID being deleted for debugging
-	c.Request.Header.Set("X-Delete-User-ID", id)
-
-	req := struct {
-		Id string
-	}{Id: id}
+	c.Request.Header.Set("X-Delete-User-ID", req.Id)
 
 	currentUserVal, exists := c.Get("user")
 	if !exists {
