@@ -28,14 +28,14 @@ describe('Protected Routes', () => {
       role: 'user'
     }));
 
-    const { findByText, getByPlaceholderText } = renderWithProviders(
+    const { findByText, findByPlaceholderText } = renderWithProviders(
       <BrowserRouter>
         <Dashboard />
       </BrowserRouter>
     );
 
     expect(await findByText('Hello, user!')).toBeTruthy();
-    expect(getByPlaceholderText('Search uploaded files')).toBeTruthy();
+    expect(await findByPlaceholderText('Search uploaded files')).toBeTruthy();
     expect(await findByText('Presentation.pptx')).toBeTruthy();
   });
 });

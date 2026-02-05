@@ -1,8 +1,9 @@
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import { describe, it, expect, beforeEach } from 'vitest';
 import { BrowserRouter } from 'react-router';
 import Logout from '../app/routes/logout';
 import { clearAuthCache } from '../app/utils/auth';
+import { renderWithProviders } from './test-utils';
 
 describe('Logout', () => {
   beforeEach(() => {
@@ -16,7 +17,7 @@ describe('Logout', () => {
   });
 
   it('clears localStorage on logout', () => {
-    render(
+    renderWithProviders(
       <BrowserRouter>
         <Logout />
       </BrowserRouter>
@@ -27,7 +28,7 @@ describe('Logout', () => {
   });
 
   it('shows logging out message', () => {
-    render(
+    renderWithProviders(
       <BrowserRouter>
         <Logout />
       </BrowserRouter>
