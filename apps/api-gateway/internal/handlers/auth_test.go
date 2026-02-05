@@ -278,7 +278,7 @@ func TestLogin_InvalidCredentials(t *testing.T) {
 		"password": "wrongpassword",
 	})
 
-	if w.Code != http.StatusInternalServerError {
-		t.Errorf("expected status %d, got %d", http.StatusInternalServerError, w.Code)
+	if w.Code != http.StatusUnauthorized {
+		t.Errorf("expected status %d, got %d", http.StatusUnauthorized, w.Code)
 	}
 }

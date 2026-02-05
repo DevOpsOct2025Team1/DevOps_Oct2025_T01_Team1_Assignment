@@ -66,7 +66,7 @@ func (s *Server) Close() error {
 	var err error
 
 	if s.authClient != nil {
-		if e := s.authClient.Close(); e != nil && err == nil {
+		if e := s.authClient.Close(); e != nil {
 			err = e
 		}
 	}

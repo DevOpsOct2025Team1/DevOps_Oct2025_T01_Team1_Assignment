@@ -1,22 +1,37 @@
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import Login from '../app/routes/login';
 import { BrowserRouter } from 'react-router';
+import { renderWithProviders } from './test-utils';
+import { clearAuthCache } from '../app/utils/auth';
+
+const mutateAsyncMock = vi.fn();
+let loginIsPending = false;
+
+vi.mock('../app/api/generated', () => ({
+  useLogin: () => ({
+    mutateAsync: mutateAsyncMock,
+    isPending: loginIsPending,
+  }),
+}));
 
 describe('Login Page', () => {
   beforeEach(() => {
+    clearAuthCache();
     localStorage.clear();
+    mutateAsyncMock.mockReset();
+    loginIsPending = false;
   });
 
   it('renders login form', async () => {
-    render(
+    renderWithProviders(
       <BrowserRouter>
         <Login />
       </BrowserRouter>
     );
 
-    expect(screen.getByRole('heading', { name: /login/i })).toBeDefined();
+    expect(screen.getByText('Enter your credentials to access your account')).toBeDefined();
     expect(screen.getByLabelText(/username/i)).toBeDefined();
     expect(screen.getByLabelText(/password/i)).toBeDefined();
     expect(screen.getByRole('button', { name: /login/i })).toBeDefined();
@@ -25,7 +40,7 @@ describe('Login Page', () => {
   it('validates empty inputs', async () => {
     const user = userEvent.setup();
     
-    render(
+    renderWithProviders(
       <BrowserRouter>
         <Login />
       </BrowserRouter>
@@ -37,10 +52,26 @@ describe('Login Page', () => {
     expect(await screen.findByText(/username and password are required/i)).toBeDefined();
   });
 
+  it('disables the form while logging in', async () => {
+    loginIsPending = true;
+
+    renderWithProviders(
+      <BrowserRouter>
+        <Login />
+      </BrowserRouter>
+    );
+
+    const loginButton = screen.getByRole('button', { name: /logging in/i });
+    expect(loginButton).toBeDisabled();
+    expect(screen.getByLabelText(/username/i)).toBeDisabled();
+    expect(screen.getByLabelText(/password/i)).toBeDisabled();
+  });
+
   it('shows error message on invalid credentials', async () => {
     const user = userEvent.setup();
+    mutateAsyncMock.mockRejectedValueOnce({ status: 401, message: 'Unauthorized' });
     
-    render(
+    renderWithProviders(
       <BrowserRouter>
         <Login />
       </BrowserRouter>
@@ -54,6 +85,6 @@ describe('Login Page', () => {
     await user.type(passwordInput, 'wrongpassword');
     await user.click(loginButton);
 
-    expect(await screen.findByText(/login failed/i)).toBeDefined();
+    expect(await screen.findByText(/unauthorized/i)).toBeDefined();
   });
 });

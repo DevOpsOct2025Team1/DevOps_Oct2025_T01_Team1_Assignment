@@ -13,3 +13,9 @@ plugins:
     out: apps/common
     opt:
       - paths=source_relative
+
+  - remote: buf.build/protocolbuffers/python
+    out: apps/file-service
+
+  - remote: buf.build/grpc/python
+    out: apps/file-service

@@ -7,12 +7,14 @@ import {
   ScrollRestoration,
   useLocation,
 } from "react-router";
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { QueryClientProvider } from "@tanstack/react-query";
 
 import type { Route } from "./+types/root";
-import type { User } from "./utils/api";
 import "./app.css";
-import { getStoredUser, isAuthenticated } from "./utils/auth";
+import { createQueryClient } from "./api/query";
+import Navigation from "./components/Navigation";
+import { AuthProvider } from "./contexts/AuthContext";
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -36,7 +38,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Meta />
         <Links />
       </head>
-      <body>
+      <body className="min-h-screen flex flex-col">
         {children}
         <ScrollRestoration />
         <Scripts />
@@ -45,65 +47,16 @@ export function Layout({ children }: { children: React.ReactNode }) {
   );
 }
 
-function Navigation() {
-  const location = useLocation();
-  const [user, setUser] = useState<User | null>(null);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-    if (isAuthenticated()) {
-      setUser(getStoredUser());
-    } else {
-      setUser(null);
-    }
-  }, [location.pathname]);
-
-  if (!mounted || location.pathname === '/login') {
-    return null;
-  }
-
-  if (!user) {
-    return null;
-  }
-
-  return (
-    <nav className="bg-white shadow-sm border-b">
-      <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <span className="font-semibold text-gray-900">DevOps App</span>
-          {user.role === 'admin' ? (
-            <a href="/admin" className="text-indigo-600 hover:text-indigo-800 font-medium">
-              Admin Dashboard
-            </a>
-          ) : (
-            <a href="/dashboard" className="text-indigo-600 hover:text-indigo-800 font-medium">
-              Dashboard
-            </a>
-          )}
-        </div>
-        <div className="flex items-center space-x-4">
-          <span className="text-sm text-gray-600">
-            {user.username} <span className="text-gray-400">({user.role})</span>
-          </span>
-          <a
-            href="/logout"
-            className="text-sm text-red-600 hover:text-red-800 font-medium"
-          >
-            Logout
-          </a>
-        </div>
-      </div>
-    </nav>
-  );
-}
-
 export default function App() {
+  const [queryClient] = useState(() => createQueryClient());
+
   return (
-    <>
-      <Navigation />
-      <Outlet />
-    </>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <Navigation />
+        <Outlet />
+      </AuthProvider>
+    </QueryClientProvider>
   );
 }
 

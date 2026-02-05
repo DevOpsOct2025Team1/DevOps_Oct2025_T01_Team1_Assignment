@@ -1,121 +1,133 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router';
-import { authApi } from '../utils/api';
-import { setAuth, isAuthenticated, isAdmin } from '../utils/auth';
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router";
+import { useAuth } from "../contexts/AuthContext";
+import { useLogin } from "../api/generated";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
 
 export default function Login() {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
   const navigate = useNavigate();
+  const { setAuth, isAuthenticated } = useAuth();
+  const loginMutation = useLogin();
+  const isLoading = loginMutation.isPending;
 
   useEffect(() => {
-    if (isAuthenticated()) {
-      if (isAdmin()) {
-        navigate('/admin');
-      } else {
-        navigate('/dashboard');
-      }
+    if (isAuthenticated) {
+      navigate("/dashboard");
     }
-  }, [navigate]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setError("");
 
     if (!username.trim() || !password.trim()) {
-      setError('Username and password are required');
+      setError("Username and password are required");
       return;
     }
 
-    setLoading(true);
     try {
-      const response = await authApi.login(username, password);
-      console.log('Login response:', response);
-      console.log('User role:', response.user.role);
-      
-      // Convert numeric role to string if needed
-      const userRole = typeof response.user.role === 'number' 
-        ? (response.user.role === 2 ? 'admin' : 'user')
-        : response.user.role;
-      
+      const response = await loginMutation.mutateAsync({
+        data: {
+          username,
+          password,
+        },
+      });
+      const authData = response.data;
+
+      if (
+        !authData ||
+        !("user" in authData) ||
+        !authData.user ||
+        !authData.user.id ||
+        !authData.user.username ||
+        !authData.user.role ||
+        !authData.token
+      ) {
+        throw new Error("Login failed. Please try again.");
+      }
+
+      console.log("Login response:", authData);
+      console.log("User role:", authData.user.role);
+
       const normalizedUser = {
-        ...response.user,
-        role: userRole
+        id: authData.user.id,
+        username: authData.user.username,
+        role: authData.user.role
       };
-      
-      setAuth(normalizedUser, response.token);
-      
-      if (userRole === 'admin') {
-        console.log('Navigating to /admin');
-        navigate('/admin');
+
+      setAuth(normalizedUser, authData.token);
+      navigate("/dashboard");
+    } catch (err: unknown) {
+      const err2 = err as Error;
+      if (err2.message) {
+        setError(err2.message);
       } else {
-        console.log('Navigating to /dashboard');
-        navigate('/dashboard');
+        setError("Login failed. Please try again.");
       }
-    } catch (err: any) {
-      if (err.status === 401) {
-        setError('Incorrect Username or Password');
-      } else if (err.message) {
-        setError(err.message);
-      } else {
-        setError('Login failed. Please try again.');
-      }
-    } finally {
-      setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
-      <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
-        <h1 className="text-3xl font-bold text-gray-800 mb-6 text-center">Login</h1>
-        
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
-              Username
-            </label>
-            <input
-              id="username"
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-              disabled={loading}
-            />
-          </div>
-
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-              Password
-            </label>
-            <input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-              disabled={loading}
-            />
-          </div>
-
-          {error && (
-            <div className="text-red-600 text-sm bg-red-50 p-3 rounded-md">
-              {error}
+    <div className="flex-1 flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
+      <Card className="w-full max-w-md">
+        <CardHeader>
+          <CardTitle className="text-3xl text-center">Login</CardTitle>
+          <CardDescription className="text-center">
+            Enter your credentials to access your account
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <label htmlFor="username" className="text-sm font-medium">
+                Username
+              </label>
+              <Input
+                id="username"
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                disabled={isLoading}
+                placeholder="Enter your username"
+              />
             </div>
-          )}
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 disabled:bg-indigo-400 disabled:cursor-not-allowed transition-colors font-medium"
-          >
-            {loading ? 'Logging in...' : 'Login'}
-          </button>
-        </form>
-      </div>
+            <div className="space-y-2">
+              <label htmlFor="password" className="text-sm font-medium">
+                Password
+              </label>
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={isLoading}
+                placeholder="Enter your password"
+              />
+            </div>
+
+            {error && (
+              <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-md">
+                {error}
+              </div>
+            )}
+
+            <Button
+              type="submit"
+              disabled={loginMutation.isPending}
+              className="w-full"
+            >
+              {loginMutation.isPending ? "Logging in..." : "Login"}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 }
