@@ -24,7 +24,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x12user/v1/user.proto\x12\x07user.v1\"U\n\x04User\x12\x0e\n\x02id\x18\x01 \x01(\tR\x02id\x12\x1a\n\x08username\x18\x02 \x01(\tR\x08username\x12!\n\x04role\x18\x03 \x01(\x0e\x32\r.user.v1.RoleR\x04role\"{\n\x11\x43reateUserRequest\x12\x1a\n\x08username\x18\x01 \x01(\tR\x08username\x12\'\n\x0fhashed_password\x18\x02 \x01(\tR\x0ehashedPassword\x12!\n\x04role\x18\x03 \x01(\x0e\x32\r.user.v1.RoleR\x04role\"7\n\x12\x43reateUserResponse\x12!\n\x04user\x18\x01 \x01(\x0b\x32\r.user.v1.UserR\x04user\" \n\x0eGetUserRequest\x12\x0e\n\x02id\x18\x01 \x01(\tR\x02id\"4\n\x0fGetUserResponse\x12!\n\x04user\x18\x01 \x01(\x0b\x32\r.user.v1.UserR\x04user\"6\n\x18GetUserByUsernameRequest\x12\x1a\n\x08username\x18\x01 \x01(\tR\x08username\">\n\x19GetUserByUsernameResponse\x12!\n\x04user\x18\x01 \x01(\x0b\x32\r.user.v1.UserR\x04user\"O\n\x15VerifyPasswordRequest\x12\x1a\n\x08username\x18\x01 \x01(\tR\x08username\x12\x1a\n\x08password\x18\x02 \x01(\tR\x08password\"Q\n\x16VerifyPasswordResponse\x12\x14\n\x05valid\x18\x01 \x01(\x08R\x05valid\x12!\n\x04user\x18\x02 \x01(\x0b\x32\r.user.v1.UserR\x04user\"\'\n\x15\x44\x65leteUserByIdRequest\x12\x0e\n\x02id\x18\x01 \x01(\tR\x02id\"2\n\x16\x44\x65leteUserByIdResponse\x12\x18\n\x07success\x18\x01 \x01(\x08R\x07success*;\n\x04Role\x12\x14\n\x10ROLE_UNSPECIFIED\x10\x00\x12\r\n\tROLE_USER\x10\x01\x12\x0e\n\nROLE_ADMIN\x10\x02\x32\x90\x03\n\x0bUserService\x12\x45\n\nCreateUser\x12\x1a.user.v1.CreateUserRequest\x1a\x1b.user.v1.CreateUserResponse\x12<\n\x07GetUser\x12\x17.user.v1.GetUserRequest\x1a\x18.user.v1.GetUserResponse\x12Z\n\x11GetUserByUsername\x12!.user.v1.GetUserByUsernameRequest\x1a\".user.v1.GetUserByUsernameResponse\x12Q\n\x0eVerifyPassword\x12\x1e.user.v1.VerifyPasswordRequest\x1a\x1f.user.v1.VerifyPasswordResponse\x12M\n\nDeleteUser\x12\x1e.user.v1.DeleteUserByIdRequest\x1a\x1f.user.v1.DeleteUserByIdResponseB\x8e\x01\n\x0b\x63om.user.v1B\tUserProtoP\x01Z7github.com/provsalt/DOP_P01_Team1/common/user/v1;userv1\xa2\x02\x03UXX\xaa\x02\x07User.V1\xca\x02\x07User\\V1\xe2\x02\x13User\\V1\\GPBMetadata\xea\x02\x08User::V1b\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x12user/v1/user.proto\x12\x07user.v1\"U\n\x04User\x12\x0e\n\x02id\x18\x01 \x01(\tR\x02id\x12\x1a\n\x08username\x18\x02 \x01(\tR\x08username\x12!\n\x04role\x18\x03 \x01(\x0e\x32\r.user.v1.RoleR\x04role\"{\n\x11\x43reateUserRequest\x12\x1a\n\x08username\x18\x01 \x01(\tR\x08username\x12\'\n\x0fhashed_password\x18\x02 \x01(\tR\x0ehashedPassword\x12!\n\x04role\x18\x03 \x01(\x0e\x32\r.user.v1.RoleR\x04role\"7\n\x12\x43reateUserResponse\x12!\n\x04user\x18\x01 \x01(\x0b\x32\r.user.v1.UserR\x04user\" \n\x0eGetUserRequest\x12\x0e\n\x02id\x18\x01 \x01(\tR\x02id\"4\n\x0fGetUserResponse\x12!\n\x04user\x18\x01 \x01(\x0b\x32\r.user.v1.UserR\x04user\"6\n\x18GetUserByUsernameRequest\x12\x1a\n\x08username\x18\x01 \x01(\tR\x08username\">\n\x19GetUserByUsernameResponse\x12!\n\x04user\x18\x01 \x01(\x0b\x32\r.user.v1.UserR\x04user\"O\n\x15VerifyPasswordRequest\x12\x1a\n\x08username\x18\x01 \x01(\tR\x08username\x12\x1a\n\x08password\x18\x02 \x01(\tR\x08password\"Q\n\x16VerifyPasswordResponse\x12\x14\n\x05valid\x18\x01 \x01(\x08R\x05valid\x12!\n\x04user\x18\x02 \x01(\x0b\x32\r.user.v1.UserR\x04user\"\'\n\x15\x44\x65leteUserByIdRequest\x12\x0e\n\x02id\x18\x01 \x01(\tR\x02id\"2\n\x16\x44\x65leteUserByIdResponse\x12\x18\n\x07success\x18\x01 \x01(\x08R\x07success\"\x12\n\x10ListUsersRequest\"8\n\x11ListUsersResponse\x12#\n\x05users\x18\x01 \x03(\x0b\x32\r.user.v1.UserR\x05users*;\n\x04Role\x12\x14\n\x10ROLE_UNSPECIFIED\x10\x00\x12\r\n\tROLE_USER\x10\x01\x12\x0e\n\nROLE_ADMIN\x10\x02\x32\xd4\x03\n\x0bUserService\x12\x45\n\nCreateUser\x12\x1a.user.v1.CreateUserRequest\x1a\x1b.user.v1.CreateUserResponse\x12<\n\x07GetUser\x12\x17.user.v1.GetUserRequest\x1a\x18.user.v1.GetUserResponse\x12Z\n\x11GetUserByUsername\x12!.user.v1.GetUserByUsernameRequest\x1a\".user.v1.GetUserByUsernameResponse\x12Q\n\x0eVerifyPassword\x12\x1e.user.v1.VerifyPasswordRequest\x1a\x1f.user.v1.VerifyPasswordResponse\x12M\n\nDeleteUser\x12\x1e.user.v1.DeleteUserByIdRequest\x1a\x1f.user.v1.DeleteUserByIdResponse\x12\x42\n\tListUsers\x12\x19.user.v1.ListUsersRequest\x1a\x1a.user.v1.ListUsersResponseB\x8e\x01\n\x0b\x63om.user.v1B\tUserProtoP\x01Z7github.com/provsalt/DOP_P01_Team1/common/user/v1;userv1\xa2\x02\x03UXX\xaa\x02\x07User.V1\xca\x02\x07User\\V1\xe2\x02\x13User\\V1\\GPBMetadata\xea\x02\x08User::V1b\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -32,8 +32,8 @@ _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'user.v1.user_pb2', _globals
 if not _descriptor._USE_C_DESCRIPTORS:
   _globals['DESCRIPTOR']._loaded_options = None
   _globals['DESCRIPTOR']._serialized_options = b'\n\013com.user.v1B\tUserProtoP\001Z7github.com/provsalt/DOP_P01_Team1/common/user/v1;userv1\242\002\003UXX\252\002\007User.V1\312\002\007User\\V1\342\002\023User\\V1\\GPBMetadata\352\002\010User::V1'
-  _globals['_ROLE']._serialized_start=765
-  _globals['_ROLE']._serialized_end=824
+  _globals['_ROLE']._serialized_start=843
+  _globals['_ROLE']._serialized_end=902
   _globals['_USER']._serialized_start=31
   _globals['_USER']._serialized_end=116
   _globals['_CREATEUSERREQUEST']._serialized_start=118
@@ -56,6 +56,10 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_DELETEUSERBYIDREQUEST']._serialized_end=711
   _globals['_DELETEUSERBYIDRESPONSE']._serialized_start=713
   _globals['_DELETEUSERBYIDRESPONSE']._serialized_end=763
-  _globals['_USERSERVICE']._serialized_start=827
-  _globals['_USERSERVICE']._serialized_end=1227
+  _globals['_LISTUSERSREQUEST']._serialized_start=765
+  _globals['_LISTUSERSREQUEST']._serialized_end=783
+  _globals['_LISTUSERSRESPONSE']._serialized_start=785
+  _globals['_LISTUSERSRESPONSE']._serialized_end=841
+  _globals['_USERSERVICE']._serialized_start=905
+  _globals['_USERSERVICE']._serialized_end=1373
 # @@protoc_insertion_point(module_scope)

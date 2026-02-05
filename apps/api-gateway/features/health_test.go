@@ -94,6 +94,10 @@ func (m *mockUserClient) DeleteAccount(_ context.Context, _ *userv1.DeleteUserBy
 	return &userv1.DeleteUserByIdResponse{Success: true}, nil
 }
 
+func (m *mockUserClient) ListUsers(_ context.Context, _ *userv1.ListUsersRequest) (*userv1.ListUsersResponse, error) {
+	return &userv1.ListUsersResponse{Users: []*userv1.User{}}, nil
+}
+
 func (m *mockUserClient) Close() error {
 	return nil
 }

@@ -18,6 +18,7 @@ import (
 type mockUserClient struct {
 	getUserFunc       func(ctx context.Context, req *userv1.GetUserRequest) (*userv1.GetUserResponse, error)
 	deleteAccountFunc func(ctx context.Context, req *userv1.DeleteUserByIdRequest) (*userv1.DeleteUserByIdResponse, error)
+	listUsersFunc     func(ctx context.Context, req *userv1.ListUsersRequest) (*userv1.ListUsersResponse, error)
 }
 
 func (m *mockUserClient) GetUser(ctx context.Context, req *userv1.GetUserRequest) (*userv1.GetUserResponse, error) {
@@ -30,6 +31,13 @@ func (m *mockUserClient) GetUser(ctx context.Context, req *userv1.GetUserRequest
 func (m *mockUserClient) DeleteAccount(ctx context.Context, req *userv1.DeleteUserByIdRequest) (*userv1.DeleteUserByIdResponse, error) {
 	if m.deleteAccountFunc != nil {
 		return m.deleteAccountFunc(ctx, req)
+	}
+	return nil, errors.New("not implemented")
+}
+
+func (m *mockUserClient) ListUsers(ctx context.Context, req *userv1.ListUsersRequest) (*userv1.ListUsersResponse, error) {
+	if m.listUsersFunc != nil {
+		return m.listUsersFunc(ctx, req)
 	}
 	return nil, errors.New("not implemented")
 }

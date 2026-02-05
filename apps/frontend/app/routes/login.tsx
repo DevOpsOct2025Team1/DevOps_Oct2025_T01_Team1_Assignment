@@ -5,11 +5,14 @@ import { useLogin } from "../api/generated";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
+import { authApi } from "../utils/api";
 
 export default function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [healthStatus, setHealthStatus] = useState("");
+  const [healthChecking, setHealthChecking] = useState(false);
   const navigate = useNavigate();
   const { setAuth, isAuthenticated } = useAuth();
   const loginMutation = useLogin();
@@ -25,12 +28,14 @@ export default function Login() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setHealthStatus("");
 
     if (!username.trim() || !password.trim()) {
       setError("Username and password are required");
       return;
     }
 
+    // TODO: ENDPOINTS - Login endpoint: POST /api/login
     try {
       const response = await loginMutation.mutateAsync({
         data: {
@@ -70,6 +75,21 @@ export default function Login() {
       } else {
         setError("Login failed. Please try again.");
       }
+    }
+  };
+
+  // TODO: ENDPOINTS - Health check endpoint: GET /health
+  const handleHealthCheck = async () => {
+    setHealthChecking(true);
+    setHealthStatus("");
+    setError("");
+    try {
+      const response = await authApi.health();
+      setHealthStatus(`Backend is healthy: ${response.status}`);
+    } catch (err) {
+      setHealthStatus("Backend is unavailable or unhealthy");
+    } finally {
+      setHealthChecking(false);
     }
   };
 
@@ -118,12 +138,28 @@ export default function Login() {
               </div>
             )}
 
+            {healthStatus && (
+              <div className="text-sm text-primary bg-primary/10 p-3 rounded-md">
+                {healthStatus}
+              </div>
+            )}
+
             <Button
               type="submit"
               disabled={loginMutation.isPending}
               className="w-full"
             >
               {loginMutation.isPending ? "Logging in..." : "Login"}
+            </Button>
+
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleHealthCheck}
+              disabled={healthChecking}
+              className="w-full"
+            >
+              {healthChecking ? "Checking..." : "Check Backend Health"}
             </Button>
           </form>
         </CardContent>

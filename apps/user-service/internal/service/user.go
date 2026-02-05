@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"log"
 
 	userv1 "github.com/provsalt/DOP_P01_Team1/common/user/v1"
 	"github.com/provsalt/DOP_P01_Team1/user-service/internal/store"
@@ -71,6 +72,7 @@ func (s *UserServiceServer) GetUser(ctx context.Context, req *userv1.GetUserRequ
 		if errors.Is(err, store.ErrUserNotFound) {
 			return nil, status.Error(codes.NotFound, "user not found")
 		}
+		log.Printf("GetUser error for ID %s: %v", req.Id, err)
 		return nil, status.Error(codes.Internal, "failed to get user")
 	}
 
@@ -149,6 +151,26 @@ func (s *UserServiceServer) DeleteUser(ctx context.Context, req *userv1.DeleteUs
 		return nil, status.Error(codes.Internal, "failed to delete user")
 	}
 	return &userv1.DeleteUserByIdResponse{Success: true}, nil
+}
+
+func (s *UserServiceServer) ListUsers(ctx context.Context, req *userv1.ListUsersRequest) (*userv1.ListUsersResponse, error) {
+	users, err := s.store.ListUsers(ctx)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to list users")
+	}
+
+	var usersList []*userv1.User
+	for _, user := range users {
+		usersList = append(usersList, &userv1.User{
+			Id:       user.Id,
+			Username: user.Username,
+			Role:     stringToRole(user.Role),
+		})
+	}
+
+	return &userv1.ListUsersResponse{
+		Users: usersList,
+	}, nil
 }
 
 func roleToString(role userv1.Role) string {

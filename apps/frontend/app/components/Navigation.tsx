@@ -1,4 +1,4 @@
-import { useLocation } from "react-router";
+import { useLocation, Link } from "react-router";
 import { useState, useEffect } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { Badge } from "./ui/badge";
@@ -26,15 +26,18 @@ export default function Navigation() {
     ? (user.role === 2 ? "admin" : "user")
     : user.role;
 
+  const isAdmin = userRole === "admin";
+  const dashboardLink = isAdmin ? "/admin" : "/dashboard";
+
   return (
     <nav className="bg-background shadow-sm border-b">
       <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
         <div className="flex items-center space-x-4">
           <span className="font-semibold text-lg">DevOps App</span>
           <Separator orientation="vertical" className="h-6" />
-          <a href="/dashboard" className="text-primary hover:text-primary/80 font-medium">
-            {userRole === "admin" ? "Admin Dashboard" : "Dashboard"}
-          </a>
+          <Link to={dashboardLink} className="text-primary hover:text-primary/80 font-medium">
+            {isAdmin ? "Admin Dashboard" : "Dashboard"}
+          </Link>
         </div>
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
@@ -48,7 +51,7 @@ export default function Navigation() {
             size="sm"
             asChild
           >
-            <a href="/logout">Logout</a>
+            <Link to="/logout">Logout</Link>
           </Button>
         </div>
       </div>

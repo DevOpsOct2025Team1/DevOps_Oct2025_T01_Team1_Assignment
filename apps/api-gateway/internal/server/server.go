@@ -23,7 +23,7 @@ func New(authClient handlers.AuthServiceClient, userClient handlers.UserServiceC
 	router.Use(otelgin.Middleware("api-gateway"))
 
 	router.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:5173", "http://localhost:3000"},
+		AllowOrigins:     []string{"http://localhost:5173", "http://localhost:5174", "http://localhost:3000"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
 		ExposeHeaders:    []string{"Content-Length"},
@@ -46,8 +46,9 @@ func (s *Server) setupRoutes(cfg *config.Config) {
 
 	s.Router.POST("/api/login", authHandler.Login)
 
+	s.Router.GET("/api/admin", middleware.ValidateRole(s.authClient, []userv1.Role{userv1.Role_ROLE_ADMIN}), userHandler.ListUsers)
 	s.Router.POST("/api/admin/create_user", middleware.ValidateRole(s.authClient, []userv1.Role{userv1.Role_ROLE_ADMIN}), authHandler.SignUp)
-	s.Router.DELETE("/api/admin/delete_user", middleware.ValidateRole(s.authClient, []userv1.Role{userv1.Role_ROLE_ADMIN}), userHandler.DeleteUser)
+	s.Router.DELETE("/api/admin/delete_user/:id", middleware.ValidateRole(s.authClient, []userv1.Role{userv1.Role_ROLE_ADMIN}), userHandler.DeleteUser)
 
 	s.Router.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{"status": "ok"})

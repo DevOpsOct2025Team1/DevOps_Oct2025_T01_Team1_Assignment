@@ -59,17 +59,29 @@ func (u *UserStore) GetUserByID(ctx context.Context, id string) (*User, error) {
 		return nil, ErrUserNotFound
 	}
 
-	var user User
-	err = collection.FindOne(ctx, bson.M{"_id": oid}).Decode(&user)
+	var result struct {
+		ID             bson.ObjectID `bson:"_id"`
+		Username       string        `bson:"username"`
+		HashedPassword string        `bson:"hashedPassword"`
+		Role           string        `bson:"role"`
+	}
+
+	err = collection.FindOne(ctx, bson.M{"_id": oid}).Decode(&result)
 	if err != nil {
-		if err == mongo.ErrNoDocuments {
+		if errors.Is(err, mongo.ErrNoDocuments) {
 			return nil, ErrUserNotFound
 		}
 		return nil, err
 	}
 
-	user.Id = oid.Hex()
-	return &user, nil
+	user := &User{
+		Id:             result.ID.Hex(),
+		Username:       result.Username,
+		HashedPassword: result.HashedPassword,
+		Role:           result.Role,
+	}
+
+	return user, nil
 }
 
 func (u *UserStore) GetUserByUsername(ctx context.Context, username string) (*User, error) {
@@ -113,4 +125,35 @@ func (u *UserStore) DeleteUserByID(ctx context.Context, id string) error {
 		return ErrUserNotFound
 	}
 	return err
+}
+
+func (u *UserStore) ListUsers(ctx context.Context) ([]*User, error) {
+	collection := u.database.Collection("users")
+
+	cursor, err := collection.Find(ctx, bson.M{})
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var users []*User
+	for cursor.Next(ctx) {
+		var result struct {
+			ID             bson.ObjectID `bson:"_id"`
+			Username       string        `bson:"username"`
+			HashedPassword string        `bson:"hashedPassword"`
+			Role           string        `bson:"role"`
+		}
+		if err := cursor.Decode(&result); err != nil {
+			continue
+		}
+		users = append(users, &User{
+			Id:             result.ID.Hex(),
+			Username:       result.Username,
+			HashedPassword: result.HashedPassword,
+			Role:           result.Role,
+		})
+	}
+
+	return users, nil
 }
