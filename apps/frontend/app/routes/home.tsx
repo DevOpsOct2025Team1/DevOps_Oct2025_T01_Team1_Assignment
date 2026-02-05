@@ -15,7 +15,7 @@ export default function Home() {
 
   useEffect(() => {
     navigate("/login");
-  }, []);
+  }, [navigate]);
 
   return (
     <div className="flex-1 flex items-center justify-center bg-gray-50">

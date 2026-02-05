@@ -22,8 +22,7 @@ export default function Login() {
     if (isAuthenticated) {
       navigate("/dashboard");
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuthenticated]);
+  }, [isAuthenticated, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

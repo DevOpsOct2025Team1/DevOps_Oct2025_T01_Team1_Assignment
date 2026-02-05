@@ -74,6 +74,29 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@0.33.1
+        with:
+          image-ref: ${{ steps.meta.outputs.image-name }}:dev
+          format: 'sarif'
+          output: 'trivy-results-${{ matrix.service }}.sarif'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Upload Trivy results
+        uses: github/codeql-action/upload-sarif@v4
+        if: always()
+        with:
+          sarif_file: 'trivy-results-${{ matrix.service }}.sarif'
+          category: 'trivy-${{ matrix.service }}'
+
+      - name: Output Trivy scanner table
+        uses: aquasecurity/trivy-action@0.33.1
+        with:
+          image-ref: ${{ steps.meta.outputs.image-name }}:dev
+          format: 'table'
+          exit-code: '1'
+          severity: 'CRITICAL'
+
       - name: Image published
         run: |
           echo "Published images for ${{ matrix.service }}:"

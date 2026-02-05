@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 	"errors"
+	"log"
 
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
@@ -145,6 +146,7 @@ func (u *UserStore) ListUsers(ctx context.Context) ([]*User, error) {
 			Role           string        `bson:"role"`
 		}
 		if err := cursor.Decode(&result); err != nil {
+			log.Printf("WARNING: Failed to decode user document in ListUsers: %v - potential data corruption", err)
 			continue
 		}
 		users = append(users, &User{

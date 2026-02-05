@@ -63,7 +63,17 @@ class ApiClient {
 
       return response.json();
     } catch (error) {
-      throw error;
+      // If error is already an ApiError, re-throw it
+      if (error && typeof error === 'object' && 'status' in error) {
+        throw error;
+      }
+      
+      // Transform network errors into ApiError format
+      console.error('Network error:', error);
+      throw {
+        message: error instanceof Error ? error.message : 'Network error occurred',
+        status: 0,
+      } as ApiError;
     }
   }
 

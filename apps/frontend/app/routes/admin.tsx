@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router';
 import { authApi } from '../utils/api';
 import type { User } from '../utils/api';
@@ -110,7 +110,7 @@ export default function Admin() {
     
     // Fetch users list
     fetchUsers();
-  }, [navigate]);
+  }, [navigate, fetchUsers]);
 
   useEffect(() => {
     const filtered = users.filter(u => {
@@ -121,7 +121,7 @@ export default function Admin() {
     setFilteredUsers(filtered);
   }, [searchQuery, roleFilter, users]);
 
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       setLoading(true);
       const response = await authApi.listUsers();
@@ -132,7 +132,7 @@ export default function Admin() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   const addAction = (action: Action) => {
     const newActions = [action, ...actions];
