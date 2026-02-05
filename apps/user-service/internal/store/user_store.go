@@ -152,9 +152,13 @@ func (u *UserStore) ListUsers(ctx context.Context) ([]*User, error) {
 		users = append(users, &User{
 			Id:             result.ID.Hex(),
 			Username:       result.Username,
-			HashedPassword: result.HashedPassword,
+			HashedPassword: "", // Don't return sensitive password data
 			Role:           result.Role,
 		})
+	}
+
+	if err := cursor.Err(); err != nil {
+		return nil, err
 	}
 
 	return users, nil

@@ -38,4 +38,32 @@ describe('Protected Routes', () => {
     expect(await findByPlaceholderText('Search uploaded files')).toBeTruthy();
     expect(await findByText('Presentation.pptx')).toBeTruthy();
   });
+
+  it('redirects admin users to admin dashboard', async () => {
+    localStorage.setItem('token', 'fake-token');
+    localStorage.setItem('user', JSON.stringify({
+      id: '2',
+      username: 'admin',
+      role: 'admin'
+    }));
+
+    const navigateMock = vi.fn();
+    vi.mock('react-router', async () => {
+      const actual = await vi.importActual('react-router');
+      return {
+        ...actual,
+        useNavigate: () => navigateMock,
+      };
+    });
+
+    renderWithProviders(
+      <BrowserRouter>
+        <Dashboard />
+      </BrowserRouter>
+    );
+
+    // Admin users should be redirected to /admin,
+    // so the dashboard content should not be visible
+    expect(navigateMock).toHaveBeenCalledWith('/admin');
+  });
 });

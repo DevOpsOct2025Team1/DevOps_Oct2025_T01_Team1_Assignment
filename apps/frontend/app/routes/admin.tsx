@@ -82,6 +82,10 @@ export default function Admin() {
   const [userToUpdate, setUserToUpdate] = useState<User | null>(null);
   const [newRole, setNewRole] = useState<string>('');
   const [changeRoleLoading, setChangeRoleLoading] = useState(false);
+  
+  // Error states
+  const [deleteError, setDeleteError] = useState<string>('');
+  const [roleError, setRoleError] = useState<string>('');
 
   const fetchUsers = useCallback(async () => {
     try {
@@ -176,8 +180,8 @@ export default function Admin() {
   const handleDeleteUser = async () => {
     if (!userToDelete) return;
 
-    console.log('Deleting user with ID:', userToDelete.id);
     setDeleteUserLoading(true);
+    setDeleteError('');
     try {
       await authApi.deleteUser(userToDelete.id);
       
@@ -192,7 +196,8 @@ export default function Admin() {
       fetchUsers();
     } catch (error) {
       console.error('Failed to delete user:', error);
-      console.error('User ID was:', userToDelete.id);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to delete user. Please try again.';
+      setDeleteError(errorMessage);
     } finally {
       setDeleteUserLoading(false);
     }
@@ -202,6 +207,7 @@ export default function Admin() {
     if (!userToUpdate || !newRole) return;
 
     setChangeRoleLoading(true);
+    setRoleError('');
     try {
       await authApi.updateUserRole({
         id: userToUpdate.id,
@@ -221,6 +227,8 @@ export default function Admin() {
       fetchUsers();
     } catch (error) {
       console.error('Failed to update user role:', error);
+      const errorMessage = error instanceof Error ? error.message : 'This feature is not yet implemented in the backend.';
+      setRoleError(errorMessage);
     } finally {
       setChangeRoleLoading(false);
     }
@@ -459,6 +467,11 @@ export default function Admin() {
               Are you sure you want to delete user "{userToDelete?.username}"? This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
+          {deleteError && (
+            <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded p-3">
+              {deleteError}
+            </div>
+          )}
           <DialogFooter>
             <Button
               variant="ghost"
@@ -487,6 +500,11 @@ export default function Admin() {
               Change the role of user "{userToUpdate?.username}" to {newRole === 'admin' ? 'Admin' : 'User'}.
             </DialogDescription>
           </DialogHeader>
+          {roleError && (
+            <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded p-3">
+              {roleError}
+            </div>
+          )}
           <DialogFooter>
             <Button
               variant="ghost"

@@ -47,9 +47,6 @@ func (h *UserHandler) DeleteUser(c *gin.Context) {
 		return
 	}
 
-	// Log the ID being deleted for debugging
-	c.Request.Header.Set("X-Delete-User-ID", req.Id)
-
 	currentUserVal, exists := c.Get("user")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "user not authenticated"})
@@ -86,7 +83,7 @@ func (h *UserHandler) DeleteUser(c *gin.Context) {
 
 	resp, err := h.client.DeleteAccount(c.Request.Context(), &userv1.DeleteUserByIdRequest{Id: req.Id})
 	if err != nil {
-		// Log the error for debugging
+		// Log the error with user ID for debugging
 		c.Error(err)
 		if st, ok := status.FromError(err); ok {
 			switch st.Code() {
