@@ -4,10 +4,23 @@ import Dashboard from '../app/routes/dashboard';
 import { renderWithProviders } from './test-utils';
 import { clearAuthCache } from '../app/utils/auth';
 
+// Mock navigate function
+const navigateMock = vi.fn();
+
+// Mock react-router's useNavigate hook
+vi.mock('react-router', async () => {
+  const actual = await vi.importActual('react-router');
+  return {
+    ...actual,
+    useNavigate: () => navigateMock,
+  };
+});
+
 describe('Protected Routes', () => {
   beforeEach(() => {
     clearAuthCache();
     localStorage.clear();
+    navigateMock.mockClear();
   });
 
   it('redirects to login when not authenticated', () => {
@@ -46,15 +59,6 @@ describe('Protected Routes', () => {
       username: 'admin',
       role: 'admin'
     }));
-
-    const navigateMock = vi.fn();
-    vi.mock('react-router', async () => {
-      const actual = await vi.importActual('react-router');
-      return {
-        ...actual,
-        useNavigate: () => navigateMock,
-      };
-    });
 
     renderWithProviders(
       <BrowserRouter>
