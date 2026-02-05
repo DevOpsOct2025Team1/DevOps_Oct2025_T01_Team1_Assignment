@@ -11,8 +11,6 @@ export default function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [healthStatus, setHealthStatus] = useState("");
-  const [healthChecking, setHealthChecking] = useState(false);
   const navigate = useNavigate();
   const { setAuth, isAuthenticated } = useAuth();
   const loginMutation = useLogin();
@@ -27,7 +25,6 @@ export default function Login() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    setHealthStatus("");
 
     if (!username.trim() || !password.trim()) {
       setError("Username and password are required");
@@ -77,21 +74,6 @@ export default function Login() {
     }
   };
 
-  // TODO: ENDPOINTS - Health check endpoint: GET /health
-  const handleHealthCheck = async () => {
-    setHealthChecking(true);
-    setHealthStatus("");
-    setError("");
-    try {
-      const response = await authApi.health();
-      setHealthStatus(`Backend is healthy: ${response.status}`);
-    } catch (err) {
-      setHealthStatus("Backend is unavailable or unhealthy");
-    } finally {
-      setHealthChecking(false);
-    }
-  };
-
   return (
     <div className="flex-1 flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
       <Card className="w-full max-w-md">
@@ -137,28 +119,12 @@ export default function Login() {
               </div>
             )}
 
-            {healthStatus && (
-              <div className="text-sm text-primary bg-primary/10 p-3 rounded-md">
-                {healthStatus}
-              </div>
-            )}
-
             <Button
               type="submit"
               disabled={loginMutation.isPending}
               className="w-full"
             >
               {loginMutation.isPending ? "Logging in..." : "Login"}
-            </Button>
-
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleHealthCheck}
-              disabled={healthChecking}
-              className="w-full"
-            >
-              {healthChecking ? "Checking..." : "Check Backend Health"}
             </Button>
           </form>
         </CardContent>
