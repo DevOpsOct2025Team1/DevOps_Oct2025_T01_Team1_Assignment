@@ -120,6 +120,7 @@ The frontend integrates with these API Gateway endpoints:
 
 - `POST /api/login` - User authentication
 - `POST /api/admin/create_user` - Create new user (admin only)
+- `GET /api/admin` - List all users (admin only)
 - `DELETE /api/admin/delete_user` - Delete user (admin only)
 - `GET /health` - Health check
 
