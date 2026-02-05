@@ -83,6 +83,19 @@ export default function Admin() {
   const [newRole, setNewRole] = useState<string>('');
   const [changeRoleLoading, setChangeRoleLoading] = useState(false);
 
+  const fetchUsers = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await authApi.listUsers();
+      setUsers(response.users);
+      setFilteredUsers(response.users);
+    } catch (error) {
+      console.error('Failed to fetch users:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     if (!isAuthenticated()) {
       navigate('/login');
@@ -120,19 +133,6 @@ export default function Admin() {
     });
     setFilteredUsers(filtered);
   }, [searchQuery, roleFilter, users]);
-
-  const fetchUsers = useCallback(async () => {
-    try {
-      setLoading(true);
-      const response = await authApi.listUsers();
-      setUsers(response.users);
-      setFilteredUsers(response.users);
-    } catch (error) {
-      console.error('Failed to fetch users:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
 
   const addAction = (action: Action) => {
     const newActions = [action, ...actions];
