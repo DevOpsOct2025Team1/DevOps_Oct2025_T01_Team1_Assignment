@@ -1,7 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
-import { authApi } from '../utils/api';
-import type { User } from '../utils/api';
+import { useCreateUser, useDeleteUser } from '../api/generated';
+import type { InternalHandlersUserResponse } from '../api/generated/model';
+import { useListUsers, useUpdateUserRole } from '../api/admin-hooks';
 import { getStoredUser as getStoredAuthUser, isAuthenticated, isAdmin } from '../utils/auth';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -57,48 +58,38 @@ function saveActions(actions: Action[]) {
 
 export default function Admin() {
   const navigate = useNavigate();
-  const [user, setUser] = useState<User | null>(null);
-  const [users, setUsers] = useState<User[]>([]);
-  const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
+  const [user, setUser] = useState<InternalHandlersUserResponse | null>(null);
+  const [filteredUsers, setFilteredUsers] = useState<InternalHandlersUserResponse[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState<'all' | 'admin' | 'user'>('all');
   const [actions, setActions] = useState<Action[]>([]);
-  const [loading, setLoading] = useState(true);
+  
+  // React Query hooks
+  const { data: usersData, isLoading: loading, refetch: refetchUsers } = useListUsers();
+  const createUserMutation = useCreateUser();
+  const deleteUserMutation = useDeleteUser();
+  const updateUserRoleMutation = useUpdateUserRole();
   
   // Add User Dialog
   const [addUserOpen, setAddUserOpen] = useState(false);
   const [newUsername, setNewUsername] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [addUserError, setAddUserError] = useState('');
-  const [addUserLoading, setAddUserLoading] = useState(false);
   
   // Delete User Dialog
   const [deleteUserOpen, setDeleteUserOpen] = useState(false);
-  const [userToDelete, setUserToDelete] = useState<User | null>(null);
-  const [deleteUserLoading, setDeleteUserLoading] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<InternalHandlersUserResponse | null>(null);
   
   // Change Role Dialog
   const [changeRoleOpen, setChangeRoleOpen] = useState(false);
-  const [userToUpdate, setUserToUpdate] = useState<User | null>(null);
+  const [userToUpdate, setUserToUpdate] = useState<InternalHandlersUserResponse | null>(null);
   const [newRole, setNewRole] = useState<string>('');
-  const [changeRoleLoading, setChangeRoleLoading] = useState(false);
   
   // Error states
   const [deleteError, setDeleteError] = useState<string>('');
   const [roleError, setRoleError] = useState<string>('');
 
-  const fetchUsers = useCallback(async () => {
-    try {
-      setLoading(true);
-      const response = await authApi.listUsers();
-      setUsers(response.users);
-      setFilteredUsers(response.users);
-    } catch (error) {
-      console.error('Failed to fetch users:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const users = usersData?.users || [];
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -124,14 +115,11 @@ export default function Admin() {
     
     // Load actions from localStorage
     setActions(loadActions());
-    
-    // Fetch users list
-    fetchUsers();
-  }, [navigate, fetchUsers]);
+  }, [navigate]);
 
   useEffect(() => {
     const filtered = users.filter(u => {
-      const matchesSearch = u.username.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesSearch = u.username?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false;
       const matchesRole = roleFilter === 'all' || u.role === roleFilter;
       return matchesSearch && matchesRole;
     });
@@ -153,70 +141,71 @@ export default function Admin() {
       return;
     }
 
-    setAddUserLoading(true);
     try {
-      const response = await authApi.createUser({
-        username: newUsername,
-        password: newPassword,
+      const response = await createUserMutation.mutateAsync({
+        data: {
+          username: newUsername,
+          password: newPassword,
+        },
       });
       
-      addAction({
-        type: 'create',
-        username: response.user.username,
-        timestamp: new Date(),
-      });
+      if (response.status === 200 && 'user' in response.data) {
+        addAction({
+          type: 'create',
+          username: response.data.user?.username || newUsername,
+          timestamp: new Date(),
+        });
+      }
       
       setNewUsername('');
       setNewPassword('');
       setAddUserOpen(false);
-      fetchUsers();
+      refetchUsers();
     } catch (err) {
       setAddUserError(err instanceof Error ? err.message : 'Failed to create user');
-    } finally {
-      setAddUserLoading(false);
     }
   };
 
   const handleDeleteUser = async () => {
-    if (!userToDelete) return;
+    if (!userToDelete?.id) return;
 
-    setDeleteUserLoading(true);
     setDeleteError('');
     try {
-      await authApi.deleteUser(userToDelete.id);
+      await deleteUserMutation.mutateAsync({
+        data: {
+          id: userToDelete.id,
+        },
+      });
       
       addAction({
         type: 'delete',
-        username: userToDelete.username,
+        username: userToDelete.username || 'unknown',
         timestamp: new Date(),
       });
       
       setDeleteUserOpen(false);
       setUserToDelete(null);
-      fetchUsers();
+      refetchUsers();
     } catch (error) {
       console.error('Failed to delete user:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to delete user. Please try again.';
       setDeleteError(errorMessage);
-    } finally {
-      setDeleteUserLoading(false);
     }
   };
 
   const handleChangeRole = async () => {
-    if (!userToUpdate || !newRole) return;
+    if (!userToUpdate?.id || !newRole) return;
 
-    setChangeRoleLoading(true);
     setRoleError('');
     try {
-      await authApi.updateUserRole({
+      await updateUserRoleMutation.mutateAsync({
         id: userToUpdate.id,
         role: newRole,
       });
       
       addAction({
         type: 'update',
-        username: userToUpdate.username,
+        username: userToUpdate.username || 'unknown',
         details: `Role changed to ${newRole}`,
         timestamp: new Date(),
       });
@@ -224,22 +213,20 @@ export default function Admin() {
       setChangeRoleOpen(false);
       setUserToUpdate(null);
       setNewRole('');
-      fetchUsers();
+      refetchUsers();
     } catch (error) {
       console.error('Failed to update user role:', error);
       const errorMessage = error instanceof Error ? error.message : 'This feature is not yet implemented in the backend.';
       setRoleError(errorMessage);
-    } finally {
-      setChangeRoleLoading(false);
     }
   };
 
-  const openDeleteDialog = (user: User) => {
+  const openDeleteDialog = (user: InternalHandlersUserResponse) => {
     setUserToDelete(user);
     setDeleteUserOpen(true);
   };
 
-  const openChangeRoleDialog = (user: User) => {
+  const openChangeRoleDialog = (user: InternalHandlersUserResponse) => {
     setUserToUpdate(user);
     setNewRole(user.role === 'admin' ? 'user' : 'admin');
     setChangeRoleOpen(true);
@@ -420,7 +407,7 @@ export default function Admin() {
                   type="text"
                   value={newUsername}
                   onChange={(e) => setNewUsername(e.target.value)}
-                  disabled={addUserLoading}
+                  disabled={createUserMutation.isPending}
                 />
               </div>
               <div>
@@ -432,7 +419,7 @@ export default function Admin() {
                   type="password"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  disabled={addUserLoading}
+                  disabled={createUserMutation.isPending}
                 />
               </div>
               {addUserError && (
@@ -446,12 +433,12 @@ export default function Admin() {
                 type="button"
                 variant="ghost"
                 onClick={() => setAddUserOpen(false)}
-                disabled={addUserLoading}
+                disabled={createUserMutation.isPending}
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={addUserLoading}>
-                {addUserLoading ? 'Creating...' : 'Create User'}
+              <Button type="submit" disabled={createUserMutation.isPending}>
+                {createUserMutation.isPending ? 'Creating...' : 'Create User'}
               </Button>
             </DialogFooter>
           </form>
@@ -476,16 +463,16 @@ export default function Admin() {
             <Button
               variant="ghost"
               onClick={() => setDeleteUserOpen(false)}
-              disabled={deleteUserLoading}
+              disabled={deleteUserMutation.isPending}
             >
               Cancel
             </Button>
             <Button
               onClick={handleDeleteUser}
-              disabled={deleteUserLoading}
+              disabled={deleteUserMutation.isPending}
               className="bg-red-600 hover:bg-red-700"
             >
-              {deleteUserLoading ? 'Deleting...' : 'Delete'}
+              {deleteUserMutation.isPending ? 'Deleting...' : 'Delete'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -509,12 +496,12 @@ export default function Admin() {
             <Button
               variant="ghost"
               onClick={() => setChangeRoleOpen(false)}
-              disabled={changeRoleLoading}
+              disabled={updateUserRoleMutation.isPending}
             >
               Cancel
             </Button>
-            <Button onClick={handleChangeRole} disabled={changeRoleLoading}>
-              {changeRoleLoading ? 'Updating...' : 'Change Role'}
+            <Button onClick={handleChangeRole} disabled={updateUserRoleMutation.isPending}>
+              {updateUserRoleMutation.isPending ? 'Updating...' : 'Change Role'}
             </Button>
           </DialogFooter>
         </DialogContent>
