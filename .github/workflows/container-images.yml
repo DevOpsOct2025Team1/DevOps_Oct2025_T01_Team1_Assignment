@@ -102,3 +102,10 @@ jobs:
           echo "Published images for ${{ matrix.service }}:"
           echo "- ${{ steps.meta.outputs.image-name }}:dev"
           echo "- ${{ steps.meta.outputs.image-name }}:main-${{ steps.meta.outputs.short-sha }}"
+
+  deploy-dev:
+    needs: build-dev
+    uses: ./.github/workflows/deploy.yml
+    with:
+      environment: dev
+    secrets: inherit

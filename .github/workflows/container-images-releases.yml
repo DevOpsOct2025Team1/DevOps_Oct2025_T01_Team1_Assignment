@@ -107,6 +107,13 @@ jobs:
           echo "- ${{ steps.meta.outputs.image-name }}:${{ steps.parse.outputs.version }}"
           echo "- ${{ steps.meta.outputs.image-name }}:staging"
 
+  deploy-staging:
+    needs: build-staging
+    uses: ./.github/workflows/deploy.yml
+    with:
+      environment: staging
+    secrets: inherit
+
   build-prod:
     if: "!endsWith(github.ref_name, '-staging')"
     runs-on: ubuntu-latest
@@ -228,3 +235,10 @@ jobs:
           echo "- ${{ steps.meta.outputs.image-name }}:${{ steps.parse.outputs.version }}"
           echo "- ${{ steps.meta.outputs.image-name }}:latest"
           echo "GitHub Release created: ${{ steps.parse.outputs.service }} v${{ steps.parse.outputs.version }}"
+
+  deploy-production:
+    needs: build-prod
+    uses: ./.github/workflows/deploy.yml
+    with:
+      environment: production
+    secrets: inherit
