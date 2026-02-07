@@ -40,7 +40,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.SignUpRequest"
+                            "$ref": "#/definitions/handlers.SignUpRequest"
                         }
                     }
                 ],
@@ -48,31 +48,31 @@ const docTemplate = `{
                     "200": {
                         "description": "User created successfully",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.AuthResponse"
+                            "$ref": "#/definitions/handlers.AuthResponse"
                         }
                     },
                     "400": {
                         "description": "Invalid request body",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized - missing or invalid token",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden - admin role required",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     }
                 }
@@ -103,7 +103,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.DeleteUserRequest"
+                            "$ref": "#/definitions/handlers.DeleteUserRequest"
                         }
                     }
                 ],
@@ -111,37 +111,104 @@ const docTemplate = `{
                     "200": {
                         "description": "User deleted successfully",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.DeleteUserResponse"
+                            "$ref": "#/definitions/handlers.DeleteUserResponse"
                         }
                     },
                     "400": {
                         "description": "Invalid request body or invalid user ID",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized - missing or invalid token",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden - cannot delete own account or admin accounts",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "User not found",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/admin/list_users": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Admin-only endpoint to list all users with optional role filter and username search",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin"
+                ],
+                "summary": "List all users",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Filter by role (admin or user)",
+                        "name": "role",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Search by username (partial match)",
+                        "name": "username",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of users",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid role parameter",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - missing or invalid token",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     }
                 }
@@ -167,7 +234,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.LoginRequest"
+                            "$ref": "#/definitions/handlers.LoginRequest"
                         }
                     }
                 ],
@@ -175,19 +242,25 @@ const docTemplate = `{
                     "200": {
                         "description": "Login successful",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.AuthResponse"
+                            "$ref": "#/definitions/handlers.AuthResponse"
                         }
                     },
                     "400": {
                         "description": "Invalid request body",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid credentials",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
                     "500": {
-                        "description": "Invalid credentials or server error",
+                        "description": "Server error",
                         "schema": {
-                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                            "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     }
                 }
@@ -195,7 +268,7 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "internal_handlers.AuthResponse": {
+        "handlers.AuthResponse": {
             "type": "object",
             "properties": {
                 "token": {
@@ -203,11 +276,11 @@ const docTemplate = `{
                     "example": "jwt-token-123"
                 },
                 "user": {
-                    "$ref": "#/definitions/internal_handlers.UserResponse"
+                    "$ref": "#/definitions/handlers.UserResponse"
                 }
             }
         },
-        "internal_handlers.DeleteUserRequest": {
+        "handlers.DeleteUserRequest": {
             "type": "object",
             "required": [
                 "id"
@@ -219,7 +292,7 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_handlers.DeleteUserResponse": {
+        "handlers.DeleteUserResponse": {
             "type": "object",
             "properties": {
                 "success": {
@@ -228,7 +301,7 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_handlers.ErrorResponse": {
+        "handlers.ErrorResponse": {
             "type": "object",
             "properties": {
                 "error": {
@@ -237,7 +310,7 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_handlers.LoginRequest": {
+        "handlers.LoginRequest": {
             "type": "object",
             "required": [
                 "password",
@@ -254,7 +327,7 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_handlers.SignUpRequest": {
+        "handlers.SignUpRequest": {
             "type": "object",
             "required": [
                 "password",
@@ -271,7 +344,7 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_handlers.UserResponse": {
+        "handlers.UserResponse": {
             "type": "object",
             "properties": {
                 "id": {
