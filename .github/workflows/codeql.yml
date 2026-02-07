@@ -1,10 +1,12 @@
 name: CodeQL SAST Scan
 
 on:
-  pull_request:
   push:
-    branches:
-      - main
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
 
 jobs:
   analyze:
