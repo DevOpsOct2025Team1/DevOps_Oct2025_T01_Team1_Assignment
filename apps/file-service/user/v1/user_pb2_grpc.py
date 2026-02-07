@@ -39,6 +39,11 @@ class UserServiceStub(object):
                 request_serializer=user_dot_v1_dot_user__pb2.DeleteUserByIdRequest.SerializeToString,
                 response_deserializer=user_dot_v1_dot_user__pb2.DeleteUserByIdResponse.FromString,
                 _registered_method=True)
+        self.ListUsers = channel.unary_unary(
+                '/user.v1.UserService/ListUsers',
+                request_serializer=user_dot_v1_dot_user__pb2.ListUsersRequest.SerializeToString,
+                response_deserializer=user_dot_v1_dot_user__pb2.ListUsersResponse.FromString,
+                _registered_method=True)
 
 
 class UserServiceServicer(object):
@@ -74,6 +79,12 @@ class UserServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def ListUsers(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_UserServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -101,6 +112,11 @@ def add_UserServiceServicer_to_server(servicer, server):
                     servicer.DeleteUser,
                     request_deserializer=user_dot_v1_dot_user__pb2.DeleteUserByIdRequest.FromString,
                     response_serializer=user_dot_v1_dot_user__pb2.DeleteUserByIdResponse.SerializeToString,
+            ),
+            'ListUsers': grpc.unary_unary_rpc_method_handler(
+                    servicer.ListUsers,
+                    request_deserializer=user_dot_v1_dot_user__pb2.ListUsersRequest.FromString,
+                    response_serializer=user_dot_v1_dot_user__pb2.ListUsersResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -238,6 +254,33 @@ class UserService(object):
             '/user.v1.UserService/DeleteUser',
             user_dot_v1_dot_user__pb2.DeleteUserByIdRequest.SerializeToString,
             user_dot_v1_dot_user__pb2.DeleteUserByIdResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def ListUsers(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/user.v1.UserService/ListUsers',
+            user_dot_v1_dot_user__pb2.ListUsersRequest.SerializeToString,
+            user_dot_v1_dot_user__pb2.ListUsersResponse.FromString,
             options,
             channel_credentials,
             insecure,
