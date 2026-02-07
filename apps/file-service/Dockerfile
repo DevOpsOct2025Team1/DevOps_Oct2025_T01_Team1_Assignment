@@ -2,15 +2,15 @@ FROM ghcr.io/astral-sh/uv:python3.11-bookworm-slim AS builder
 
 WORKDIR /build
 
-COPY pyproject.toml .
-COPY uv.lock* .
+COPY apps/file-service/pyproject.toml .
+COPY apps/file-service/uv.lock* .
 
 RUN uv sync --frozen --no-dev --no-install-project
 
-COPY file_service ./file_service
-COPY user ./user
-COPY auth ./auth
-COPY file ./file
+COPY apps/file-service/file_service ./file_service
+COPY apps/file-service/user ./user
+COPY apps/file-service/auth ./auth
+COPY apps/file-service/file ./file
 
 RUN uv sync --frozen --no-dev
 
