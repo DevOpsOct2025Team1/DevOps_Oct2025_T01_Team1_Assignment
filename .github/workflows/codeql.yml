@@ -12,6 +12,11 @@ jobs:
   analyze:
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
+
     strategy:
       matrix:
         language: [ 'go', 'javascript' ]
@@ -32,8 +37,14 @@ jobs:
       - name: Build Go workspace
         if: matrix.language == 'go'
         run: |
+          cd "$GITHUB_WORKSPACE"
           go work sync
-          go test ./... -run TestNonExistent
+          go test \
+            ./apps/api-gateway/... \
+            ./apps/auth-service/... \
+            ./apps/common/... \
+            ./apps/user-service/... \
+            -run TestNonExistent
 
       - name: Setup Node.js
         if: matrix.language == 'javascript'
@@ -41,11 +52,15 @@ jobs:
         with:
           node-version: "24"
 
+      - name: Setup Bun
+        if: matrix.language == 'javascript'
+        uses: oven-sh/setup-bun@v2
+
       - name: Install frontend deps
         if: matrix.language == 'javascript'
         run: |
           cd apps/frontend
-          npm install
+          bun install --frozen-lockfile
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
