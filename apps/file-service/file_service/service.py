@@ -1,10 +1,12 @@
 import time
+import io
 from bson import ObjectId
 from bson.errors import InvalidId
 import grpc
-
+from botocore.exceptions import ClientError
 from file.v1 import file_pb2, file_pb2_grpc
-from file_service.store import files_collection
+from file_service.store import files_collection, s3_client, generate_s3_key
+from file_service.config import S3_BUCKET_NAME
 
 
 def get_user_id(context):
@@ -17,29 +19,68 @@ def get_user_id(context):
 
 class FileService(file_pb2_grpc.FileServiceServicer):
 
-    def CreateFile(self, request, context):
+    def UploadFile(self, request_iterator, context):
+        """Stream upload file to S3 and save metadata."""
         user_id = get_user_id(context)
-
-        doc = {
-            "user_id": user_id,
-            "filename": request.filename,
-            "size": request.size,
-            "content_type": request.content_type,
-            "created_at": int(time.time())
-        }
-
-        result = files_collection.insert_one(doc)
-
-        return file_pb2.FileResponse(
-            file=file_pb2.File(
-                id=str(result.inserted_id),
-                user_id=user_id,
-                filename=doc["filename"],
-                size=doc["size"],
-                content_type=doc["content_type"],
-                created_at=doc["created_at"]
+        
+        # First message should contain metadata
+        try:
+            first_request = next(request_iterator)
+            if not first_request.HasField("metadata"):
+                context.abort(grpc.StatusCode.INVALID_ARGUMENT, "First message must contain metadata")
+            
+            metadata = first_request.metadata
+            filename = metadata.filename
+            content_type = metadata.content_type or "application/octet-stream"
+            
+            # Generate unique file ID and S3 key
+            file_id = str(ObjectId())
+            s3_key = generate_s3_key(user_id, file_id, filename)
+            
+            # Collect file chunks
+            file_buffer = io.BytesIO()
+            for request in request_iterator:
+                if request.HasField("chunk"):
+                    file_buffer.write(request.chunk)
+            
+            # Upload to S3
+            file_buffer.seek(0)
+            file_size = file_buffer.getbuffer().nbytes
+            
+            try:
+                s3_client.upload_fileobj(
+                    file_buffer,
+                    S3_BUCKET_NAME,
+                    s3_key,
+                    ExtraArgs={'ContentType': content_type}
+                )
+            except ClientError as e:
+                context.abort(grpc.StatusCode.INTERNAL, f"Failed to upload file to S3: {str(e)}")
+            
+            # Save metadata to MongoDB
+            doc = {
+                "_id": ObjectId(file_id),
+                "user_id": user_id,
+                "filename": filename,
+                "size": file_size,
+                "content_type": content_type,
+                "s3_key": s3_key,
+                "created_at": int(time.time())
+            }
+            files_collection.insert_one(doc)
+            
+            return file_pb2.FileResponse(
+                file=file_pb2.File(
+                    id=file_id,
+                    user_id=user_id,
+                    filename=filename,
+                    size=file_size,
+                    content_type=content_type,
+                    created_at=doc["created_at"]
+                )
             )
-        )
+        except StopIteration:
+            context.abort(grpc.StatusCode.INVALID_ARGUMENT, "Empty upload stream")
 
     def ListFiles(self, request, context):
         user_id = get_user_id(context)
@@ -81,11 +122,66 @@ class FileService(file_pb2_grpc.FileServiceServicer):
             )
         )
 
+
+    def DownloadFile(self, request, context):
+        """Stream download file from S3."""
+        user_id = get_user_id(context)
+        
+        try:
+            doc = files_collection.find_one({"_id": ObjectId(request.id), "user_id": user_id})
+        except InvalidId:
+            context.abort(grpc.StatusCode.INVALID_ARGUMENT, "Invalid file id format")
+        
+        if not doc:
+            context.abort(grpc.StatusCode.NOT_FOUND, "File not found")
+        
+        s3_key = doc.get("s3_key")
+        if not s3_key:
+            context.abort(grpc.StatusCode.INTERNAL, "File metadata missing S3 key")
+        
+        try:
+            # First, yield metadata
+            yield file_pb2.DownloadFileResponse(
+                metadata=file_pb2.DownloadFileMetadata(
+                    filename=doc["filename"],
+                    content_type=doc["content_type"],
+                    size=doc["size"]
+                )
+            )
+            
+            # Stream file from S3 in chunks
+            response = s3_client.get_object(Bucket=S3_BUCKET_NAME, Key=s3_key)
+            chunk_size = 64 * 1024  # 64KB chunks
+            
+            while True:
+                chunk = response['Body'].read(chunk_size)
+                if not chunk:
+                    break
+                yield file_pb2.DownloadFileResponse(chunk=chunk)
+                
+        except ClientError as e:
+            context.abort(grpc.StatusCode.INTERNAL, f"Failed to download file from S3: {str(e)}")
+
     def DeleteFile(self, request, context):
         user_id = get_user_id(context)
 
         try:
-            res = files_collection.delete_one({"_id": ObjectId(request.id), "user_id": user_id})
+            doc = files_collection.find_one({"_id": ObjectId(request.id), "user_id": user_id})
         except InvalidId:
             context.abort(grpc.StatusCode.INVALID_ARGUMENT, "Invalid file id format")
+        
+        if not doc:
+            return file_pb2.DeleteFileResponse(success=False)
+        
+        # Delete from S3 if s3_key exists
+        s3_key = doc.get("s3_key")
+        if s3_key:
+            try:
+                s3_client.delete_object(Bucket=S3_BUCKET_NAME, Key=s3_key)
+            except ClientError as e:
+                # Log error but continue with MongoDB deletion
+                print(f"Warning: Failed to delete file from S3: {str(e)}")
+        
+        # Delete from MongoDB
+        res = files_collection.delete_one({"_id": ObjectId(request.id), "user_id": user_id})
         return file_pb2.DeleteFileResponse(success=res.deleted_count == 1)

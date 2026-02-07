@@ -24,7 +24,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x12\x66ile/v1/file.proto\x12\x07\x66ile.v1\"\xa1\x01\n\x04\x46ile\x12\x0e\n\x02id\x18\x01 \x01(\tR\x02id\x12\x17\n\x07user_id\x18\x02 \x01(\tR\x06userId\x12\x1a\n\x08\x66ilename\x18\x03 \x01(\tR\x08\x66ilename\x12\x12\n\x04size\x18\x04 \x01(\x03R\x04size\x12!\n\x0c\x63ontent_type\x18\x05 \x01(\tR\x0b\x63ontentType\x12\x1d\n\ncreated_at\x18\x06 \x01(\x03R\tcreatedAt\"\x7f\n\x11\x43reateFileRequest\x12\x1a\n\x08\x66ilename\x18\x01 \x01(\tR\x08\x66ilename\x12\x17\n\x07user_id\x18\x02 \x01(\tR\x06userId\x12\x12\n\x04size\x18\x03 \x01(\x03R\x04size\x12!\n\x0c\x63ontent_type\x18\x04 \x01(\tR\x0b\x63ontentType\" \n\x0eGetFileRequest\x12\x0e\n\x02id\x18\x01 \x01(\tR\x02id\"+\n\x10ListFilesRequest\x12\x17\n\x07user_id\x18\x01 \x01(\tR\x06userId\"8\n\x11ListFilesResponse\x12#\n\x05\x66iles\x18\x01 \x03(\x0b\x32\r.file.v1.FileR\x05\x66iles\"1\n\x0c\x46ileResponse\x12!\n\x04\x66ile\x18\x01 \x01(\x0b\x32\r.file.v1.FileR\x04\x66ile\"#\n\x11\x44\x65leteFileRequest\x12\x0e\n\x02id\x18\x01 \x01(\tR\x02id\".\n\x12\x44\x65leteFileResponse\x12\x18\n\x07success\x18\x01 \x01(\x08R\x07success2\x94\x02\n\x0b\x46ileService\x12?\n\nCreateFile\x12\x1a.file.v1.CreateFileRequest\x1a\x15.file.v1.FileResponse\x12\x42\n\tListFiles\x12\x19.file.v1.ListFilesRequest\x1a\x1a.file.v1.ListFilesResponse\x12\x39\n\x07GetFile\x12\x17.file.v1.GetFileRequest\x1a\x15.file.v1.FileResponse\x12\x45\n\nDeleteFile\x12\x1a.file.v1.DeleteFileRequest\x1a\x1b.file.v1.DeleteFileResponseB\x8e\x01\n\x0b\x63om.file.v1B\tFileProtoP\x01Z7github.com/provsalt/DOP_P01_Team1/common/file/v1;filev1\xa2\x02\x03\x46XX\xaa\x02\x07\x46ile.V1\xca\x02\x07\x46ile\\V1\xe2\x02\x13\x46ile\\V1\\GPBMetadata\xea\x02\x08\x46ile::V1b\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x12\x66ile/v1/file.proto\x12\x07\x66ile.v1\"\xa1\x01\n\x04\x46ile\x12\x0e\n\x02id\x18\x01 \x01(\tR\x02id\x12\x17\n\x07user_id\x18\x02 \x01(\tR\x06userId\x12\x1a\n\x08\x66ilename\x18\x03 \x01(\tR\x08\x66ilename\x12\x12\n\x04size\x18\x04 \x01(\x03R\x04size\x12!\n\x0c\x63ontent_type\x18\x05 \x01(\tR\x0b\x63ontentType\x12\x1d\n\ncreated_at\x18\x06 \x01(\x03R\tcreatedAt\"\x7f\n\x11\x43reateFileRequest\x12\x1a\n\x08\x66ilename\x18\x01 \x01(\tR\x08\x66ilename\x12\x17\n\x07user_id\x18\x02 \x01(\tR\x06userId\x12\x12\n\x04size\x18\x03 \x01(\x03R\x04size\x12!\n\x0c\x63ontent_type\x18\x04 \x01(\tR\x0b\x63ontentType\"9\n\x0eGetFileRequest\x12\x0e\n\x02id\x18\x01 \x01(\tR\x02id\x12\x17\n\x07user_id\x18\x02 \x01(\tR\x06userId\"+\n\x10ListFilesRequest\x12\x17\n\x07user_id\x18\x01 \x01(\tR\x06userId\"8\n\x11ListFilesResponse\x12#\n\x05\x66iles\x18\x01 \x03(\x0b\x32\r.file.v1.FileR\x05\x66iles\"1\n\x0c\x46ileResponse\x12!\n\x04\x66ile\x18\x01 \x01(\x0b\x32\r.file.v1.FileR\x04\x66ile\"<\n\x11\x44\x65leteFileRequest\x12\x0e\n\x02id\x18\x01 \x01(\tR\x02id\x12\x17\n\x07user_id\x18\x02 \x01(\tR\x06userId\".\n\x12\x44\x65leteFileResponse\x12\x18\n\x07success\x18\x01 \x01(\x08R\x07success\"n\n\x11UploadFileRequest\x12\x39\n\x08metadata\x18\x01 \x01(\x0b\x32\x1b.file.v1.UploadFileMetadataH\x00R\x08metadata\x12\x16\n\x05\x63hunk\x18\x02 \x01(\x0cH\x00R\x05\x63hunkB\x06\n\x04\x64\x61ta\"S\n\x12UploadFileMetadata\x12\x1a\n\x08\x66ilename\x18\x01 \x01(\tR\x08\x66ilename\x12!\n\x0c\x63ontent_type\x18\x02 \x01(\tR\x0b\x63ontentType\"%\n\x13\x44ownloadFileRequest\x12\x0e\n\x02id\x18\x01 \x01(\tR\x02id\"s\n\x14\x44ownloadFileResponse\x12;\n\x08metadata\x18\x01 \x01(\x0b\x32\x1d.file.v1.DownloadFileMetadataH\x00R\x08metadata\x12\x16\n\x05\x63hunk\x18\x02 \x01(\x0cH\x00R\x05\x63hunkB\x06\n\x04\x64\x61ta\"i\n\x14\x44ownloadFileMetadata\x12\x1a\n\x08\x66ilename\x18\x01 \x01(\tR\x08\x66ilename\x12!\n\x0c\x63ontent_type\x18\x02 \x01(\tR\x0b\x63ontentType\x12\x12\n\x04size\x18\x03 \x01(\x03R\x04size2\xa6\x03\n\x0b\x46ileService\x12\x41\n\nUploadFile\x12\x1a.file.v1.UploadFileRequest\x1a\x15.file.v1.FileResponse(\x01\x12?\n\nCreateFile\x12\x1a.file.v1.CreateFileRequest\x1a\x15.file.v1.FileResponse\x12\x42\n\tListFiles\x12\x19.file.v1.ListFilesRequest\x1a\x1a.file.v1.ListFilesResponse\x12\x39\n\x07GetFile\x12\x17.file.v1.GetFileRequest\x1a\x15.file.v1.FileResponse\x12M\n\x0c\x44ownloadFile\x12\x1c.file.v1.DownloadFileRequest\x1a\x1d.file.v1.DownloadFileResponse0\x01\x12\x45\n\nDeleteFile\x12\x1a.file.v1.DeleteFileRequest\x1a\x1b.file.v1.DeleteFileResponseB\x8e\x01\n\x0b\x63om.file.v1B\tFileProtoP\x01Z7github.com/provsalt/DOP_P01_Team1/common/file/v1;filev1\xa2\x02\x03\x46XX\xaa\x02\x07\x46ile.V1\xca\x02\x07\x46ile\\V1\xe2\x02\x13\x46ile\\V1\\GPBMetadata\xea\x02\x08\x46ile::V1b\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -37,17 +37,27 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_CREATEFILEREQUEST']._serialized_start=195
   _globals['_CREATEFILEREQUEST']._serialized_end=322
   _globals['_GETFILEREQUEST']._serialized_start=324
-  _globals['_GETFILEREQUEST']._serialized_end=356
-  _globals['_LISTFILESREQUEST']._serialized_start=358
-  _globals['_LISTFILESREQUEST']._serialized_end=401
-  _globals['_LISTFILESRESPONSE']._serialized_start=403
-  _globals['_LISTFILESRESPONSE']._serialized_end=459
-  _globals['_FILERESPONSE']._serialized_start=461
-  _globals['_FILERESPONSE']._serialized_end=510
-  _globals['_DELETEFILEREQUEST']._serialized_start=512
-  _globals['_DELETEFILEREQUEST']._serialized_end=547
-  _globals['_DELETEFILERESPONSE']._serialized_start=549
-  _globals['_DELETEFILERESPONSE']._serialized_end=595
-  _globals['_FILESERVICE']._serialized_start=598
-  _globals['_FILESERVICE']._serialized_end=874
+  _globals['_GETFILEREQUEST']._serialized_end=381
+  _globals['_LISTFILESREQUEST']._serialized_start=383
+  _globals['_LISTFILESREQUEST']._serialized_end=426
+  _globals['_LISTFILESRESPONSE']._serialized_start=428
+  _globals['_LISTFILESRESPONSE']._serialized_end=484
+  _globals['_FILERESPONSE']._serialized_start=486
+  _globals['_FILERESPONSE']._serialized_end=535
+  _globals['_DELETEFILEREQUEST']._serialized_start=537
+  _globals['_DELETEFILEREQUEST']._serialized_end=597
+  _globals['_DELETEFILERESPONSE']._serialized_start=599
+  _globals['_DELETEFILERESPONSE']._serialized_end=645
+  _globals['_UPLOADFILEREQUEST']._serialized_start=647
+  _globals['_UPLOADFILEREQUEST']._serialized_end=757
+  _globals['_UPLOADFILEMETADATA']._serialized_start=759
+  _globals['_UPLOADFILEMETADATA']._serialized_end=842
+  _globals['_DOWNLOADFILEREQUEST']._serialized_start=844
+  _globals['_DOWNLOADFILEREQUEST']._serialized_end=881
+  _globals['_DOWNLOADFILERESPONSE']._serialized_start=883
+  _globals['_DOWNLOADFILERESPONSE']._serialized_end=998
+  _globals['_DOWNLOADFILEMETADATA']._serialized_start=1000
+  _globals['_DOWNLOADFILEMETADATA']._serialized_end=1105
+  _globals['_FILESERVICE']._serialized_start=1108
+  _globals['_FILESERVICE']._serialized_end=1530
 # @@protoc_insertion_point(module_scope)
