@@ -114,3 +114,44 @@ func (u *UserStore) DeleteUserByID(ctx context.Context, id string) error {
 	}
 	return err
 }
+
+func (u *UserStore) ListUsers(ctx context.Context, roleFilter string, usernameFilter string) ([]*User, error) {
+	collection := u.database.Collection("users")
+
+	filter := bson.M{}
+	if roleFilter != "" {
+		filter["role"] = roleFilter
+	}
+	if usernameFilter != "" {
+		filter["username"] = bson.M{"$regex": usernameFilter, "$options": "i"}
+	}
+
+	cursor, err := collection.Find(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var results []struct {
+		ID             bson.ObjectID `bson:"_id"`
+		Username       string        `bson:"username"`
+		HashedPassword string        `bson:"hashedPassword"`
+		Role           string        `bson:"role"`
+	}
+
+	if err := cursor.All(ctx, &results); err != nil {
+		return nil, err
+	}
+
+	users := make([]*User, len(results))
+	for i, result := range results {
+		users[i] = &User{
+			Id:             result.ID.Hex(),
+			Username:       result.Username,
+			HashedPassword: result.HashedPassword,
+			Role:           result.Role,
+		}
+	}
+
+	return users, nil
+}
