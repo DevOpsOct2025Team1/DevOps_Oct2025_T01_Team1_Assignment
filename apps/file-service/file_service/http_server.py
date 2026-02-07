@@ -5,12 +5,12 @@ from typing import List, Optional
 import uvicorn
 import grpc
 from contextlib import asynccontextmanager
-
-from file_service.service import FileService
+import anyio
 from file_service.auth_client import AuthClient
 from file_service.store import files_collection, s3_client, generate_s3_key
 from file_service.config import S3_BUCKET_NAME, HTTP_PORT
 from bson import ObjectId
+from bson.errors import InvalidId
 from botocore.exceptions import ClientError
 
 # Global auth client
@@ -24,14 +24,15 @@ async def lifespan(app: FastAPI):
     if auth_client:
         auth_client.close()
 
-app = FastAPI(lifespan=lifespan)
+allowed_origins = [
+    "http://localhost",
+    "http://localhost:3000",
+]
 
+app = FastAPI(lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Adjust for production
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=allowed_origins,  # Adjust for production
 )
 
 # Dependency to get current user
@@ -45,7 +46,7 @@ async def get_current_user(authorization: str = Header(None)):
 
     response = None
     if auth_client:
-        response = auth_client.validate_token(token)
+        response = await anyio.to_thread.run_sync(auth_client.validate_token, token)
     
     if not response or not response.valid:
         raise HTTPException(status_code=401, detail="Invalid token")
@@ -53,7 +54,7 @@ async def get_current_user(authorization: str = Header(None)):
     return response.user_id
 
 @app.post("/api/files")
-async def upload_file(file: UploadFile = File(...), user_id: str = Depends(get_current_user)):
+def upload_file(file: UploadFile = File(...), user_id: str = Depends(get_current_user)):
     try:
         file_id = str(ObjectId())
         filename = file.filename
@@ -115,8 +116,8 @@ async def list_files(user_id: str = Depends(get_current_user)):
 async def download_file(file_id: str, user_id: str = Depends(get_current_user)):
     try:
         doc = files_collection.find_one({"_id": ObjectId(file_id), "user_id": user_id})
-    except:
-         raise HTTPException(status_code=400, detail="Invalid file ID")
+    except InvalidId:
+        raise HTTPException(status_code=400, detail="Invalid file ID")
 
     if not doc:
         raise HTTPException(status_code=404, detail="File not found")
@@ -144,8 +145,8 @@ async def download_file(file_id: str, user_id: str = Depends(get_current_user)):
 async def delete_file(file_id: str, user_id: str = Depends(get_current_user)):
     try:
         doc = files_collection.find_one({"_id": ObjectId(file_id), "user_id": user_id})
-    except:
-         raise HTTPException(status_code=400, detail="Invalid file ID")
+    except InvalidId:
+        raise HTTPException(status_code=400, detail="Invalid file ID")
          
     if not doc:
         return JSONResponse(status_code=404, content={"error": "File not found"})

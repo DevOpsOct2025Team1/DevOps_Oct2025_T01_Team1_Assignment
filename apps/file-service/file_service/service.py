@@ -18,6 +18,38 @@ def get_user_id(context):
 
 
 class FileService(file_pb2_grpc.FileServiceServicer):
+    
+    def CreateFile(self, request, context):
+        user_id = get_user_id(context)
+
+        filename = request.filename
+        size = request.size
+        content_type = request.content_type or "application/octet-stream"
+
+        file_id = ObjectId()
+        s3_key = generate_s3_key(user_id, str(file_id), filename)
+
+        doc = {
+            "_id": file_id,
+            "user_id": user_id,
+            "filename": filename,
+            "size": size,
+            "content_type": content_type,
+            "s3_key": s3_key,
+            "created_at": int(time.time()),
+        }
+        result = files_collection.insert_one(doc)
+
+        return file_pb2.FileResponse(
+            file=file_pb2.File(
+                id=str(result.inserted_id),
+                user_id=user_id,
+                filename=filename,
+                size=size,
+                content_type=content_type,
+                created_at=doc["created_at"],
+            )
+        )
 
     def UploadFile(self, request_iterator, context):
         """Stream upload file to S3 and save metadata."""
