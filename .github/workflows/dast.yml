@@ -12,7 +12,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Start services
         run: |
@@ -31,10 +31,15 @@ jobs:
           echo "API Gateway not ready"
           exit 1
 
-      - name: OWASP ZAP Baseline Scan
-        uses: zaproxy/action-baseline@v0.15.0
+      - name: Update Swagger host for local scan
+        run: |
+          jq '.host = "localhost:3001"' apps/api-gateway/docs/swagger.json > /tmp/swagger.json
+
+      - name: OWASP ZAP API Scan
+        uses: zaproxy/action-api-scan@v0.10.0
         with:
-          target: "http://localhost:3001"
+          target: /tmp/swagger.json
+          format: openapi
           fail_action: true
 
       - name: Stop containers
