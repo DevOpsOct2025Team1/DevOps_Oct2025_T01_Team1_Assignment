@@ -5,9 +5,22 @@ import (
 	"testing"
 )
 
+func unsetenv(t *testing.T, key string) {
+	t.Helper()
+	prev, wasSet := os.LookupEnv(key)
+	_ = os.Unsetenv(key)
+	t.Cleanup(func() {
+		if wasSet {
+			_ = os.Setenv(key, prev)
+			return
+		}
+		_ = os.Unsetenv(key)
+	})
+}
+
 func TestLoad_RequiresMongoURI(t *testing.T) {
-	t.Setenv("PORT", "")
-	os.Unsetenv("MONGODB_URI")
+	unsetenv(t, "PORT")
+	unsetenv(t, "MONGODB_URI")
 
 	_, err := Load()
 	if err == nil {
@@ -17,9 +30,9 @@ func TestLoad_RequiresMongoURI(t *testing.T) {
 
 func TestLoad_Defaults(t *testing.T) {
 	t.Setenv("MONGODB_URI", "mongodb://localhost:27017")
-	os.Unsetenv("PORT")
-	os.Unsetenv("MONGODB_DATABASE")
-	os.Unsetenv("ENVIRONMENT")
+	unsetenv(t, "PORT")
+	unsetenv(t, "MONGODB_DATABASE")
+	unsetenv(t, "ENVIRONMENT")
 
 	cfg, err := Load()
 	if err != nil {

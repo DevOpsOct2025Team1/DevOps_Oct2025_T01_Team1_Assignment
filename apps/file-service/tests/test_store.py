@@ -1,4 +1,4 @@
-import importlib
+import sys
 from unittest.mock import MagicMock, Mock, patch
 
 
@@ -13,15 +13,15 @@ def test_store_uses_env_database_and_mongo_uri(monkeypatch):
     mock_client.__getitem__.return_value = mock_db
     mock_db.__getitem__.return_value = mock_collection
 
-    # Patch pymongo.MongoClient BEFORE reloading the module so module-level
+    # Patch pymongo.MongoClient BEFORE importing the module so module-level
     # initialization doesn't attempt a real connection.
     with patch("pymongo.MongoClient", return_value=mock_client) as mongo_cls:
-        import file_service.config as config
+        # Ensure a clean import so config/store read the monkeypatched env.
+        sys.modules.pop("file_service.store", None)
+        sys.modules.pop("file_service.config", None)
+
         import file_service.store as store
 
-        importlib.reload(config)
-        reloaded = importlib.reload(store)
-
         mongo_cls.assert_called_once_with("mongodb://example:27017")
-        assert reloaded.DB_NAME == "test_db"
-        assert reloaded.files_collection is mock_collection
+        assert store.DB_NAME == "test_db"
+        assert store.files_collection is mock_collection

@@ -4,35 +4,38 @@ from unittest.mock import Mock, patch
 def test_serve_wires_grpc_and_telemetry_without_running_real_server():
     server = Mock()
 
-    with patch("file_service.__main__.init_telemetry") as init_telemetry, patch(
-        "file_service.__main__.grpc.server", return_value=server
-    ) as grpc_server, patch(
-        "file_service.__main__.futures.ThreadPoolExecutor"
-    ) as executor_cls, patch(
-        "file_service.__main__.file_pb2_grpc.add_FileServiceServicer_to_server"
-    ) as add_servicer, patch(
-        "file_service.__main__.register_health"
-    ) as register_health, patch(
-        "file_service.__main__.SERVICE_PORT", 55555
-    ), patch(
-        "file_service.__main__.SERVICE_NAME", "file-service"
-    ), patch(
-        "file_service.__main__.ENVIRONMENT", "test"
-    ), patch(
-        "file_service.__main__.OTLP_ENDPOINT", "http://otel"
-    ), patch(
-        "file_service.__main__.AXIOM_TOKEN", "token"
-    ), patch(
-        "file_service.__main__.DATASET", "dataset"
+    import file_service.__main__ as main
+
+    with patch.object(main, "init_telemetry") as init_telemetry, patch.object(
+        main.grpc, "server", return_value=server
+    ) as grpc_server, patch.object(
+        main.futures, "ThreadPoolExecutor"
+    ) as executor_cls, patch.object(
+        main.file_pb2_grpc, "add_FileServiceServicer_to_server"
+    ) as add_servicer, patch.object(
+        main, "register_health"
+    ) as register_health, patch.object(
+        main, "SERVICE_PORT", 55555
+    ), patch.object(
+        main, "SERVICE_NAME", "file-service"
+    ), patch.object(
+        main, "ENVIRONMENT", "test"
+    ), patch.object(
+        main, "OTLP_ENDPOINT", "http://otel"
+    ), patch.object(
+        main, "AXIOM_TOKEN", "token"
+    ), patch.object(
+        main, "DATASET", "dataset"
     ):
-        from file_service.__main__ import serve
 
         # Prevent blocking forever.
         server.wait_for_termination.side_effect = SystemExit(0)
 
         try:
-            serve()
+            main.serve()
         except SystemExit:
+            # Swallow the expected SystemExit from wait_for_termination so the
+            # test can continue with assertions.
             pass
 
         init_telemetry.assert_called_once_with(
