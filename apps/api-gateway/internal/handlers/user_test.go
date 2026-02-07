@@ -18,6 +18,7 @@ import (
 type mockUserClient struct {
 	getUserFunc       func(ctx context.Context, req *userv1.GetUserRequest) (*userv1.GetUserResponse, error)
 	deleteAccountFunc func(ctx context.Context, req *userv1.DeleteUserByIdRequest) (*userv1.DeleteUserByIdResponse, error)
+	listUsersFunc     func(ctx context.Context, req *userv1.ListUsersRequest) (*userv1.ListUsersResponse, error)
 }
 
 func (m *mockUserClient) GetUser(ctx context.Context, req *userv1.GetUserRequest) (*userv1.GetUserResponse, error) {
@@ -30,6 +31,13 @@ func (m *mockUserClient) GetUser(ctx context.Context, req *userv1.GetUserRequest
 func (m *mockUserClient) DeleteAccount(ctx context.Context, req *userv1.DeleteUserByIdRequest) (*userv1.DeleteUserByIdResponse, error) {
 	if m.deleteAccountFunc != nil {
 		return m.deleteAccountFunc(ctx, req)
+	}
+	return nil, errors.New("not implemented")
+}
+
+func (m *mockUserClient) ListUsers(ctx context.Context, req *userv1.ListUsersRequest) (*userv1.ListUsersResponse, error) {
+	if m.listUsersFunc != nil {
+		return m.listUsersFunc(ctx, req)
 	}
 	return nil, errors.New("not implemented")
 }
@@ -48,6 +56,7 @@ func setupUserTestRouter(handler *UserHandler, currentUser *userv1.User) *gin.En
 		c.Next()
 	})
 	router.DELETE("/api/admin/delete_user", handler.DeleteUser)
+	router.GET("/api/admin/list_users", handler.ListUsers)
 	return router
 }
 
@@ -279,5 +288,174 @@ func TestDeleteAccount_NoUserInContext(t *testing.T) {
 
 	if w.Code != http.StatusUnauthorized {
 		t.Errorf("expected status %d, got %d", http.StatusUnauthorized, w.Code)
+	}
+}
+
+func TestListUsers_Success_NoFilters(t *testing.T) {
+	currentUser := &userv1.User{
+		Id:       "admin",
+		Username: "admin",
+		Role:     userv1.Role_ROLE_ADMIN,
+	}
+
+	mock := &mockUserClient{
+		listUsersFunc: func(ctx context.Context, req *userv1.ListUsersRequest) (*userv1.ListUsersResponse, error) {
+			if req.Role != userv1.Role_ROLE_UNSPECIFIED || req.UsernameFilter != "" {
+				t.Errorf("expected no filters, got role=%v, username=%s", req.Role, req.UsernameFilter)
+			}
+			return &userv1.ListUsersResponse{
+				Users: []*userv1.User{
+					{Id: "1", Username: "admin1", Role: userv1.Role_ROLE_ADMIN},
+					{Id: "2", Username: "user1", Role: userv1.Role_ROLE_USER},
+				},
+			}, nil
+		},
+	}
+
+	handler := NewUserHandler(mock)
+	router := setupUserTestRouter(handler, currentUser)
+
+	req, _ := http.NewRequest("GET", "/api/admin/list_users", nil)
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("expected status %d, got %d", http.StatusOK, w.Code)
+	}
+
+	var response map[string]interface{}
+	if err := json.Unmarshal(w.Body.Bytes(), &response); err != nil {
+		t.Fatalf("failed to unmarshal response: %v", err)
+	}
+
+	users, ok := response["users"].([]interface{})
+	if !ok {
+		t.Fatalf("expected users array, got %T", response["users"])
+	}
+
+	if len(users) != 2 {
+		t.Errorf("expected 2 users, got %d", len(users))
+	}
+}
+
+func TestListUsers_WithRoleFilter(t *testing.T) {
+	currentUser := &userv1.User{
+		Id:       "admin",
+		Username: "admin",
+		Role:     userv1.Role_ROLE_ADMIN,
+	}
+
+	mock := &mockUserClient{
+		listUsersFunc: func(ctx context.Context, req *userv1.ListUsersRequest) (*userv1.ListUsersResponse, error) {
+			if req.Role != userv1.Role_ROLE_ADMIN {
+				t.Errorf("expected role=ROLE_ADMIN, got %v", req.Role)
+			}
+			return &userv1.ListUsersResponse{
+				Users: []*userv1.User{
+					{Id: "1", Username: "admin1", Role: userv1.Role_ROLE_ADMIN},
+				},
+			}, nil
+		},
+	}
+
+	handler := NewUserHandler(mock)
+	router := setupUserTestRouter(handler, currentUser)
+
+	req, _ := http.NewRequest("GET", "/api/admin/list_users?role=admin", nil)
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("expected status %d, got %d", http.StatusOK, w.Code)
+	}
+}
+
+func TestListUsers_WithUsernameFilter(t *testing.T) {
+	currentUser := &userv1.User{
+		Id:       "admin",
+		Username: "admin",
+		Role:     userv1.Role_ROLE_ADMIN,
+	}
+
+	mock := &mockUserClient{
+		listUsersFunc: func(ctx context.Context, req *userv1.ListUsersRequest) (*userv1.ListUsersResponse, error) {
+			if req.UsernameFilter != "john" {
+				t.Errorf("expected username=john, got %s", req.UsernameFilter)
+			}
+			return &userv1.ListUsersResponse{
+				Users: []*userv1.User{
+					{Id: "1", Username: "john_admin", Role: userv1.Role_ROLE_ADMIN},
+					{Id: "2", Username: "john_user", Role: userv1.Role_ROLE_USER},
+				},
+			}, nil
+		},
+	}
+
+	handler := NewUserHandler(mock)
+	router := setupUserTestRouter(handler, currentUser)
+
+	req, _ := http.NewRequest("GET", "/api/admin/list_users?username=john", nil)
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("expected status %d, got %d", http.StatusOK, w.Code)
+	}
+}
+
+func TestListUsers_WithBothFilters(t *testing.T) {
+	currentUser := &userv1.User{
+		Id:       "admin",
+		Username: "admin",
+		Role:     userv1.Role_ROLE_ADMIN,
+	}
+
+	mock := &mockUserClient{
+		listUsersFunc: func(ctx context.Context, req *userv1.ListUsersRequest) (*userv1.ListUsersResponse, error) {
+			if req.Role != userv1.Role_ROLE_USER || req.UsernameFilter != "test" {
+				t.Errorf("expected role=ROLE_USER and username=test, got role=%v, username=%s", req.Role, req.UsernameFilter)
+			}
+			return &userv1.ListUsersResponse{
+				Users: []*userv1.User{
+					{Id: "1", Username: "test_user", Role: userv1.Role_ROLE_USER},
+				},
+			}, nil
+		},
+	}
+
+	handler := NewUserHandler(mock)
+	router := setupUserTestRouter(handler, currentUser)
+
+	req, _ := http.NewRequest("GET", "/api/admin/list_users?role=user&username=test", nil)
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("expected status %d, got %d", http.StatusOK, w.Code)
+	}
+}
+
+func TestListUsers_InvalidRole(t *testing.T) {
+	currentUser := &userv1.User{
+		Id:       "admin",
+		Username: "admin",
+		Role:     userv1.Role_ROLE_ADMIN,
+	}
+
+	mock := &mockUserClient{
+		listUsersFunc: func(ctx context.Context, req *userv1.ListUsersRequest) (*userv1.ListUsersResponse, error) {
+			return nil, status.Error(codes.InvalidArgument, "role must be 'admin' or 'user'")
+		},
+	}
+
+	handler := NewUserHandler(mock)
+	router := setupUserTestRouter(handler, currentUser)
+
+	req, _ := http.NewRequest("GET", "/api/admin/list_users?role=invalid", nil)
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Errorf("expected status %d, got %d", http.StatusBadRequest, w.Code)
 	}
 }
