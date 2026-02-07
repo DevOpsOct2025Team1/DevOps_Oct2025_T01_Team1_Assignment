@@ -602,6 +602,102 @@ func (x *DeleteUserByIdResponse) GetSuccess() bool {
 	return false
 }
 
+type ListUsersRequest struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	Role           Role                   `protobuf:"varint,1,opt,name=role,proto3,enum=user.v1.Role" json:"role,omitempty"`
+	UsernameFilter string                 `protobuf:"bytes,2,opt,name=username_filter,json=usernameFilter,proto3" json:"username_filter,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *ListUsersRequest) Reset() {
+	*x = ListUsersRequest{}
+	mi := &file_user_v1_user_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListUsersRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListUsersRequest) ProtoMessage() {}
+
+func (x *ListUsersRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_user_v1_user_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListUsersRequest.ProtoReflect.Descriptor instead.
+func (*ListUsersRequest) Descriptor() ([]byte, []int) {
+	return file_user_v1_user_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *ListUsersRequest) GetRole() Role {
+	if x != nil {
+		return x.Role
+	}
+	return Role_ROLE_UNSPECIFIED
+}
+
+func (x *ListUsersRequest) GetUsernameFilter() string {
+	if x != nil {
+		return x.UsernameFilter
+	}
+	return ""
+}
+
+type ListUsersResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Users         []*User                `protobuf:"bytes,1,rep,name=users,proto3" json:"users,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListUsersResponse) Reset() {
+	*x = ListUsersResponse{}
+	mi := &file_user_v1_user_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListUsersResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListUsersResponse) ProtoMessage() {}
+
+func (x *ListUsersResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_user_v1_user_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListUsersResponse.ProtoReflect.Descriptor instead.
+func (*ListUsersResponse) Descriptor() ([]byte, []int) {
+	return file_user_v1_user_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *ListUsersResponse) GetUsers() []*User {
+	if x != nil {
+		return x.Users
+	}
+	return nil
+}
+
 var File_user_v1_user_proto protoreflect.FileDescriptor
 
 const file_user_v1_user_proto_rawDesc = "" +
@@ -634,12 +730,17 @@ const file_user_v1_user_proto_rawDesc = "" +
 	"\x15DeleteUserByIdRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\"2\n" +
 	"\x16DeleteUserByIdResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess*;\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\"^\n" +
+	"\x10ListUsersRequest\x12!\n" +
+	"\x04role\x18\x01 \x01(\x0e2\r.user.v1.RoleR\x04role\x12'\n" +
+	"\x0fusername_filter\x18\x02 \x01(\tR\x0eusernameFilter\"8\n" +
+	"\x11ListUsersResponse\x12#\n" +
+	"\x05users\x18\x01 \x03(\v2\r.user.v1.UserR\x05users*;\n" +
 	"\x04Role\x12\x14\n" +
 	"\x10ROLE_UNSPECIFIED\x10\x00\x12\r\n" +
 	"\tROLE_USER\x10\x01\x12\x0e\n" +
 	"\n" +
-	"ROLE_ADMIN\x10\x022\x90\x03\n" +
+	"ROLE_ADMIN\x10\x022\xd4\x03\n" +
 	"\vUserService\x12E\n" +
 	"\n" +
 	"CreateUser\x12\x1a.user.v1.CreateUserRequest\x1a\x1b.user.v1.CreateUserResponse\x12<\n" +
@@ -647,7 +748,8 @@ const file_user_v1_user_proto_rawDesc = "" +
 	"\x11GetUserByUsername\x12!.user.v1.GetUserByUsernameRequest\x1a\".user.v1.GetUserByUsernameResponse\x12Q\n" +
 	"\x0eVerifyPassword\x12\x1e.user.v1.VerifyPasswordRequest\x1a\x1f.user.v1.VerifyPasswordResponse\x12M\n" +
 	"\n" +
-	"DeleteUser\x12\x1e.user.v1.DeleteUserByIdRequest\x1a\x1f.user.v1.DeleteUserByIdResponseB\x8e\x01\n" +
+	"DeleteUser\x12\x1e.user.v1.DeleteUserByIdRequest\x1a\x1f.user.v1.DeleteUserByIdResponse\x12B\n" +
+	"\tListUsers\x12\x19.user.v1.ListUsersRequest\x1a\x1a.user.v1.ListUsersResponseB\x8e\x01\n" +
 	"\vcom.user.v1B\tUserProtoP\x01Z7github.com/provsalt/DOP_P01_Team1/common/user/v1;userv1\xa2\x02\x03UXX\xaa\x02\aUser.V1\xca\x02\aUser\\V1\xe2\x02\x13User\\V1\\GPBMetadata\xea\x02\bUser::V1b\x06proto3"
 
 var (
@@ -663,7 +765,7 @@ func file_user_v1_user_proto_rawDescGZIP() []byte {
 }
 
 var file_user_v1_user_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_user_v1_user_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
+var file_user_v1_user_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
 var file_user_v1_user_proto_goTypes = []any{
 	(Role)(0),                         // 0: user.v1.Role
 	(*User)(nil),                      // 1: user.v1.User
@@ -677,6 +779,8 @@ var file_user_v1_user_proto_goTypes = []any{
 	(*VerifyPasswordResponse)(nil),    // 9: user.v1.VerifyPasswordResponse
 	(*DeleteUserByIdRequest)(nil),     // 10: user.v1.DeleteUserByIdRequest
 	(*DeleteUserByIdResponse)(nil),    // 11: user.v1.DeleteUserByIdResponse
+	(*ListUsersRequest)(nil),          // 12: user.v1.ListUsersRequest
+	(*ListUsersResponse)(nil),         // 13: user.v1.ListUsersResponse
 }
 var file_user_v1_user_proto_depIdxs = []int32{
 	0,  // 0: user.v1.User.role:type_name -> user.v1.Role
@@ -685,21 +789,25 @@ var file_user_v1_user_proto_depIdxs = []int32{
 	1,  // 3: user.v1.GetUserResponse.user:type_name -> user.v1.User
 	1,  // 4: user.v1.GetUserByUsernameResponse.user:type_name -> user.v1.User
 	1,  // 5: user.v1.VerifyPasswordResponse.user:type_name -> user.v1.User
-	2,  // 6: user.v1.UserService.CreateUser:input_type -> user.v1.CreateUserRequest
-	4,  // 7: user.v1.UserService.GetUser:input_type -> user.v1.GetUserRequest
-	6,  // 8: user.v1.UserService.GetUserByUsername:input_type -> user.v1.GetUserByUsernameRequest
-	8,  // 9: user.v1.UserService.VerifyPassword:input_type -> user.v1.VerifyPasswordRequest
-	10, // 10: user.v1.UserService.DeleteUser:input_type -> user.v1.DeleteUserByIdRequest
-	3,  // 11: user.v1.UserService.CreateUser:output_type -> user.v1.CreateUserResponse
-	5,  // 12: user.v1.UserService.GetUser:output_type -> user.v1.GetUserResponse
-	7,  // 13: user.v1.UserService.GetUserByUsername:output_type -> user.v1.GetUserByUsernameResponse
-	9,  // 14: user.v1.UserService.VerifyPassword:output_type -> user.v1.VerifyPasswordResponse
-	11, // 15: user.v1.UserService.DeleteUser:output_type -> user.v1.DeleteUserByIdResponse
-	11, // [11:16] is the sub-list for method output_type
-	6,  // [6:11] is the sub-list for method input_type
-	6,  // [6:6] is the sub-list for extension type_name
-	6,  // [6:6] is the sub-list for extension extendee
-	0,  // [0:6] is the sub-list for field type_name
+	0,  // 6: user.v1.ListUsersRequest.role:type_name -> user.v1.Role
+	1,  // 7: user.v1.ListUsersResponse.users:type_name -> user.v1.User
+	2,  // 8: user.v1.UserService.CreateUser:input_type -> user.v1.CreateUserRequest
+	4,  // 9: user.v1.UserService.GetUser:input_type -> user.v1.GetUserRequest
+	6,  // 10: user.v1.UserService.GetUserByUsername:input_type -> user.v1.GetUserByUsernameRequest
+	8,  // 11: user.v1.UserService.VerifyPassword:input_type -> user.v1.VerifyPasswordRequest
+	10, // 12: user.v1.UserService.DeleteUser:input_type -> user.v1.DeleteUserByIdRequest
+	12, // 13: user.v1.UserService.ListUsers:input_type -> user.v1.ListUsersRequest
+	3,  // 14: user.v1.UserService.CreateUser:output_type -> user.v1.CreateUserResponse
+	5,  // 15: user.v1.UserService.GetUser:output_type -> user.v1.GetUserResponse
+	7,  // 16: user.v1.UserService.GetUserByUsername:output_type -> user.v1.GetUserByUsernameResponse
+	9,  // 17: user.v1.UserService.VerifyPassword:output_type -> user.v1.VerifyPasswordResponse
+	11, // 18: user.v1.UserService.DeleteUser:output_type -> user.v1.DeleteUserByIdResponse
+	13, // 19: user.v1.UserService.ListUsers:output_type -> user.v1.ListUsersResponse
+	14, // [14:20] is the sub-list for method output_type
+	8,  // [8:14] is the sub-list for method input_type
+	8,  // [8:8] is the sub-list for extension type_name
+	8,  // [8:8] is the sub-list for extension extendee
+	0,  // [0:8] is the sub-list for field type_name
 }
 
 func init() { file_user_v1_user_proto_init() }
@@ -713,7 +821,7 @@ func file_user_v1_user_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_user_v1_user_proto_rawDesc), len(file_user_v1_user_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   11,
+			NumMessages:   13,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
