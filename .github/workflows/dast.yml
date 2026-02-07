@@ -33,12 +33,12 @@ jobs:
 
       - name: Update Swagger host for local scan
         run: |
-          jq '.host = "localhost:3001"' apps/api-gateway/docs/swagger.json > /tmp/swagger.json
+          jq '.host = "localhost:3001"' apps/api-gateway/docs/swagger.json > swagger-ci.json
 
       - name: OWASP ZAP API Scan
         uses: zaproxy/action-api-scan@v0.10.0
         with:
-          target: /tmp/swagger.json
+          target: swagger-ci.json
           format: openapi
           fail_action: true
 
