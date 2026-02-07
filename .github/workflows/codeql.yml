@@ -1,0 +1,66 @@
+name: CodeQL SAST Scan
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
+
+    strategy:
+      matrix:
+        language: [ 'go', 'javascript' ]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+
+      - name: Setup Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: "1.25.5"
+
+      - name: Build Go workspace
+        if: matrix.language == 'go'
+        run: |
+          cd "$GITHUB_WORKSPACE"
+          go work sync
+          go test \
+            ./apps/api-gateway/... \
+            ./apps/auth-service/... \
+            ./apps/common/... \
+            ./apps/user-service/... \
+            -run TestNonExistent
+
+      - name: Setup Node.js
+        if: matrix.language == 'javascript'
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+
+      - name: Setup Bun
+        if: matrix.language == 'javascript'
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install frontend deps
+        if: matrix.language == 'javascript'
+        run: |
+          cd apps/frontend
+          bun install --frozen-lockfile
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3

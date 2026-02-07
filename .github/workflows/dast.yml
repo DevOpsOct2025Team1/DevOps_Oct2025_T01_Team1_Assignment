@@ -1,0 +1,49 @@
+name: DAST - OWASP ZAP Scan
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  zap_scan:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Start services
+        run: |
+          docker compose -f compose.yml -f compose.ci.yml --env-file .env.ci up -d
+
+      - name: Wait for API Gateway
+        run: |
+          echo "Waiting for API Gateway..."
+          for i in {1..30}; do
+            if curl -fsS http://localhost:3001/health >/dev/null; then
+              echo "API Gateway ready"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "API Gateway not ready"
+          exit 1
+
+      - name: Update Swagger host for local scan
+        run: |
+          jq '.host = "localhost:3001" | .schemes = ["http"]' apps/api-gateway/docs/swagger.json > swagger-ci.json
+
+      - name: OWASP ZAP API Scan
+        uses: zaproxy/action-api-scan@v0.10.0
+        with:
+          target: swagger-ci.json
+          format: openapi
+          fail_action: true
+
+      - name: Stop containers
+        if: always()
+        run: docker compose -f compose.yml -f compose.ci.yml down
