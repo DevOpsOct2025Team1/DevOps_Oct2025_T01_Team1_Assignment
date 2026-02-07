@@ -16,7 +16,7 @@ jobs:
 
       - name: Start services
         run: |
-          docker compose --env-file .env.ci up -d
+          docker compose -f compose.yml -f compose.ci.yml --env-file .env.ci up -d
 
       - name: Wait for API Gateway
         run: |
@@ -32,11 +32,11 @@ jobs:
           exit 1
 
       - name: OWASP ZAP Baseline Scan
-        uses: zaproxy/action-baseline@v0.10.0
+        uses: zaproxy/action-baseline@v0.15.0
         with:
           target: "http://localhost:3001"
           fail_action: true
 
       - name: Stop containers
         if: always()
-        run: docker compose down
+        run: docker compose -f compose.yml -f compose.ci.yml down
