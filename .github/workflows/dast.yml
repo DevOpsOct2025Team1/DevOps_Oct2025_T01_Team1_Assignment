@@ -22,7 +22,7 @@ jobs:
         run: |
           echo "Waiting for API Gateway..."
           for i in {1..30}; do
-            if curl -s http://localhost:3001 >/dev/null; then
+            if curl -fsS http://localhost:3001/health >/dev/null; then
               echo "API Gateway ready"
               exit 0
             fi
