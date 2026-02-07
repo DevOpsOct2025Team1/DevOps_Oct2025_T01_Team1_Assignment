@@ -12,6 +12,7 @@ from file_service.config import S3_BUCKET_NAME, HTTP_PORT
 from bson import ObjectId
 from bson.errors import InvalidId
 from botocore.exceptions import ClientError
+import logging
 
 # Global auth client
 auth_client = None
@@ -42,7 +43,7 @@ async def get_current_user(authorization: str = Header(None)):
     
     scheme, _, token = authorization.partition(" ")
     if scheme.lower() != "bearer" or not token:
-         raise HTTPException(status_code=401, detail="Invalid Authorization header format")
+        raise HTTPException(status_code=401, detail="Invalid Authorization header format")
 
     response = None
     if auth_client:
@@ -70,9 +71,8 @@ def upload_file(file: UploadFile = File(...), user_id: str = Depends(get_current
         )
         
         # Save metadata to MongoDB
-        file_size = file.size # Note: spooled file size might need checking
-        # If file.size is not available or reliable (e.g. chunked), we might need to seek/tell
-        # But for UploadFile it usually works if spooled.
+        head_response = s3_client.head_object(Bucket=S3_BUCKET_NAME, Key=s3_key)
+        file_size = head_response.get("ContentLength", 0)
         
         doc = {
             "_id": ObjectId(file_id),
@@ -95,8 +95,8 @@ def upload_file(file: UploadFile = File(...), user_id: str = Depends(get_current
             }
         }
     except Exception as e:
-        print(f"Upload failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logging.error(f"Upload failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="File upload failed")
 
 @app.get("/api/files")
 async def list_files(user_id: str = Depends(get_current_user)):
@@ -159,7 +159,7 @@ async def delete_file(file_id: str, user_id: str = Depends(get_current_user)):
         except ClientError:
             pass # Continue to delete metadata
             
-    files_collection.delete_one({"_id": ObjectId(file_id)})
+    files_collection.delete_one({"_id": doc["_id"], "user_id": user_id})
     return {"success": True}
 
 def run_http_server():

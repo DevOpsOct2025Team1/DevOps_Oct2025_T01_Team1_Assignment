@@ -18,7 +18,7 @@ def get_user_id(context):
 
 
 class FileService(file_pb2_grpc.FileServiceServicer):
-    
+
     def CreateFile(self, request, context):
         user_id = get_user_id(context)
 
@@ -185,11 +185,14 @@ class FileService(file_pb2_grpc.FileServiceServicer):
             response = s3_client.get_object(Bucket=S3_BUCKET_NAME, Key=s3_key)
             chunk_size = 64 * 1024  # 64KB chunks
             
-            while True:
-                chunk = response['Body'].read(chunk_size)
-                if not chunk:
-                    break
-                yield file_pb2.DownloadFileResponse(chunk=chunk)
+            try:
+                while True:
+                    chunk = response['Body'].read(chunk_size)
+                    if not chunk:
+                        break
+                    yield file_pb2.DownloadFileResponse(chunk=chunk)
+            finally:
+                response['Body'].close()
                 
         except ClientError as e:
             context.abort(grpc.StatusCode.INTERNAL, f"Failed to download file from S3: {str(e)}")
