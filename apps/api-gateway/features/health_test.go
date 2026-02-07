@@ -1,9 +1,11 @@
 package features
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -94,6 +96,15 @@ func (m *mockUserClient) DeleteAccount(_ context.Context, _ *userv1.DeleteUserBy
 	return &userv1.DeleteUserByIdResponse{Success: true}, nil
 }
 
+func (m *mockUserClient) ListUsers(_ context.Context, req *userv1.ListUsersRequest) (*userv1.ListUsersResponse, error) {
+	return &userv1.ListUsersResponse{
+		Users: []*userv1.User{
+			{Id: "a1", Username: "admin", Role: userv1.Role_ROLE_ADMIN},
+			{Id: "u1", Username: "user", Role: userv1.Role_ROLE_USER},
+		},
+	}, nil
+}
+
 func (m *mockUserClient) Close() error {
 	return nil
 }
@@ -101,18 +112,37 @@ func (m *mockUserClient) Close() error {
 func (h *healthTestContext) iSendAGETRequestTo(endpoint string) error {
 	start := time.Now()
 
-	resp, err := http.Get(h.server.URL + endpoint)
+	req, err := http.NewRequest("GET", h.server.URL+endpoint, nil)
+	if err != nil {
+		return fmt.Errorf("failed to create GET request: %w", err)
+	}
+
+	if h.customAuthHeader != "" {
+		req.Header.Set("Authorization", h.customAuthHeader)
+	} else if h.authToken != "" {
+		req.Header.Set("Authorization", "Bearer "+h.authToken)
+	}
+
+	client := &http.Client{Timeout: 5 * time.Second}
+	resp, err := client.Do(req)
 	if err != nil {
 		return fmt.Errorf("failed to send GET request: %w", err)
 	}
 
 	h.responseTime = time.Since(start)
+
+	if h.response != nil && h.response.Body != nil {
+		_ = h.response.Body.Close()
+	}
 	h.response = resp
 
+	raw, _ := io.ReadAll(resp.Body)
+	_ = resp.Body.Close()
+	resp.Body = io.NopCloser(bytes.NewReader(raw))
+	h.responseRaw = raw
+
 	var body map[string]interface{}
-	if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
-		return fmt.Errorf("failed to decode response body: %w", err)
-	}
+	_ = json.Unmarshal(raw, &body)
 	h.responseBody = body
 
 	return nil
@@ -187,7 +217,7 @@ func TestFeatures(t *testing.T) {
 		ScenarioInitializer: InitializeScenario,
 		Options: &godog.Options{
 			Format:   "pretty",
-			Paths:    []string{"health.feature", "auth.feature", "admin.feature", "security.feature"},
+			Paths:    []string{"health.feature", "auth.feature", "admin.feature", "security.feature", "list_users.feature"},
 			TestingT: t,
 		},
 	}

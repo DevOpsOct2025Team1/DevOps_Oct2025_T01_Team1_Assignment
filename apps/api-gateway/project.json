@@ -26,6 +26,13 @@
         "cwd": "apps/api-gateway"
       }
     },
+    "integration": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "go test -v ./internal/integration",
+        "cwd": "apps/api-gateway"
+      }
+    },
     "docker-build": {
       "executor": "nx:run-commands",
       "options": {

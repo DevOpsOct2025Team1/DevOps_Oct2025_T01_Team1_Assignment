@@ -22,6 +22,7 @@ service UserService {
   rpc GetUserByUsername(GetUserByUsernameRequest) returns (GetUserByUsernameResponse);
   rpc VerifyPassword(VerifyPasswordRequest) returns (VerifyPasswordResponse);
   rpc DeleteUser(DeleteUserByIdRequest) returns (DeleteUserByIdResponse);
+  rpc ListUsers(ListUsersRequest) returns (ListUsersResponse);
 }
 
 message CreateUserRequest {
@@ -66,4 +67,13 @@ message DeleteUserByIdRequest {
 
 message DeleteUserByIdResponse {
   bool success = 1;
+}
+
+message ListUsersRequest {
+  Role role = 1;
+  string username_filter = 2;
+}
+
+message ListUsersResponse {
+  repeated User users = 1;
 }

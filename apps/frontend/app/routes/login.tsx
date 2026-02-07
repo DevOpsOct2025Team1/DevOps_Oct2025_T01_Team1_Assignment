@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { useAuth } from "../contexts/AuthContext";
-import { useLogin } from "../api/generated";
+import { usePostApiLogin } from "../api/generated";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
@@ -12,7 +12,7 @@ export default function Login() {
   const [error, setError] = useState("");
   const navigate = useNavigate();
   const { setAuth, isAuthenticated } = useAuth();
-  const loginMutation = useLogin();
+  const loginMutation = usePostApiLogin();
   const isLoading = loginMutation.isPending;
 
   useEffect(() => {

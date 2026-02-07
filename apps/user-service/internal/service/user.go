@@ -11,13 +11,22 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+// userStore defines the interface for user storage operations
+type userStore interface {
+	CreateUser(ctx context.Context, user *store.User) (string, error)
+	GetUserByID(ctx context.Context, id string) (*store.User, error)
+	GetUserByUsername(ctx context.Context, username string) (*store.User, error)
+	DeleteUserByID(ctx context.Context, id string) error
+	ListUsers(ctx context.Context, roleFilter string, usernameFilter string) ([]*store.User, error)
+}
+
 type UserServiceServer struct {
-	store *store.UserStore
+	store userStore
 
 	userv1.UnimplementedUserServiceServer
 }
 
-func NewUserServiceServer(store *store.UserStore) *UserServiceServer {
+func NewUserServiceServer(store userStore) *UserServiceServer {
 	return &UserServiceServer{
 		store: store,
 	}
@@ -149,6 +158,38 @@ func (s *UserServiceServer) DeleteUser(ctx context.Context, req *userv1.DeleteUs
 		return nil, status.Error(codes.Internal, "failed to delete user")
 	}
 	return &userv1.DeleteUserByIdResponse{Success: true}, nil
+}
+
+func (s *UserServiceServer) ListUsers(ctx context.Context, req *userv1.ListUsersRequest) (*userv1.ListUsersResponse, error) {
+	role := req.Role
+	if role != userv1.Role_ROLE_UNSPECIFIED && role != userv1.Role_ROLE_ADMIN && role != userv1.Role_ROLE_USER {
+		return nil, status.Error(codes.InvalidArgument, "invalid role")
+	}
+
+	var roleStr string
+	if role == userv1.Role_ROLE_ADMIN {
+		roleStr = "admin"
+	} else if role == userv1.Role_ROLE_USER {
+		roleStr = "user"
+	}
+
+	users, err := s.store.ListUsers(ctx, roleStr, req.UsernameFilter)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to list users")
+	}
+
+	pbUsers := make([]*userv1.User, len(users))
+	for i, user := range users {
+		pbUsers[i] = &userv1.User{
+			Id:       user.Id,
+			Username: user.Username,
+			Role:     stringToRole(user.Role),
+		}
+	}
+
+	return &userv1.ListUsersResponse{
+		Users: pbUsers,
+	}, nil
 }
 
 func roleToString(role userv1.Role) string {

@@ -1,0 +1,94 @@
+services:
+  user-service:
+    image: ghcr.io/devopsoct2025team1/devops_oct2025_t01_team1_assignment/user-service:latest
+    ports:
+      - "${USER_SERVICE_PORT:-8080}:${USER_SERVICE_PORT:-8080}"
+    environment:
+      - PORT=${USER_SERVICE_PORT:-8080}
+      - MONGODB_URI=${MONGODB_URI}
+      - MONGODB_DATABASE=${MONGODB_DATABASE}
+      - DEFAULT_ADMIN_USERNAME=${USER_SERVICE_DEFAULT_ADMIN_USERNAME}
+      - DEFAULT_ADMIN_PASSWORD=${USER_SERVICE_DEFAULT_ADMIN_PASSWORD}
+      - AXIOM_API_TOKEN=${AXIOM_API_TOKEN}
+      - AXIOM_ENDPOINT=${AXIOM_ENDPOINT:-us-east-1.aws.edge.axiom.co}
+      - AXIOM_DATASET=${AXIOM_DATASET:-traces}
+      - AXIOM_METRICS_DATASET=${AXIOM_METRICS_DATASET:-metrics}
+      - ENVIRONMENT=production
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "${USER_SERVICE_PORT:-8080}"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  auth-service:
+    image: ghcr.io/devopsoct2025team1/devops_oct2025_t01_team1_assignment/auth-service:latest
+    ports:
+      - "${AUTH_SERVICE_PORT:-8081}:${AUTH_SERVICE_PORT:-8081}"
+    environment:
+      - PORT=${AUTH_SERVICE_PORT:-8081}
+      - USER_SERVICE_ADDR=user-service:${USER_SERVICE_PORT:-8080}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRY=${JWT_EXPIRY:-24h}
+      - AXIOM_API_TOKEN=${AXIOM_API_TOKEN}
+      - AXIOM_ENDPOINT=${AXIOM_ENDPOINT:-us-east-1.aws.edge.axiom.co}
+      - AXIOM_DATASET=${AXIOM_DATASET:-traces}
+      - AXIOM_METRICS_DATASET=${AXIOM_METRICS_DATASET:-metrics}
+      - ENVIRONMENT=production
+    depends_on:
+      user-service:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "${AUTH_SERVICE_PORT:-8081}"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  api-gateway:
+    image: ghcr.io/devopsoct2025team1/devops_oct2025_t01_team1_assignment/api-gateway:latest
+    ports:
+      - "${API_GATEWAY_PORT:-3001}:${API_GATEWAY_PORT:-3001}"
+    environment:
+      - PORT=${API_GATEWAY_PORT:-3001}
+      - AUTH_SERVICE_ADDR=auth-service:${AUTH_SERVICE_PORT:-8081}
+      - FILE_SERVICE_ADDR=file-service:${FILE_SERVICE_PORT:-50054}
+      - AXIOM_API_TOKEN=${AXIOM_API_TOKEN}
+      - AXIOM_ENDPOINT=${AXIOM_ENDPOINT:-us-east-1.aws.edge.axiom.co}
+      - AXIOM_DATASET=${AXIOM_DATASET:-traces}
+      - AXIOM_METRICS_DATASET=${AXIOM_METRICS_DATASET:-metrics}
+      - ENVIRONMENT=production
+    depends_on:
+      auth-service:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:${API_GATEWAY_PORT:-3001}/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  file-service:
+    image: ghcr.io/devopsoct2025team1/devops_oct2025_t01_team1_assignment/file-service:latest
+    ports:
+      - "${FILE_SERVICE_PORT:-50054}:${FILE_SERVICE_PORT:-50054}"
+    environment:
+      - FILE_SERVICE_PORT=${FILE_SERVICE_PORT:-50054}
+      - MONGO_URI=${MONGODB_URI}
+      - AXIOM_API_TOKEN=${AXIOM_API_TOKEN}
+      - OTLP_ENDPOINT=${AXIOM_ENDPOINT:-https://us-east-1.aws.edge.axiom.co}
+      - AXIOM_DATASET=${AXIOM_DATASET:-traces}
+      - ENVIRONMENT=production
+    restart: unless-stopped
+
+  frontend:
+    image: ghcr.io/devopsoct2025team1/devops_oct2025_t01_team1_assignment/frontend:latest
+    ports:
+      - "${FRONTEND_PORT:-3000}:${FRONTEND_PORT:-3000}"
+    environment:
+      - PORT=${FRONTEND_PORT:-3000}
+      - ENVIRONMENT=production
+    depends_on:
+      api-gateway:
+        condition: service_healthy
+    restart: unless-stopped

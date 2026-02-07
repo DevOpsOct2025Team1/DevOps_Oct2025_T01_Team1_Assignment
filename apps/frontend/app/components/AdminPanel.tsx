@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useCreateUser, useDeleteUser } from "../api/generated";
+import { usePostApiAdminCreateUser, useDeleteApiAdminDeleteUser } from "../api/generated";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
@@ -13,8 +13,8 @@ interface Action {
 
 export default function AdminPanel() {
   const [actions, setActions] = useState<Action[]>([]);
-  const createUserMutation = useCreateUser();
-  const deleteUserMutation = useDeleteUser();
+  const createUserMutation = usePostApiAdminCreateUser();
+  const deleteUserMutation = useDeleteApiAdminDeleteUser();
 
   const [createUsername, setCreateUsername] = useState("");
   const [createPassword, setCreatePassword] = useState("");
