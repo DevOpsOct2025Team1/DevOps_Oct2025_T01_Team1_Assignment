@@ -10,7 +10,7 @@ const mutateAsyncMock = vi.fn();
 let loginIsPending = false;
 
 vi.mock('../app/api/generated', () => ({
-  useLogin: () => ({
+  usePostApiLogin: () => ({
     mutateAsync: mutateAsyncMock,
     isPending: loginIsPending,
   }),

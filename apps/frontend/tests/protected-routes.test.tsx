@@ -8,11 +8,11 @@ const createUserMock = vi.fn();
 const deleteUserMock = vi.fn();
 
 vi.mock('../app/api/generated', () => ({
-  useCreateUser: () => ({
+  usePostApiAdminCreateUser: () => ({
     mutateAsync: createUserMock,
     isPending: false,
   }),
-  useDeleteUser: () => ({
+  useDeleteApiAdminDeleteUser: () => ({
     mutateAsync: deleteUserMock,
     isPending: false,
   }),
