@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router';
 import { useCreateUser, useDeleteUser } from '../api/generated';
 import type { InternalHandlersUserResponse } from '../api/generated/model';
@@ -23,46 +23,12 @@ import {
   DialogTitle,
 } from '../components/ui/dialog';
 
-interface Action {
-  type: 'create' | 'delete' | 'update';
-  username: string;
-  details?: string;
-  timestamp: Date;
-}
-
-const ACTIONS_STORAGE_KEY = 'admin_recent_actions';
-
-function loadActions(): Action[] {
-  try {
-    const stored = localStorage.getItem(ACTIONS_STORAGE_KEY);
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      return parsed.map((action: any) => ({
-        ...action,
-        timestamp: new Date(action.timestamp),
-      }));
-    }
-  } catch (error) {
-    console.error('Failed to load actions:', error);
-  }
-  return [];
-}
-
-function saveActions(actions: Action[]) {
-  try {
-    localStorage.setItem(ACTIONS_STORAGE_KEY, JSON.stringify(actions));
-  } catch (error) {
-    console.error('Failed to save actions:', error);
-  }
-}
-
 export default function Admin() {
   const navigate = useNavigate();
   const [user, setUser] = useState<InternalHandlersUserResponse | null>(null);
   const [filteredUsers, setFilteredUsers] = useState<InternalHandlersUserResponse[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState<'all' | 'admin' | 'user'>('all');
-  const [actions, setActions] = useState<Action[]>([]);
   
   // React Query hooks
   const { data: usersData, isLoading: loading, refetch: refetchUsers } = useListUsers();
@@ -89,7 +55,7 @@ export default function Admin() {
   const [deleteError, setDeleteError] = useState<string>('');
   const [roleError, setRoleError] = useState<string>('');
 
-  const users = usersData?.users || [];
+  const users = useMemo(() => usersData?.users || [], [usersData?.users]);
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -112,9 +78,6 @@ export default function Admin() {
           : storedUser.role
       });
     }
-    
-    // Load actions from localStorage
-    setActions(loadActions());
   }, [navigate]);
 
   useEffect(() => {
@@ -125,12 +88,6 @@ export default function Admin() {
     });
     setFilteredUsers(filtered);
   }, [searchQuery, roleFilter, users]);
-
-  const addAction = (action: Action) => {
-    const newActions = [action, ...actions];
-    setActions(newActions);
-    saveActions(newActions);
-  };
 
   const handleAddUser = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -148,14 +105,6 @@ export default function Admin() {
           password: newPassword,
         },
       });
-      
-      if (response.status === 200 && 'user' in response.data) {
-        addAction({
-          type: 'create',
-          username: response.data.user?.username || newUsername,
-          timestamp: new Date(),
-        });
-      }
       
       setNewUsername('');
       setNewPassword('');
@@ -177,12 +126,6 @@ export default function Admin() {
         },
       });
       
-      addAction({
-        type: 'delete',
-        username: userToDelete.username || 'unknown',
-        timestamp: new Date(),
-      });
-      
       setDeleteUserOpen(false);
       setUserToDelete(null);
       refetchUsers();
@@ -201,13 +144,6 @@ export default function Admin() {
       await updateUserRoleMutation.mutateAsync({
         id: userToUpdate.id,
         role: newRole,
-      });
-      
-      addAction({
-        type: 'update',
-        username: userToUpdate.username || 'unknown',
-        details: `Role changed to ${newRole}`,
-        timestamp: new Date(),
       });
       
       setChangeRoleOpen(false);
@@ -351,39 +287,6 @@ export default function Admin() {
               ))
             )}
           </div>
-        </div>
-
-        {/* Recent Actions */}
-        <div className="mt-8 bg-white p-6 rounded-lg shadow">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Recent Actions</h2>
-          {actions.length === 0 ? (
-            <p className="text-gray-500 text-center py-4">No actions yet</p>
-          ) : (
-            <div className="space-y-2">
-              {actions.map((action, idx) => (
-                <div key={idx} className="flex items-center justify-between py-2 px-4 bg-gray-50 rounded">
-                  <div className="flex items-center space-x-3">
-                    <span className={`px-2 py-1 text-xs font-medium rounded ${
-                      action.type === 'create' 
-                        ? 'bg-green-100 text-green-800' 
-                        : action.type === 'delete'
-                        ? 'bg-red-100 text-red-800'
-                        : 'bg-blue-100 text-blue-800'
-                    }`}>
-                      {action.type.toUpperCase()}
-                    </span>
-                    <span className="text-gray-700">
-                      {action.username}
-                      {action.details && <span className="text-gray-500 text-sm ml-2">({action.details})</span>}
-                    </span>
-                  </div>
-                  <span className="text-sm text-gray-500">
-                    {action.timestamp.toLocaleString()}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
         </div>
       </div>
 
