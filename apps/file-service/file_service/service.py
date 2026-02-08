@@ -7,20 +7,39 @@ from botocore.exceptions import ClientError
 from file.v1 import file_pb2, file_pb2_grpc
 from file_service.store import files_collection, s3_client, generate_s3_key
 from file_service.config import S3_BUCKET_NAME
+from file_service.auth_client import AuthClient
 
 
-def get_user_id(context):
+def get_user_id(context, auth_client):
+    """Extract and validate authorization token from gRPC metadata."""
     metadata = dict(context.invocation_metadata())
-    user_id = metadata.get("user-id")
-    if user_id is None:
-        context.abort(grpc.StatusCode.UNAUTHENTICATED, "Missing user-id in metadata")
-    return user_id
+    authorization = metadata.get("authorization")
+
+    if not authorization:
+        context.abort(grpc.StatusCode.UNAUTHENTICATED, "Missing authorization header")
+
+    parts = authorization.split(" ")
+    if len(parts) != 2 or parts[0].lower() != "bearer":
+        context.abort(grpc.StatusCode.UNAUTHENTICATED, "Invalid authorization header format")
+
+    token = parts[1]
+
+    response = auth_client.validate_token(token)
+    if not response or not response.valid:
+        context.abort(grpc.StatusCode.UNAUTHENTICATED, "Invalid token")
+
+    if not response.user:
+        context.abort(grpc.StatusCode.UNAUTHENTICATED, "Invalid token: no user")
+
+    return response.user.id
 
 
 class FileService(file_pb2_grpc.FileServiceServicer):
+    def __init__(self, auth_client: AuthClient):
+        self.auth_client = auth_client
 
     def CreateFile(self, request, context):
-        user_id = get_user_id(context)
+        user_id = get_user_id(context, self.auth_client)
 
         filename = request.filename
         size = request.size
@@ -53,7 +72,7 @@ class FileService(file_pb2_grpc.FileServiceServicer):
 
     def UploadFile(self, request_iterator, context):
         """Stream upload file to S3 and save metadata."""
-        user_id = get_user_id(context)
+        user_id = get_user_id(context, self.auth_client)
         
         # First message should contain metadata
         try:
@@ -115,7 +134,7 @@ class FileService(file_pb2_grpc.FileServiceServicer):
             context.abort(grpc.StatusCode.INVALID_ARGUMENT, "Empty upload stream")
 
     def ListFiles(self, request, context):
-        user_id = get_user_id(context)
+        user_id = get_user_id(context, self.auth_client)
 
         docs = files_collection.find({"user_id": user_id})
 
@@ -133,7 +152,7 @@ class FileService(file_pb2_grpc.FileServiceServicer):
         )
 
     def GetFile(self, request, context):
-        user_id = get_user_id(context)
+        user_id = get_user_id(context, self.auth_client)
 
         try:
             doc = files_collection.find_one({"_id": ObjectId(request.id), "user_id": user_id})
@@ -157,7 +176,7 @@ class FileService(file_pb2_grpc.FileServiceServicer):
 
     def DownloadFile(self, request, context):
         """Stream download file from S3."""
-        user_id = get_user_id(context)
+        user_id = get_user_id(context, self.auth_client)
         
         try:
             doc = files_collection.find_one({"_id": ObjectId(request.id), "user_id": user_id})
@@ -198,7 +217,7 @@ class FileService(file_pb2_grpc.FileServiceServicer):
             context.abort(grpc.StatusCode.INTERNAL, f"Failed to download file from S3: {str(e)}")
 
     def DeleteFile(self, request, context):
-        user_id = get_user_id(context)
+        user_id = get_user_id(context, self.auth_client)
 
         try:
             doc = files_collection.find_one({"_id": ObjectId(request.id), "user_id": user_id})

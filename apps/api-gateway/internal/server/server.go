@@ -16,9 +16,10 @@ type Server struct {
 	Router     *gin.Engine
 	authClient handlers.AuthServiceClient
 	userClient handlers.UserServiceClient
+	fileClient handlers.FileServiceClient
 }
 
-func New(authClient handlers.AuthServiceClient, userClient handlers.UserServiceClient, cfg *config.Config) *Server {
+func New(authClient handlers.AuthServiceClient, userClient handlers.UserServiceClient, fileClient handlers.FileServiceClient, cfg *config.Config) *Server {
 	router := gin.Default()
 	router.Use(otelgin.Middleware("api-gateway"))
 
@@ -34,6 +35,7 @@ func New(authClient handlers.AuthServiceClient, userClient handlers.UserServiceC
 		Router:     router,
 		authClient: authClient,
 		userClient: userClient,
+		fileClient: fileClient,
 	}
 
 	s.setupRoutes(cfg)
@@ -43,12 +45,23 @@ func New(authClient handlers.AuthServiceClient, userClient handlers.UserServiceC
 func (s *Server) setupRoutes(cfg *config.Config) {
 	authHandler := handlers.NewAuthHandler(s.authClient)
 	userHandler := handlers.NewUserHandler(s.userClient)
+	fileHandler := handlers.NewFileHandler(s.fileClient)
 
 	s.Router.POST("/api/login", authHandler.Login)
 
 	s.Router.POST("/api/admin/create_user", middleware.ValidateRole(s.authClient, []userv1.Role{userv1.Role_ROLE_ADMIN}), authHandler.SignUp)
 	s.Router.DELETE("/api/admin/delete_user", middleware.ValidateRole(s.authClient, []userv1.Role{userv1.Role_ROLE_ADMIN}), userHandler.DeleteUser)
 	s.Router.GET("/api/admin/list_users", middleware.ValidateRole(s.authClient, []userv1.Role{userv1.Role_ROLE_ADMIN}), userHandler.ListUsers)
+
+	files := s.Router.Group("/api/files")
+	files.Use(middleware.ValidateRole(s.authClient, []userv1.Role{userv1.Role_ROLE_USER, userv1.Role_ROLE_ADMIN}))
+	{
+		files.GET("", fileHandler.ListFiles)
+		files.POST("", fileHandler.UploadFile)
+		files.GET("/:id", fileHandler.GetFile)
+		files.GET("/:id/download", fileHandler.DownloadFile)
+		files.DELETE("/:id", fileHandler.DeleteFile)
+	}
 
 	s.Router.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{"status": "ok"})
@@ -74,6 +87,12 @@ func (s *Server) Close() error {
 
 	if s.userClient != nil {
 		if e := s.userClient.Close(); e != nil && err == nil {
+			err = e
+		}
+	}
+
+	if s.fileClient != nil {
+		if e := s.fileClient.Close(); e != nil && err == nil {
 			err = e
 		}
 	}

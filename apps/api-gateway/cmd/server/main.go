@@ -49,6 +49,7 @@ func main() {
 
 	log.Printf("Using auth-service at: %s", cfg.AuthServiceAddr)
 	log.Printf("Using user-service at: %s", cfg.UserServiceAddr)
+	log.Printf("Using file-service at: %s", cfg.FileServiceAddr)
 
 	if cfg.Environment == "development" {
 		docs.SwaggerInfo.Host = "localhost:" + cfg.Port
@@ -64,7 +65,12 @@ func main() {
 		log.Fatalf("Failed to create user client: %v", err)
 	}
 
-	srv := server.New(authClient, userClient, cfg)
+	fileClient, err := handlers.NewGRPCFileClient(cfg.FileServiceAddr)
+	if err != nil {
+		log.Fatalf("Failed to create file client: %v", err)
+	}
+
+	srv := server.New(authClient, userClient, fileClient, cfg)
 	defer srv.Close()
 
 	log.Printf("API Gateway listening on :%s", cfg.Port)

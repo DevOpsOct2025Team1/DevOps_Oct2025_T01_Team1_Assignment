@@ -22,7 +22,7 @@
       "executor": "nx:run-commands",
       "continuous": true,
       "options": {
-        "command": "uv run python -m file_service",
+        "command": "",
         "cwd": "apps/file-service",
         "envFile": ".env"
       }

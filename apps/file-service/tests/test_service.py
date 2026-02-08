@@ -4,29 +4,73 @@ import grpc
 
 from file_service.service import FileService, get_user_id
 from file.v1 import file_pb2
+from auth.v1 import auth_pb2
 
 
 class TestGetUserId:
 
     def test_get_user_id_success(self):
         context = Mock()
-        context.invocation_metadata.return_value = [("user-id", "test-user-123")]
-        
-        user_id = get_user_id(context)
-        
-        assert user_id == "test-user-123"
+        context.invocation_metadata.return_value = [("authorization", "Bearer valid-token")]
 
-    def test_get_user_id_missing(self):
+        auth_client = Mock()
+        auth_client.validate_token.return_value = auth_pb2.ValidateTokenResponse(
+            valid=True,
+            user_id="test-user-123"
+        )
+
+        user_id = get_user_id(context, auth_client)
+
+        assert user_id == "test-user-123"
+        auth_client.validate_token.assert_called_once_with("valid-token")
+
+    def test_get_user_id_missing_authorization(self):
         context = Mock()
         context.invocation_metadata.return_value = []
         context.abort.side_effect = Exception("Aborted")
 
+        auth_client = Mock()
+
         with pytest.raises(Exception):
-            get_user_id(context)
+            get_user_id(context, auth_client)
 
         context.abort.assert_called_once_with(
             grpc.StatusCode.UNAUTHENTICATED,
-            "Missing user-id in metadata"
+            "Missing authorization header"
+        )
+
+    def test_get_user_id_invalid_format(self):
+        context = Mock()
+        context.invocation_metadata.return_value = [("authorization", "InvalidToken")]
+        context.abort.side_effect = Exception("Aborted")
+
+        auth_client = Mock()
+
+        with pytest.raises(Exception):
+            get_user_id(context, auth_client)
+
+        context.abort.assert_called_once_with(
+            grpc.StatusCode.UNAUTHENTICATED,
+            "Invalid authorization header format"
+        )
+
+    def test_get_user_id_invalid_token(self):
+        context = Mock()
+        context.invocation_metadata.return_value = [("authorization", "Bearer invalid-token")]
+        context.abort.side_effect = Exception("Aborted")
+
+        auth_client = Mock()
+        auth_client.validate_token.return_value = auth_pb2.ValidateTokenResponse(
+            valid=False,
+            user_id=""
+        )
+
+        with pytest.raises(Exception):
+            get_user_id(context, auth_client)
+
+        context.abort.assert_called_once_with(
+            grpc.StatusCode.UNAUTHENTICATED,
+            "Invalid token"
         )
 
 
@@ -35,19 +79,25 @@ class TestFileService:
     @patch('file_service.service.files_collection')
     def test_create_file(self, mock_collection):
         mock_collection.insert_one.return_value = Mock(inserted_id="507f1f77bcf86cd799439011")
-        
-        service = FileService()
+
+        auth_client = Mock()
+        auth_client.validate_token.return_value = auth_pb2.ValidateTokenResponse(
+            valid=True,
+            user_id="user-123"
+        )
+
+        service = FileService(auth_client)
         context = Mock()
-        context.invocation_metadata.return_value = [("user-id", "user-123")]
-        
+        context.invocation_metadata.return_value = [("authorization", "Bearer valid-token")]
+
         request = file_pb2.CreateFileRequest(
             filename="test.txt",
             size=1024,
             content_type="text/plain"
         )
-        
+
         response = service.CreateFile(request, context)
-        
+
         assert response.file.id == "507f1f77bcf86cd799439011"
         assert response.file.user_id == "user-123"
         assert response.file.filename == "test.txt"
@@ -67,9 +117,15 @@ class TestFileService:
     def test_create_file_sets_created_at_from_time(self, mock_collection, _mock_time):
         mock_collection.insert_one.return_value = Mock(inserted_id="507f1f77bcf86cd799439011")
 
-        service = FileService()
+        auth_client = Mock()
+        auth_client.validate_token.return_value = auth_pb2.ValidateTokenResponse(
+            valid=True,
+            user_id="user-123"
+        )
+
+        service = FileService(auth_client)
         context = Mock()
-        context.invocation_metadata.return_value = [("user-id", "user-123")]
+        context.invocation_metadata.return_value = [("authorization", "Bearer valid-token")]
         request = file_pb2.CreateFileRequest(filename="x", size=1, content_type="text/plain")
 
         response = service.CreateFile(request, context)
@@ -87,14 +143,20 @@ class TestFileService:
                 "created_at": 1234567890
             }
         ]
-        
-        service = FileService()
+
+        auth_client = Mock()
+        auth_client.validate_token.return_value = auth_pb2.ValidateTokenResponse(
+            valid=True,
+            user_id="user-123"
+        )
+
+        service = FileService(auth_client)
         context = Mock()
-        context.invocation_metadata.return_value = [("user-id", "user-123")]
-        
+        context.invocation_metadata.return_value = [("authorization", "Bearer valid-token")]
+
         request = file_pb2.ListFilesRequest()
         response = service.ListFiles(request, context)
-        
+
         assert len(response.files) == 1
         assert response.files[0].filename == "file1.txt"
 
@@ -104,9 +166,15 @@ class TestFileService:
     def test_list_files_ignores_user_id_in_request(self, mock_collection):
         mock_collection.find.return_value = []
 
-        service = FileService()
+        auth_client = Mock()
+        auth_client.validate_token.return_value = auth_pb2.ValidateTokenResponse(
+            valid=True,
+            user_id="user-123"
+        )
+
+        service = FileService(auth_client)
         context = Mock()
-        context.invocation_metadata.return_value = [("user-id", "user-123")]
+        context.invocation_metadata.return_value = [("authorization", "Bearer valid-token")]
 
         request = file_pb2.ListFilesRequest(user_id="other-user")
         _ = service.ListFiles(request, context)
@@ -124,9 +192,15 @@ class TestFileService:
             "created_at": 1234567890,
         }
 
-        service = FileService()
+        auth_client = Mock()
+        auth_client.validate_token.return_value = auth_pb2.ValidateTokenResponse(
+            valid=True,
+            user_id="user-123"
+        )
+
+        service = FileService(auth_client)
         context = Mock()
-        context.invocation_metadata.return_value = [("user-id", "user-123")]
+        context.invocation_metadata.return_value = [("authorization", "Bearer valid-token")]
 
         request = file_pb2.GetFileRequest(id="507f1f77bcf86cd799439011")
         response = service.GetFile(request, context)
@@ -136,9 +210,15 @@ class TestFileService:
 
     @patch('file_service.service.files_collection')
     def test_get_file_invalid_id_aborts(self, mock_collection):
-        service = FileService()
+        auth_client = Mock()
+        auth_client.validate_token.return_value = auth_pb2.ValidateTokenResponse(
+            valid=True,
+            user_id="user-123"
+        )
+
+        service = FileService(auth_client)
         context = Mock()
-        context.invocation_metadata.return_value = [("user-id", "user-123")]
+        context.invocation_metadata.return_value = [("authorization", "Bearer valid-token")]
         context.abort.side_effect = Exception("Aborted")
 
         request = file_pb2.GetFileRequest(id="not-a-valid-objectid")
@@ -155,9 +235,15 @@ class TestFileService:
     def test_get_file_not_found_aborts(self, mock_collection):
         mock_collection.find_one.return_value = None
 
-        service = FileService()
+        auth_client = Mock()
+        auth_client.validate_token.return_value = auth_pb2.ValidateTokenResponse(
+            valid=True,
+            user_id="user-123"
+        )
+
+        service = FileService(auth_client)
         context = Mock()
-        context.invocation_metadata.return_value = [("user-id", "user-123")]
+        context.invocation_metadata.return_value = [("authorization", "Bearer valid-token")]
         context.abort.side_effect = Exception("Aborted")
 
         request = file_pb2.GetFileRequest(id="507f1f77bcf86cd799439011")
@@ -171,24 +257,37 @@ class TestFileService:
 
     @patch('file_service.service.files_collection')
     def test_delete_file(self, mock_collection):
+        mock_collection.find_one.return_value = {"_id": "507f1f77bcf86cd799439011", "user_id": "user-123"}
         mock_collection.delete_one.return_value = Mock(deleted_count=1)
-        
-        service = FileService()
+
+        auth_client = Mock()
+        auth_client.validate_token.return_value = auth_pb2.ValidateTokenResponse(
+            valid=True,
+            user_id="user-123"
+        )
+
+        service = FileService(auth_client)
         context = Mock()
-        context.invocation_metadata.return_value = [("user-id", "user-123")]
-        
+        context.invocation_metadata.return_value = [("authorization", "Bearer valid-token")]
+
         request = file_pb2.DeleteFileRequest(id="507f1f77bcf86cd799439011")
         response = service.DeleteFile(request, context)
-        
+
         assert response.success is True
 
     @patch('file_service.service.files_collection')
     def test_delete_file_not_found(self, mock_collection):
-        mock_collection.delete_one.return_value = Mock(deleted_count=0)
+        mock_collection.find_one.return_value = None
 
-        service = FileService()
+        auth_client = Mock()
+        auth_client.validate_token.return_value = auth_pb2.ValidateTokenResponse(
+            valid=True,
+            user_id="user-123"
+        )
+
+        service = FileService(auth_client)
         context = Mock()
-        context.invocation_metadata.return_value = [("user-id", "user-123")]
+        context.invocation_metadata.return_value = [("authorization", "Bearer valid-token")]
 
         request = file_pb2.DeleteFileRequest(id="507f1f77bcf86cd799439011")
         response = service.DeleteFile(request, context)
@@ -197,9 +296,15 @@ class TestFileService:
 
     @patch('file_service.service.files_collection')
     def test_delete_file_invalid_id_aborts(self, mock_collection):
-        service = FileService()
+        auth_client = Mock()
+        auth_client.validate_token.return_value = auth_pb2.ValidateTokenResponse(
+            valid=True,
+            user_id="user-123"
+        )
+
+        service = FileService(auth_client)
         context = Mock()
-        context.invocation_metadata.return_value = [("user-id", "user-123")]
+        context.invocation_metadata.return_value = [("authorization", "Bearer valid-token")]
         context.abort.side_effect = Exception("Aborted")
 
         request = file_pb2.DeleteFileRequest(id="not-a-valid-objectid")
@@ -210,4 +315,4 @@ class TestFileService:
             grpc.StatusCode.INVALID_ARGUMENT,
             "Invalid file id format",
         )
-        mock_collection.delete_one.assert_not_called()
+        mock_collection.find_one.assert_not_called()
