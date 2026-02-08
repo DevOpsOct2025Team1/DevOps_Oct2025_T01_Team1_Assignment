@@ -22,7 +22,7 @@ ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
 RUN bun run build
 
 # wtf react router is not compatible with bun? that's so lame
-FROM gcr.io/distroless/nodejs24-debian13 AS release
+FROM cgr.dev/chainguard/node:latest AS release
 WORKDIR /usr/src/app
 COPY --from=install /temp/prod/node_modules node_modules
 COPY --from=prerelease /usr/src/app/build ./build
