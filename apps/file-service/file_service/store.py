@@ -36,5 +36,3 @@ def init_upload_session_indexes():
         expireAfterSeconds=7 * 24 * 60 * 60
     )
     upload_sessions_collection.create_index("upload_id", unique=True)
-
-init_upload_session_indexes()

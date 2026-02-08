@@ -437,11 +437,12 @@ func (h *FileHandler) UploadPart(c *gin.Context) {
 
 	uploadID := c.Param("upload_id")
 	partNumberStr := c.Param("part_number")
-	partNumber, err := strconv.Atoi(partNumberStr)
+	partNumberParsed, err := strconv.ParseInt(partNumberStr, 10, 32)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid part number"})
 		return
 	}
+	partNumber := int32(partNumberParsed)
 
 	file, err := c.FormFile("chunk")
 	if err != nil {
@@ -465,7 +466,7 @@ func (h *FileHandler) UploadPart(c *gin.Context) {
 	ctx := h.contextWithAuth(c)
 	resp, err := h.client.UploadPart(ctx, &filev1.UploadPartRequest{
 		UploadId:   uploadID,
-		PartNumber: int32(partNumber),
+		PartNumber: partNumber,
 		Chunk:      chunk,
 	})
 	if err != nil {
