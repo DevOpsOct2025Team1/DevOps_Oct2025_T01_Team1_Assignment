@@ -16,6 +16,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
+      - name: Clean up previous containers
+        run: |
+          docker compose -f compose.yml -f compose.ci.yml down -v --remove-orphans || true
+
       - name: Start services
         run: |
           docker compose -f compose.yml -f compose.ci.yml --env-file .env.ci up -d
