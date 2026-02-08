@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { getHours } from "date-fns";
-import { useGetApiAdminListUsers } from "../api/generated";
+import { useGetApiAdminListUsers } from "~/api/generated";
 import { Input } from "./ui/input";
 import { Search, Loader2 } from "lucide-react";
 import { CreateUserDialog } from "./CreateUserDialog";
@@ -28,7 +28,7 @@ export default function AdminPanel() {
       query: {
         select: (data) => {
           if (data.status === 200 && data.data) {
-             return (data.data['users'] || []) as unknown as User[];
+             return (data.data["users"] || []) as unknown as User[];
           }
           return [];
         }

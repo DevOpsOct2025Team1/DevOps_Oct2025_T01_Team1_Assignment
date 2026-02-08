@@ -27,15 +27,6 @@ export default function Dashboard() {
   return (
     <div className="flex-1 bg-gray-50 py-8">
       <div className="max-w-5xl mx-auto px-4">
-        {!userIsAdmin && (
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900">
-              Dashboard
-            </h1>
-            <p className="text-gray-600 mt-1">Welcome, {user.username}</p>
-          </div>
-        )}
-
         <Suspense fallback={<div className="text-center py-8 text-gray-600">Loading...</div>}>
           {userIsAdmin ? <AdminPanel /> : <UserPanel />}
         </Suspense>
