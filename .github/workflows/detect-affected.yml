@@ -40,7 +40,19 @@ jobs:
 
           affected=$(./nx show projects --affected --base=$BASE 2>&1 | grep -v "added\|audited\|packages are looking\|npm fund\|found.*vulnerabilities" || true)
 
-          json_array=$(echo "$affected" | jq -R -s -c 'split("\n") | map(select(length > 0))')
+          echo "All affected projects:"
+          echo "$affected"
 
-          echo "Affected projects: $json_array"
+          filtered=""
+          for project in $affected; do
+            if [[ -f "apps/${project}/Dockerfile" ]]; then
+              filtered="${filtered}${project}\n"
+            else
+              echo "Filtered out (no Dockerfile): $project"
+            fi
+          done
+
+          json_array=$(echo -e "$filtered" | jq -R -s -c 'split("\n") | map(select(length > 0))')
+
+          echo "Containerized projects: $json_array"
           echo "projects=$json_array" >> $GITHUB_OUTPUT
