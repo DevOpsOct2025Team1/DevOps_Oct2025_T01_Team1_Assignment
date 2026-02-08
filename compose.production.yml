@@ -58,6 +58,7 @@ services:
       - AXIOM_DATASET=${AXIOM_DATASET:-traces}
       - AXIOM_METRICS_DATASET=${AXIOM_METRICS_DATASET:-metrics}
       - ENVIRONMENT=production
+      - FRONTEND_URL=${FRONTEND_URL:-localhost:3000}
     depends_on:
       auth-service:
         condition: service_healthy
