@@ -87,8 +87,9 @@ services:
       - "3001:3001"
     environment:
       - PORT=3001
-      - AUTH_SERVICE_ADDR=auth-service:8081
-      - FILE_SERVICE_ADDR=file-service:50054
+      - AUTH_SERVICE_ADDR=auth-service:${AUTH_SERVICE_PORT:-8081}
+      - USER_SERVICE_ADDR=user-service:${USER_SERVICE_PORT:-8080}
+      - FILE_SERVICE_ADDR=file-service:${FILE_SERVICE_PORT:-50054}
       - AXIOM_API_TOKEN=${AXIOM_API_TOKEN}
       - AXIOM_ENDPOINT=${AXIOM_ENDPOINT:-us-east-1.aws.edge.axiom.co}
       - AXIOM_DATASET=${AXIOM_DATASET:-traces}
@@ -96,6 +97,8 @@ services:
       - ENVIRONMENT=${ENVIRONMENT:-production}
       - FRONTEND_URL=${FRONTEND_URL:-http://localhost:3000}
     depends_on:
+      user-service:
+        condition: service_healthy
       auth-service:
         condition: service_healthy
       file-service:
