@@ -71,6 +71,8 @@ jobs:
           tags: |
             ${{ steps.meta.outputs.image-name }}:dev
             ${{ steps.meta.outputs.image-name }}:main-${{ steps.meta.outputs.short-sha }}
+          build-args: |
+            VITE_API_BASE_URL=/
           cache-from: type=gha
           cache-to: type=gha,mode=max
 

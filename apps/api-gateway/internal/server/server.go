@@ -23,8 +23,13 @@ func New(authClient handlers.AuthServiceClient, userClient handlers.UserServiceC
 	router := gin.Default()
 	router.Use(otelgin.Middleware("api-gateway"))
 
+	allowOrigins := []string{"http://localhost:5173"}
+	if cfg.FrontendURL != "" {
+		allowOrigins = append(allowOrigins, cfg.FrontendURL)
+	}
+
 	router.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:5173", "http://localhost:3000"},
+		AllowOrigins:     allowOrigins,
 		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
 		ExposeHeaders:    []string{"Content-Length"},
