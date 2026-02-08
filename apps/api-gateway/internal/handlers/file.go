@@ -68,16 +68,14 @@ func mapGRPCError(err error) int {
 }
 
 func (h *FileHandler) ListFiles(c *gin.Context) {
-	user, err := h.getUserFromContext(c)
+	_, err := h.getUserFromContext(c)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return
 	}
 
 	ctx := h.contextWithAuth(c)
-	resp, err := h.client.ListFiles(ctx, &filev1.ListFilesRequest{
-		UserId: user.Id,
-	})
+	resp, err := h.client.ListFiles(ctx, &filev1.ListFilesRequest{})
 	if err != nil {
 		c.JSON(mapGRPCError(err), gin.H{"error": err.Error()})
 		return
@@ -98,7 +96,7 @@ func (h *FileHandler) ListFiles(c *gin.Context) {
 }
 
 func (h *FileHandler) GetFile(c *gin.Context) {
-	user, err := h.getUserFromContext(c)
+	_, err := h.getUserFromContext(c)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return
@@ -112,8 +110,7 @@ func (h *FileHandler) GetFile(c *gin.Context) {
 
 	ctx := h.contextWithAuth(c)
 	resp, err := h.client.GetFile(ctx, &filev1.GetFileRequest{
-		Id:     fileID,
-		UserId: user.Id,
+		Id: fileID,
 	})
 	if err != nil {
 		c.JSON(mapGRPCError(err), gin.H{"error": err.Error()})

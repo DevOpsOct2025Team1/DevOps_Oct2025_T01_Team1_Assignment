@@ -108,9 +108,8 @@ func (x *File) GetCreatedAt() int64 {
 type CreateFileRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Filename      string                 `protobuf:"bytes,1,opt,name=filename,proto3" json:"filename,omitempty"`
-	UserId        string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	Size          int64                  `protobuf:"varint,3,opt,name=size,proto3" json:"size,omitempty"`
-	ContentType   string                 `protobuf:"bytes,4,opt,name=content_type,json=contentType,proto3" json:"content_type,omitempty"`
+	Size          int64                  `protobuf:"varint,2,opt,name=size,proto3" json:"size,omitempty"`
+	ContentType   string                 `protobuf:"bytes,3,opt,name=content_type,json=contentType,proto3" json:"content_type,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -152,13 +151,6 @@ func (x *CreateFileRequest) GetFilename() string {
 	return ""
 }
 
-func (x *CreateFileRequest) GetUserId() string {
-	if x != nil {
-		return x.UserId
-	}
-	return ""
-}
-
 func (x *CreateFileRequest) GetSize() int64 {
 	if x != nil {
 		return x.Size
@@ -176,7 +168,6 @@ func (x *CreateFileRequest) GetContentType() string {
 type GetFileRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	UserId        string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -218,16 +209,8 @@ func (x *GetFileRequest) GetId() string {
 	return ""
 }
 
-func (x *GetFileRequest) GetUserId() string {
-	if x != nil {
-		return x.UserId
-	}
-	return ""
-}
-
 type ListFilesRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -260,13 +243,6 @@ func (x *ListFilesRequest) ProtoReflect() protoreflect.Message {
 // Deprecated: Use ListFilesRequest.ProtoReflect.Descriptor instead.
 func (*ListFilesRequest) Descriptor() ([]byte, []int) {
 	return file_file_v1_file_proto_rawDescGZIP(), []int{3}
-}
-
-func (x *ListFilesRequest) GetUserId() string {
-	if x != nil {
-		return x.UserId
-	}
-	return ""
 }
 
 type ListFilesResponse struct {
@@ -785,17 +761,14 @@ const file_file_v1_file_proto_rawDesc = "" +
 	"\x04size\x18\x04 \x01(\x03R\x04size\x12!\n" +
 	"\fcontent_type\x18\x05 \x01(\tR\vcontentType\x12\x1d\n" +
 	"\n" +
-	"created_at\x18\x06 \x01(\x03R\tcreatedAt\"\x7f\n" +
+	"created_at\x18\x06 \x01(\x03R\tcreatedAt\"f\n" +
 	"\x11CreateFileRequest\x12\x1a\n" +
-	"\bfilename\x18\x01 \x01(\tR\bfilename\x12\x17\n" +
-	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x12\n" +
-	"\x04size\x18\x03 \x01(\x03R\x04size\x12!\n" +
-	"\fcontent_type\x18\x04 \x01(\tR\vcontentType\"9\n" +
+	"\bfilename\x18\x01 \x01(\tR\bfilename\x12\x12\n" +
+	"\x04size\x18\x02 \x01(\x03R\x04size\x12!\n" +
+	"\fcontent_type\x18\x03 \x01(\tR\vcontentType\" \n" +
 	"\x0eGetFileRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12\x17\n" +
-	"\auser_id\x18\x02 \x01(\tR\x06userId\"+\n" +
-	"\x10ListFilesRequest\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\tR\x06userId\"8\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"\x12\n" +
+	"\x10ListFilesRequest\"8\n" +
 	"\x11ListFilesResponse\x12#\n" +
 	"\x05files\x18\x01 \x03(\v2\r.file.v1.FileR\x05files\"1\n" +
 	"\fFileResponse\x12!\n" +
