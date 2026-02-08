@@ -16,7 +16,9 @@ COPY --from=install /temp/dev/node_modules node_modules
 COPY apps/api-gateway/docs/swagger.json ../api-gateway/docs/swagger.json
 COPY apps/frontend/ .
 
+ARG VITE_API_BASE_URL=/api
 ENV NODE_ENV=production
+ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
 RUN bun run build
 
 # wtf react router is not compatible with bun? that's so lame
