@@ -1,0 +1,333 @@
+package handlers
+
+import (
+	"bytes"
+	"context"
+	"encoding/json"
+	"io"
+	"mime/multipart"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+
+	"github.com/gin-gonic/gin"
+	filev1 "github.com/provsalt/DOP_P01_Team1/common/file/v1"
+	userv1 "github.com/provsalt/DOP_P01_Team1/common/user/v1"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
+)
+
+func setupFileTestRouter(handler *FileHandler) *gin.Engine {
+	gin.SetMode(gin.TestMode)
+	router := gin.New()
+
+	router.Use(func(c *gin.Context) {
+		c.Set("user", &userv1.User{
+			Id:       "user-123",
+			Username: "testuser",
+			Role:     userv1.Role_ROLE_USER,
+		})
+		c.Next()
+	})
+
+	router.GET("/api/files", handler.ListFiles)
+	router.GET("/api/files/:id", handler.GetFile)
+	router.DELETE("/api/files/:id", handler.DeleteFile)
+	router.POST("/api/files", handler.UploadFile)
+	router.GET("/api/files/:id/download", handler.DownloadFile)
+
+	return router
+}
+
+func TestListFiles_Success(t *testing.T) {
+	mockClient := &mockFileClient{
+		listFilesFunc: func(ctx context.Context, req *filev1.ListFilesRequest) (*filev1.ListFilesResponse, error) {
+			return &filev1.ListFilesResponse{
+				Files: []*filev1.File{
+					{
+						Id:          "file-1",
+						Filename:    "test.txt",
+						Size:        1024,
+						ContentType: "text/plain",
+						CreatedAt:   1704067200,
+					},
+				},
+			}, nil
+		},
+	}
+
+	handler := NewFileHandler(mockClient)
+	router := setupFileTestRouter(handler)
+
+	req, _ := http.NewRequest("GET", "/api/files", nil)
+	req.Header.Set("Authorization", "Bearer test-token")
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("expected status %d, got %d", http.StatusOK, w.Code)
+	}
+
+	var response map[string]interface{}
+	if err := json.Unmarshal(w.Body.Bytes(), &response); err != nil {
+		t.Fatalf("failed to unmarshal response: %v", err)
+	}
+
+	files := response["files"].([]interface{})
+	if len(files) != 1 {
+		t.Errorf("expected 1 file, got %d", len(files))
+	}
+}
+
+func TestListFiles_NoUser(t *testing.T) {
+	mockClient := &mockFileClient{}
+	handler := NewFileHandler(mockClient)
+
+	gin.SetMode(gin.TestMode)
+	router := gin.New()
+	router.GET("/api/files", handler.ListFiles)
+
+	req, _ := http.NewRequest("GET", "/api/files", nil)
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusUnauthorized {
+		t.Errorf("expected status %d, got %d", http.StatusUnauthorized, w.Code)
+	}
+}
+
+func TestGetFile_Success(t *testing.T) {
+	mockClient := &mockFileClient{
+		getFileFunc: func(ctx context.Context, req *filev1.GetFileRequest) (*filev1.FileResponse, error) {
+			return &filev1.FileResponse{
+				File: &filev1.File{
+					Id:          "file-1",
+					Filename:    "test.txt",
+					Size:        1024,
+					ContentType: "text/plain",
+					CreatedAt:   1704067200,
+				},
+			}, nil
+		},
+	}
+
+	handler := NewFileHandler(mockClient)
+	router := setupFileTestRouter(handler)
+
+	req, _ := http.NewRequest("GET", "/api/files/file-1", nil)
+	req.Header.Set("Authorization", "Bearer test-token")
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("expected status %d, got %d", http.StatusOK, w.Code)
+	}
+}
+
+func TestGetFile_NotFound(t *testing.T) {
+	mockClient := &mockFileClient{
+		getFileFunc: func(ctx context.Context, req *filev1.GetFileRequest) (*filev1.FileResponse, error) {
+			return nil, status.Error(codes.NotFound, "file not found")
+		},
+	}
+
+	handler := NewFileHandler(mockClient)
+	router := setupFileTestRouter(handler)
+
+	req, _ := http.NewRequest("GET", "/api/files/missing-file", nil)
+	req.Header.Set("Authorization", "Bearer test-token")
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusNotFound {
+		t.Errorf("expected status %d, got %d", http.StatusNotFound, w.Code)
+	}
+}
+
+func TestDeleteFile_Success(t *testing.T) {
+	mockClient := &mockFileClient{
+		deleteFileFunc: func(ctx context.Context, req *filev1.DeleteFileRequest) (*filev1.DeleteFileResponse, error) {
+			return &filev1.DeleteFileResponse{
+				Success: true,
+			}, nil
+		},
+	}
+
+	handler := NewFileHandler(mockClient)
+	router := setupFileTestRouter(handler)
+
+	req, _ := http.NewRequest("DELETE", "/api/files/file-1", nil)
+	req.Header.Set("Authorization", "Bearer test-token")
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("expected status %d, got %d", http.StatusOK, w.Code)
+	}
+
+	var response map[string]interface{}
+	if err := json.Unmarshal(w.Body.Bytes(), &response); err != nil {
+		t.Fatalf("failed to unmarshal response: %v", err)
+	}
+
+	if response["success"] != true {
+		t.Errorf("expected success true, got %v", response["success"])
+	}
+}
+
+func TestUploadFile_Success(t *testing.T) {
+	mockStream := &mockUploadStream{
+		sendFunc: func(req *filev1.UploadFileRequest) error {
+			return nil
+		},
+		closeAndRecvFunc: func() (*filev1.FileResponse, error) {
+			return &filev1.FileResponse{
+				File: &filev1.File{
+					Id:          "file-123",
+					Filename:    "upload.txt",
+					Size:        13,
+					ContentType: "text/plain",
+					CreatedAt:   1704067200,
+				},
+			}, nil
+		},
+	}
+
+	mockClient := &mockFileClient{
+		uploadFileFunc: func(ctx context.Context) (filev1.FileService_UploadFileClient, error) {
+			return mockStream, nil
+		},
+	}
+
+	handler := NewFileHandler(mockClient)
+	router := setupFileTestRouter(handler)
+
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+	part, _ := writer.CreateFormFile("file", "upload.txt")
+	part.Write([]byte("test content"))
+	writer.Close()
+
+	req, _ := http.NewRequest("POST", "/api/files", body)
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+	req.Header.Set("Authorization", "Bearer test-token")
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("expected status %d, got %d: %s", http.StatusOK, w.Code, w.Body.String())
+	}
+}
+
+func TestUploadFile_MissingFile(t *testing.T) {
+	mockClient := &mockFileClient{}
+	handler := NewFileHandler(mockClient)
+	router := setupFileTestRouter(handler)
+
+	req, _ := http.NewRequest("POST", "/api/files", nil)
+	req.Header.Set("Authorization", "Bearer test-token")
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Errorf("expected status %d, got %d", http.StatusBadRequest, w.Code)
+	}
+}
+
+type mockUploadStream struct {
+	sendFunc         func(*filev1.UploadFileRequest) error
+	closeAndRecvFunc func() (*filev1.FileResponse, error)
+}
+
+func (m *mockUploadStream) Send(req *filev1.UploadFileRequest) error {
+	if m.sendFunc != nil {
+		return m.sendFunc(req)
+	}
+	return nil
+}
+
+func (m *mockUploadStream) CloseAndRecv() (*filev1.FileResponse, error) {
+	if m.closeAndRecvFunc != nil {
+		return m.closeAndRecvFunc()
+	}
+	return nil, nil
+}
+
+func (m *mockUploadStream) Header() (metadata.MD, error) { return nil, nil }
+func (m *mockUploadStream) Trailer() metadata.MD         { return nil }
+func (m *mockUploadStream) CloseSend() error             { return nil }
+func (m *mockUploadStream) Context() context.Context     { return context.Background() }
+func (m *mockUploadStream) SendMsg(interface{}) error    { return nil }
+func (m *mockUploadStream) RecvMsg(interface{}) error    { return io.EOF }
+
+type mockDownloadStream struct {
+	recvFunc func() (*filev1.DownloadFileResponse, error)
+}
+
+func (m *mockDownloadStream) Recv() (*filev1.DownloadFileResponse, error) {
+	if m.recvFunc != nil {
+		return m.recvFunc()
+	}
+	return nil, io.EOF
+}
+
+func (m *mockDownloadStream) Header() (metadata.MD, error) { return nil, nil }
+func (m *mockDownloadStream) Trailer() metadata.MD         { return nil }
+func (m *mockDownloadStream) CloseSend() error             { return nil }
+func (m *mockDownloadStream) Context() context.Context     { return context.Background() }
+func (m *mockDownloadStream) SendMsg(interface{}) error    { return nil }
+func (m *mockDownloadStream) RecvMsg(interface{}) error    { return io.EOF }
+
+func TestDownloadFile_Success(t *testing.T) {
+	callCount := 0
+	mockStream := &mockDownloadStream{
+		recvFunc: func() (*filev1.DownloadFileResponse, error) {
+			callCount++
+			if callCount == 1 {
+				return &filev1.DownloadFileResponse{
+					Data: &filev1.DownloadFileResponse_Metadata{
+						Metadata: &filev1.DownloadFileMetadata{
+							Filename:    "test.txt",
+							ContentType: "text/plain",
+							Size:        12,
+						},
+					},
+				}, nil
+			} else if callCount == 2 {
+				return &filev1.DownloadFileResponse{
+					Data: &filev1.DownloadFileResponse_Chunk{
+						Chunk: []byte("test content"),
+					},
+				}, nil
+			}
+			return nil, io.EOF
+		},
+	}
+
+	mockClient := &mockFileClient{
+		downloadFileFunc: func(ctx context.Context, req *filev1.DownloadFileRequest) (filev1.FileService_DownloadFileClient, error) {
+			return mockStream, nil
+		},
+	}
+
+	handler := NewFileHandler(mockClient)
+	router := setupFileTestRouter(handler)
+
+	req, _ := http.NewRequest("GET", "/api/files/file-1/download", nil)
+	req.Header.Set("Authorization", "Bearer test-token")
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("expected status %d, got %d", http.StatusOK, w.Code)
+	}
+
+	if w.Header().Get("Content-Type") != "text/plain" {
+		t.Errorf("expected Content-Type text/plain, got %s", w.Header().Get("Content-Type"))
+	}
+
+	if w.Body.String() != "test content" {
+		t.Errorf("expected body 'test content', got %s", w.Body.String())
+	}
+}

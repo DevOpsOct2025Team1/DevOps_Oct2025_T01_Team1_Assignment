@@ -5,9 +5,11 @@ package file.v1;
 option go_package="file/v1;filev1";
 
 service FileService {
+  rpc UploadFile(stream UploadFileRequest) returns (FileResponse);
   rpc CreateFile(CreateFileRequest) returns (FileResponse);
   rpc ListFiles(ListFilesRequest) returns (ListFilesResponse);
   rpc GetFile(GetFileRequest) returns (FileResponse);
+  rpc DownloadFile(DownloadFileRequest) returns (stream DownloadFileResponse);
   rpc DeleteFile(DeleteFileRequest) returns (DeleteFileResponse);
 }
 
@@ -22,18 +24,15 @@ message File {
 
 message CreateFileRequest {
   string filename = 1;
-  string user_id = 2;
-  int64 size = 3;
-  string content_type = 4;
+  int64 size = 2;
+  string content_type = 3;
 }
 
 message GetFileRequest {
   string id = 1;
 }
 
-message ListFilesRequest {
-  string user_id = 1;
-}
+message ListFilesRequest {}
 
 message ListFilesResponse {
   repeated File files = 1;
@@ -45,8 +44,38 @@ message FileResponse {
 
 message DeleteFileRequest {
   string id = 1;
+  string user_id = 2;
 }
 
 message DeleteFileResponse {
   bool success = 1;
+}
+
+message UploadFileRequest {
+  oneof data {
+    UploadFileMetadata metadata = 1;
+    bytes chunk = 2;
+  }
+}
+
+message UploadFileMetadata {
+  string filename = 1;
+  string content_type = 2;
+}
+
+message DownloadFileRequest {
+  string id = 1;
+}
+
+message DownloadFileResponse {
+  oneof data {
+    DownloadFileMetadata metadata = 1;
+    bytes chunk = 2;
+  }
+}
+
+message DownloadFileMetadata {
+  string filename = 1;
+  string content_type = 2;
+  int64 size = 3;
 }

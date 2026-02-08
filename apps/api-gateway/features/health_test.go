@@ -15,6 +15,7 @@ import (
 	"github.com/provsalt/DOP_P01_Team1/api-gateway/internal/config"
 	"github.com/provsalt/DOP_P01_Team1/api-gateway/internal/server"
 	authv1 "github.com/provsalt/DOP_P01_Team1/common/auth/v1"
+	filev1 "github.com/provsalt/DOP_P01_Team1/common/file/v1"
 	userv1 "github.com/provsalt/DOP_P01_Team1/common/user/v1"
 )
 
@@ -31,9 +32,10 @@ type healthTestContext struct {
 func newHealthTestContext() *healthTestContext {
 	mockAuthClient := &mockAuthClient{}
 	mockUserClient := &mockUserClient{}
+	mockFileClient := &mockFileClient{}
 
 	cfg := &config.Config{Environment: "test"}
-	srv := server.New(mockAuthClient, mockUserClient, cfg)
+	srv := server.New(mockAuthClient, mockUserClient, mockFileClient, cfg)
 	testServer := httptest.NewServer(srv.Router)
 
 	return &healthTestContext{
@@ -106,6 +108,32 @@ func (m *mockUserClient) ListUsers(_ context.Context, req *userv1.ListUsersReque
 }
 
 func (m *mockUserClient) Close() error {
+	return nil
+}
+
+type mockFileClient struct{}
+
+func (m *mockFileClient) ListFiles(ctx context.Context, req *filev1.ListFilesRequest) (*filev1.ListFilesResponse, error) {
+	return &filev1.ListFilesResponse{Files: []*filev1.File{}}, nil
+}
+
+func (m *mockFileClient) GetFile(ctx context.Context, req *filev1.GetFileRequest) (*filev1.FileResponse, error) {
+	return nil, fmt.Errorf("not implemented")
+}
+
+func (m *mockFileClient) DeleteFile(ctx context.Context, req *filev1.DeleteFileRequest) (*filev1.DeleteFileResponse, error) {
+	return &filev1.DeleteFileResponse{Success: false}, nil
+}
+
+func (m *mockFileClient) UploadFile(ctx context.Context) (filev1.FileService_UploadFileClient, error) {
+	return nil, fmt.Errorf("not implemented")
+}
+
+func (m *mockFileClient) DownloadFile(ctx context.Context, req *filev1.DownloadFileRequest) (filev1.FileService_DownloadFileClient, error) {
+	return nil, fmt.Errorf("not implemented")
+}
+
+func (m *mockFileClient) Close() error {
 	return nil
 }
 

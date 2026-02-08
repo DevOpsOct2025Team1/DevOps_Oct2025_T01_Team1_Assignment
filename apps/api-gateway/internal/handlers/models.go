@@ -44,3 +44,32 @@ type ErrorResponse struct {
 type HealthResponse struct {
 	Status string `json:"status" example:"ok"`
 }
+
+// FileMetadata represents file metadata
+type FileMetadata struct {
+	ID          string `json:"id" example:"507f1f77bcf86cd799439011"`
+	Filename    string `json:"filename" example:"document.pdf"`
+	Size        int64  `json:"size" example:"1024000"`
+	ContentType string `json:"content_type" example:"application/pdf"`
+	CreatedAt   int64  `json:"created_at" example:"1704067200"`
+}
+
+// FileResponse represents the response for file upload
+type FileResponse struct {
+	File FileMetadata `json:"file"`
+}
+
+// ListFilesResponse represents the response for listing files
+type ListFilesResponse struct {
+	Files []FileMetadata `json:"files"`
+}
+
+// GetFileResponse represents the response for getting a single file
+type GetFileResponse struct {
+	File FileMetadata `json:"file"`
+}
+
+// DeleteFileResponse represents the response for deleting a file
+type DeleteFileResponse struct {
+	Success bool `json:"success" example:"true"`
+}

@@ -15,7 +15,7 @@ def test_serve_wires_grpc_and_telemetry_without_running_real_server():
     ) as add_servicer, patch.object(
         main, "register_health"
     ) as register_health, patch.object(
-        main, "SERVICE_PORT", 55555
+        main, "FILE_SERVICE_PORT", 55555
     ), patch.object(
         main, "SERVICE_NAME", "file-service"
     ), patch.object(

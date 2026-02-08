@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, Mock, patch
 
 
 def test_store_uses_env_database_and_mongo_uri(monkeypatch):
-    monkeypatch.setenv("MONGO_URI", "mongodb://example:27017")
+    monkeypatch.setenv("MONGODB_URI", "mongodb://example:27017")
     monkeypatch.setenv("MONGODB_DATABASE", "test_db")
 
     mock_client = MagicMock()
@@ -15,8 +15,8 @@ def test_store_uses_env_database_and_mongo_uri(monkeypatch):
 
     # Patch pymongo.MongoClient BEFORE importing the module so module-level
     # initialization doesn't attempt a real connection.
-    with patch("pymongo.MongoClient", return_value=mock_client) as mongo_cls:
-        # Ensure a clean import so config/store read the monkeypatched env.
+    with patch("pymongo.MongoClient", return_value=mock_client) as mongo_cls, \
+         patch("file_service.config.load_dotenv"):
         sys.modules.pop("file_service.store", None)
         sys.modules.pop("file_service.config", None)
 

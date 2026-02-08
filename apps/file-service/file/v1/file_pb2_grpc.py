@@ -14,6 +14,11 @@ class FileServiceStub(object):
         Args:
             channel: A grpc.Channel.
         """
+        self.UploadFile = channel.stream_unary(
+                '/file.v1.FileService/UploadFile',
+                request_serializer=file_dot_v1_dot_file__pb2.UploadFileRequest.SerializeToString,
+                response_deserializer=file_dot_v1_dot_file__pb2.FileResponse.FromString,
+                _registered_method=True)
         self.CreateFile = channel.unary_unary(
                 '/file.v1.FileService/CreateFile',
                 request_serializer=file_dot_v1_dot_file__pb2.CreateFileRequest.SerializeToString,
@@ -29,6 +34,11 @@ class FileServiceStub(object):
                 request_serializer=file_dot_v1_dot_file__pb2.GetFileRequest.SerializeToString,
                 response_deserializer=file_dot_v1_dot_file__pb2.FileResponse.FromString,
                 _registered_method=True)
+        self.DownloadFile = channel.unary_stream(
+                '/file.v1.FileService/DownloadFile',
+                request_serializer=file_dot_v1_dot_file__pb2.DownloadFileRequest.SerializeToString,
+                response_deserializer=file_dot_v1_dot_file__pb2.DownloadFileResponse.FromString,
+                _registered_method=True)
         self.DeleteFile = channel.unary_unary(
                 '/file.v1.FileService/DeleteFile',
                 request_serializer=file_dot_v1_dot_file__pb2.DeleteFileRequest.SerializeToString,
@@ -38,6 +48,12 @@ class FileServiceStub(object):
 
 class FileServiceServicer(object):
     """Missing associated documentation comment in .proto file."""
+
+    def UploadFile(self, request_iterator, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
 
     def CreateFile(self, request, context):
         """Missing associated documentation comment in .proto file."""
@@ -57,6 +73,12 @@ class FileServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def DownloadFile(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
     def DeleteFile(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
@@ -66,6 +88,11 @@ class FileServiceServicer(object):
 
 def add_FileServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
+            'UploadFile': grpc.stream_unary_rpc_method_handler(
+                    servicer.UploadFile,
+                    request_deserializer=file_dot_v1_dot_file__pb2.UploadFileRequest.FromString,
+                    response_serializer=file_dot_v1_dot_file__pb2.FileResponse.SerializeToString,
+            ),
             'CreateFile': grpc.unary_unary_rpc_method_handler(
                     servicer.CreateFile,
                     request_deserializer=file_dot_v1_dot_file__pb2.CreateFileRequest.FromString,
@@ -80,6 +107,11 @@ def add_FileServiceServicer_to_server(servicer, server):
                     servicer.GetFile,
                     request_deserializer=file_dot_v1_dot_file__pb2.GetFileRequest.FromString,
                     response_serializer=file_dot_v1_dot_file__pb2.FileResponse.SerializeToString,
+            ),
+            'DownloadFile': grpc.unary_stream_rpc_method_handler(
+                    servicer.DownloadFile,
+                    request_deserializer=file_dot_v1_dot_file__pb2.DownloadFileRequest.FromString,
+                    response_serializer=file_dot_v1_dot_file__pb2.DownloadFileResponse.SerializeToString,
             ),
             'DeleteFile': grpc.unary_unary_rpc_method_handler(
                     servicer.DeleteFile,
@@ -96,6 +128,33 @@ def add_FileServiceServicer_to_server(servicer, server):
  # This class is part of an EXPERIMENTAL API.
 class FileService(object):
     """Missing associated documentation comment in .proto file."""
+
+    @staticmethod
+    def UploadFile(request_iterator,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.stream_unary(
+            request_iterator,
+            target,
+            '/file.v1.FileService/UploadFile',
+            file_dot_v1_dot_file__pb2.UploadFileRequest.SerializeToString,
+            file_dot_v1_dot_file__pb2.FileResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
 
     @staticmethod
     def CreateFile(request,
@@ -168,6 +227,33 @@ class FileService(object):
             '/file.v1.FileService/GetFile',
             file_dot_v1_dot_file__pb2.GetFileRequest.SerializeToString,
             file_dot_v1_dot_file__pb2.FileResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def DownloadFile(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_stream(
+            request,
+            target,
+            '/file.v1.FileService/DownloadFile',
+            file_dot_v1_dot_file__pb2.DownloadFileRequest.SerializeToString,
+            file_dot_v1_dot_file__pb2.DownloadFileResponse.FromString,
             options,
             channel_credentials,
             insecure,

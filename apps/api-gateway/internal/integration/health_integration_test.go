@@ -15,7 +15,7 @@ func TestHealthEndpoint_Integration(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	cfg := &config.Config{Environment: "test"}
-	srv := server.New(nil, nil, cfg)
+	srv := server.New(nil, nil, nil, cfg)
 
 	ts := httptest.NewServer(srv.Router)
 	defer ts.Close()
