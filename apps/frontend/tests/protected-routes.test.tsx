@@ -1,85 +1,98 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { BrowserRouter, useNavigate } from 'react-router';
-import Dashboard from '../app/routes/dashboard';
-import { renderWithProviders } from './test-utils';
-import { clearAuthCache } from '../app/utils/auth';
+import { describe, it, expect, beforeEach, vi } from "vitest"
+import { BrowserRouter } from "react-router"
+import Dashboard from "../app/routes/dashboard"
+import { renderWithProviders } from "./test-utils"
+import { clearAuthCache } from "../app/utils/auth"
 
-const createUserMock = vi.fn();
-const deleteUserMock = vi.fn();
+const createUserMock = vi.fn(() => ({
+  mutateAsync: vi.fn(),
+  isPending: false,
+}))
 
-vi.mock('../app/api/generated', () => ({
-  usePostApiAdminCreateUser: () => ({
-    mutateAsync: createUserMock,
-    isPending: false,
-  }),
-  useDeleteApiAdminDeleteUser: () => ({
-    mutateAsync: deleteUserMock,
-    isPending: false,
-  }),
-}));
+const deleteUserMock = vi.fn(() => ({
+  mutateAsync: vi.fn(),
+  isPending: false,
+}))
 
-describe('Protected Routes', () => {
+const getUsersMock = vi.fn(() => ({
+  data: [],
+  isLoading: false,
+}))
+
+const getFilesMock = vi.fn(() => ({
+  status: 200,
+  data: { files: [] },
+}))
+
+vi.mock("../app/api/generated", () => ({
+  usePostApiAdminCreateUser: () => createUserMock(),
+  useDeleteApiAdminDeleteUser: () => deleteUserMock(),
+  useGetApiAdminListUsers: () => getUsersMock(),
+  getGetApiAdminListUsersQueryKey: () => ["users"],
+  useGetApiFiles: (options: any) => {
+    const data = getFilesMock()
+    if (options?.query?.select && data?.data) {
+      return {
+        data: options.query.select(data),
+        isLoading: false,
+        refetch: vi.fn(),
+      }
+    }
+    return {
+      data,
+      isLoading: false,
+      refetch: vi.fn(),
+    }
+  },
+  usePostApiFiles: () => ({ mutate: vi.fn(), isPending: false }),
+  useDeleteApiFilesId: () => ({ mutate: vi.fn(), isPending: false }),
+  getGetApiFilesIdDownloadUrl: (id: string) => `/api/files/${id}/download`,
+}))
+
+describe("Protected Routes", () => {
   beforeEach(() => {
-    clearAuthCache();
-    localStorage.clear();
-    createUserMock.mockReset();
-    deleteUserMock.mockReset();
-  });
+    vi.resetModules()
+    clearAuthCache()
+    localStorage.clear()
+    createUserMock.mockClear()
+    deleteUserMock.mockClear()
+    getUsersMock.mockClear()
+    getFilesMock.mockClear()
+  })
 
-  it('redirects to login when not authenticated', () => {
-    let navigatedTo = '';
+  it("shows admin dashboard for admin users", async () => {
+    localStorage.setItem("token", "fake-token")
+    localStorage.setItem("user", JSON.stringify({
+      id: "1",
+      username: "admin",
+      role: "admin"
+    }))
 
-    const TestWrapper = () => {
-      const navigate = useNavigate();
-      navigatedTo = '/login';
-      return <Dashboard />;
-    };
-
-    renderWithProviders(
-      <BrowserRouter>
-        <TestWrapper />
-      </BrowserRouter>
-    );
-
-    expect(navigatedTo).toBe('/login');
-  });
-
-  it('shows admin dashboard for admin users', async () => {
-    localStorage.setItem('token', 'fake-token');
-    localStorage.setItem('user', JSON.stringify({
-      id: '1',
-      username: 'admin',
-      role: 'admin'
-    }));
-
-    const { getByRole, findByText } = renderWithProviders(
+    const { findByText } = renderWithProviders(
       <BrowserRouter>
         <Dashboard />
       </BrowserRouter>
-    );
+    )
 
-    expect(getByRole('heading', { name: /admin dashboard/i })).toBeTruthy();
-    // Wait for lazy-loaded AdminPanel component - use unique description text
-    expect(await findByText('Add a new user to the system')).toBeTruthy();
-    expect(await findByText('Remove a user from the system')).toBeTruthy();
-  });
+    expect(await findByText(/Admin/i)).toBeTruthy()
+    expect(await findByText("What would you like to manage today?")).toBeTruthy()
+  })
 
-  it('shows user dashboard for regular users', async () => {
-    localStorage.setItem('token', 'fake-token');
-    localStorage.setItem('user', JSON.stringify({
-      id: '1',
-      username: 'user',
-      role: 'user'
-    }));
+  it("shows user dashboard for regular users", async () => {
+    localStorage.setItem("token", "fake-token")
+    localStorage.setItem("user", JSON.stringify({
+      id: "1",
+      username: "user",
+      role: "user"
+    }))
 
-    const { getByText, findByText } = renderWithProviders(
+    const { findByText } = renderWithProviders(
       <BrowserRouter>
         <Dashboard />
       </BrowserRouter>
-    );
+    )
 
-    expect(getByText('Dashboard')).toBeTruthy();
-    expect(await findByText('My Files')).toBeTruthy();
-    expect(await findByText('No files uploaded yet')).toBeTruthy();
-  });
-});
+    expect(await findByText(/Good .* user/i)).toBeTruthy()
+    expect(await findByText("What brings you to your files today?")).toBeTruthy()
+  })
+})

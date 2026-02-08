@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"log"
 
 	userv1 "github.com/provsalt/DOP_P01_Team1/common/user/v1"
 	"github.com/provsalt/DOP_P01_Team1/user-service/internal/store"
@@ -56,6 +57,7 @@ func (s *UserServiceServer) CreateUser(ctx context.Context, req *userv1.CreateUs
 		if errors.Is(err, store.ErrUserExists) {
 			return nil, status.Error(codes.AlreadyExists, "username already exists")
 		}
+		log.Printf("failed to create user: %v", err)
 		return nil, status.Error(codes.Internal, "failed to create user")
 	}
 
@@ -80,6 +82,7 @@ func (s *UserServiceServer) GetUser(ctx context.Context, req *userv1.GetUserRequ
 		if errors.Is(err, store.ErrUserNotFound) {
 			return nil, status.Error(codes.NotFound, "user not found")
 		}
+		log.Printf("failed to get user: %v", err)
 		return nil, status.Error(codes.Internal, "failed to get user")
 	}
 
@@ -102,6 +105,7 @@ func (s *UserServiceServer) GetUserByUsername(ctx context.Context, req *userv1.G
 		if errors.Is(err, store.ErrUserNotFound) {
 			return nil, status.Error(codes.NotFound, "user not found")
 		}
+		log.Printf("failed to get user by username: %v", err)
 		return nil, status.Error(codes.Internal, "failed to get user")
 	}
 
@@ -127,7 +131,8 @@ func (s *UserServiceServer) VerifyPassword(ctx context.Context, req *userv1.Veri
 		if errors.Is(err, store.ErrUserNotFound) {
 			return &userv1.VerifyPasswordResponse{Valid: false}, nil
 		}
-		return nil, status.Error(codes.Internal, "failed to get user")
+		log.Printf("failed to get user for password verification: %v", err)
+		return nil, status.Error(codes.Internal, "failed to verify password")
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(user.HashedPassword), []byte(req.Password))
@@ -155,6 +160,7 @@ func (s *UserServiceServer) DeleteUser(ctx context.Context, req *userv1.DeleteUs
 		if errors.Is(err, store.ErrUserNotFound) {
 			return nil, status.Error(codes.NotFound, "user not found")
 		}
+		log.Printf("failed to delete user: %v", err)
 		return nil, status.Error(codes.Internal, "failed to delete user")
 	}
 	return &userv1.DeleteUserByIdResponse{Success: true}, nil
@@ -175,6 +181,7 @@ func (s *UserServiceServer) ListUsers(ctx context.Context, req *userv1.ListUsers
 
 	users, err := s.store.ListUsers(ctx, roleStr, req.UsernameFilter)
 	if err != nil {
+		log.Printf("failed to list users: %v", err)
 		return nil, status.Error(codes.Internal, "failed to list users")
 	}
 

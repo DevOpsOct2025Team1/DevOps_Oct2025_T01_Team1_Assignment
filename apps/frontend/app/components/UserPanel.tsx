@@ -1,74 +1,221 @@
-import { FileText } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
+import { useState, useCallback } from "react"
+import { Search, Upload, X } from "lucide-react"
+import { getHours } from "date-fns"
+import { useAuth } from "~/contexts/AuthContext"
+import { Button } from "~/components/ui/button"
+import { Input } from "~/components/ui/input"
+import { Dialog, DialogContent, DialogClose } from "~/components/ui/dialog"
+import { useGetApiFiles, usePostApiFiles, useDeleteApiFilesId } from "~/api/generated"
+import { resolveUrl, getAuthHeaders } from "~/api/orval-client"
+import { getGetApiFilesIdDownloadUrl } from "~/api/generated"
+import { FileList } from "./FileList"
+import type { InternalHandlersFileMetadata } from "~/api/generated/model"
 
-export default function UserPanel() {
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "~/components/ui/alert-dialog"
+
+const UserPanel = () => {
+  const { user } = useAuth()
+  const [isUploadOpen, setIsUploadOpen] = useState(false)
+  const [fileToDelete, setFileToDelete] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState("")
+
+  const getGreeting = () => {
+    const hours = getHours(new Date())
+    if (hours < 12) return "Good morning"
+    if (hours < 18) return "Good afternoon"
+    return "Good evening"
+  }
+
+  const { data: files = [], isLoading, refetch } = useGetApiFiles(
+    {
+      query: {
+        select: (data) => {
+          if (data.status === 200 && data.data) {
+             return (data.data.files || []) as InternalHandlersFileMetadata[]
+          }
+          return []
+        }
+      }
+    }
+  )
+
+  const { mutate: uploadFile, isPending: isUploading } = usePostApiFiles({
+    mutation: {
+      onSuccess: () => {
+        setIsUploadOpen(false)
+        refetch().then()
+      },
+    },
+  })
+  const { mutate: deleteFile } = useDeleteApiFilesId({
+    mutation: {
+      onSuccess: () => {
+        setFileToDelete(null)
+        refetch().then()
+      },
+    },
+  })
+
+  const handleFileUpload = (file: File) => {
+    uploadFile({ data: { file } })
+  }
+
+  const handleDeleteConfirm = () => {
+    if (fileToDelete) {
+      deleteFile({ id: fileToDelete })
+    }
+  }
+
+  const onDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      handleFileUpload(e.dataTransfer.files[0])
+      e.dataTransfer.clearData()
+    }
+  }, [])
+
+  const onDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+  }, [])
+
+  const onFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      handleFileUpload(e.target.files[0])
+    }
+  }
+  
+  const triggerDownload = async (id: string, name: string) => {
+      try {
+          const downloadUrl = resolveUrl(getGetApiFilesIdDownloadUrl(id));
+          const headers = new Headers(getAuthHeaders());
+          headers.delete("Content-Type");
+
+          const response = await fetch(downloadUrl, {
+            headers,
+          });
+          if (!response.ok) throw new Error("Download failed");
+          const blob = await response.blob();
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = name;
+          document.body.appendChild(a);
+          a.click();
+          window.URL.revokeObjectURL(url);
+          document.body.removeChild(a);
+      } catch (error) {
+          console.error("Download error:", error);
+      }
+  }
+
+  const filteredFiles = files.filter(file => 
+    file.filename?.toLowerCase().includes(searchQuery.toLowerCase())
+  )
+
   return (
-    <>
-      {/*<div className="grid gap-6 md:grid-cols-3">*/}
-        {/*<div className="bg-white p-6 rounded-lg shadow">*/}
-        {/*  <div className="flex items-center justify-between mb-4">*/}
-        {/*    <h2 className="text-lg font-semibold text-gray-900">Upload File</h2>*/}
-        {/*    <svg className="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">*/}
-        {/*      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />*/}
-        {/*    </svg>*/}
-        {/*  </div>*/}
-        {/*  <p className="text-sm text-gray-600 mb-4">Upload files to the system</p>*/}
-        {/*  <button className="w-full bg-gray-300 text-gray-700 py-2 px-4 rounded-md cursor-not-allowed">*/}
-        {/*    Feature Coming Soon*/}
-        {/*  </button>*/}
-        {/*  <p className="text-xs text-gray-500 mt-2 text-center">TODO: connect API endpoint</p>*/}
-        {/*</div>*/}
+    <div className="space-y-8">
+      <div className="space-y-2">
+        <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-gray-900">
+          {getGreeting()} {user?.username || "User"}
+        </h1>
+        <p className="text-lg md:text-xl text-gray-600">
+          What brings you to your files today?
+        </p>
+      </div>
 
-        {/*<div className="bg-white p-6 rounded-lg shadow">*/}
-        {/*  <div className="flex items-center justify-between mb-4">*/}
-        {/*    <h2 className="text-lg font-semibold text-gray-900">Download File</h2>*/}
-        {/*    <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">*/}
-        {/*      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />*/}
-        {/*    </svg>*/}
-        {/*  </div>*/}
-        {/*  <p className="text-sm text-gray-600 mb-4">Download your files</p>*/}
-        {/*  <button className="w-full bg-gray-300 text-gray-700 py-2 px-4 rounded-md cursor-not-allowed">*/}
-        {/*    Feature Coming Soon*/}
-        {/*  </button>*/}
-        {/*  <p className="text-xs text-gray-500 mt-2 text-center">TODO: connect API endpoint</p>*/}
-        {/*</div>*/}
+      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
+        <div className="relative flex-1 w-full md:max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Input
+            placeholder="Search uploaded files"
+            className="pl-10 bg-white border-gray-200 w-full"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+        <Button
+          onClick={() => setIsUploadOpen(true)}
+        >
+          <Upload className="mr-2 h-4 w-4" />
+          Upload
+        </Button>
+      </div>
 
-        {/*<div className="bg-white p-6 rounded-lg shadow">*/}
-        {/*  <div className="flex items-center justify-between mb-4">*/}
-        {/*    <h2 className="text-lg font-semibold text-gray-900">Delete File</h2>*/}
-        {/*    <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">*/}
-        {/*      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />*/}
-        {/*    </svg>*/}
-        {/*  </div>*/}
-        {/*  <p className="text-sm text-gray-600 mb-4">Remove files from the system</p>*/}
-        {/*  <button className="w-full bg-gray-300 text-gray-700 py-2 px-4 rounded-md cursor-not-allowed">*/}
-        {/*    Feature Coming Soon*/}
-        {/*  </button>*/}
-        {/*  <p className="text-xs text-gray-500 mt-2 text-center">TODO: connect API endpoint</p>*/}
-        {/*</div>*/}
-      {/*</div>*/}
+      <FileList 
+        files={filteredFiles}
+        isLoading={isLoading}
+        onDelete={(id) => setFileToDelete(id)}
+        onDownload={triggerDownload}
+      />
 
-      <Card>
-        <CardHeader>
-          <CardTitle>My Files</CardTitle>
-          <CardDescription>Manage your uploaded files</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center py-8 text-muted-foreground">
-            <FileText className="w-16 h-16 mx-auto mb-4" />
-            <p>No files uploaded yet</p>
-            <p className="text-xs mt-2">TODO: connect API endpoint for file listing</p>
+      <Dialog open={isUploadOpen} onOpenChange={setIsUploadOpen}>
+        <DialogContent className="sm:max-w-xl p-0 overflow-hidden bg-white gap-0">
+          <DialogClose className="absolute right-4 top-4 rounded-sm opacity-70">
+            <X className="h-6 w-6" />
+            <span className="sr-only">Close</span>
+          </DialogClose>
+          
+          <div 
+            className="flex flex-col items-center justify-center p-12 min-h-[400px]"
+            onDrop={onDrop}
+            onDragOver={onDragOver}
+          >
+            <div className="w-full h-full flex flex-col items-center justify-center">
+               <div className="mb-6">
+                <Upload className="h-24 w-24 text-gray-900" strokeWidth={1} />
+               </div>
+               <h3 className="text-2xl font-medium text-gray-900 mb-2">
+                 Drag and drop a file to upload
+               </h3>
+               <p className="text-sm text-gray-500 mb-6">or</p>
+               <div className="relative">
+                 <input
+                   type="file"
+                   className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                   onChange={onFileInputChange}
+                   disabled={isUploading}
+                 />
+                 <Button
+                     size="lg"
+                     disabled={isUploading}
+                 >
+                   <Upload className="mr-2 h-4 w-4" />
+                   {isUploading ? "Uploading..." : "Upload"}
+                 </Button>
+               </div>
+               <p className="mt-4 text-sm text-gray-500">Max size: 2GB</p>
+            </div>
           </div>
-        </CardContent>
-      </Card>
+        </DialogContent>
+      </Dialog>
 
-      {/*<div className="mt-6 bg-blue-50 border border-blue-200 p-4 rounded-lg">*/}
-      {/*  <h3 className="text-sm font-semibold text-blue-900 mb-2">Note</h3>*/}
-      {/*  <p className="text-sm text-blue-800">*/}
-      {/*    File management features (upload, download, delete) are placeholders.*/}
-      {/*    Backend API endpoints for these operations need to be implemented.*/}
-      {/*  </p>*/}
-      {/*</div>*/}
-    </>
-  );
+      <AlertDialog open={!!fileToDelete} onOpenChange={(open) => !open && setFileToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete your file.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteConfirm} className="bg-red-600 hover:bg-red-700">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  )
 }
+
+export default UserPanel

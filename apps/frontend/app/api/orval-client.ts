@@ -9,7 +9,7 @@ export type ApiError = {
 
 const isBrowser = typeof window !== "undefined";
 
-const getAuthHeaders = (): HeadersInit => {
+export const getAuthHeaders = (): HeadersInit => {
   const token = getStoredToken();
   const headers: HeadersInit = {
     "Content-Type": "application/json",
@@ -22,7 +22,7 @@ const getAuthHeaders = (): HeadersInit => {
   return headers;
 };
 
-const resolveUrl = (url: string): string => {
+export const resolveUrl = (url: string): string => {
   if (url.startsWith("http://") || url.startsWith("https://")) {
     return url;
   }
@@ -39,12 +39,25 @@ export const customFetch = async <T>(
   url: string,
   options: RequestInit = {}
 ): Promise<T> => {
+  // Start with default auth headers
+  const headers = new Headers(getAuthHeaders());
+
+  // Apply any headers provided in options, regardless of their HeadersInit form
+  if (options.headers) {
+    const optionHeaders = new Headers(options.headers);
+    optionHeaders.forEach((value, key) => {
+      headers.set(key, value);
+    });
+  }
+
+  // Let the browser set the correct Content-Type boundary for FormData
+  if (options.body instanceof FormData) {
+    headers.delete("Content-Type");
+  }
+
   const response = await fetch(resolveUrl(url), {
     ...options,
-    headers: {
-      ...getAuthHeaders(),
-      ...options.headers,
-    },
+    headers,
   });
 
   let data: unknown = undefined;
