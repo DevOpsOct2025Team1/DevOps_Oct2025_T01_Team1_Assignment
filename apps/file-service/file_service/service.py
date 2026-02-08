@@ -73,8 +73,18 @@ class FileService(file_pb2_grpc.FileServiceServicer):
     def UploadFile(self, request_iterator, context):
         """Stream upload file to S3 and save metadata."""
         user_id = get_user_id(context, self.auth_client)
-        
+
         # First message should contain metadata
+        MAX_FILES_PER_USER = 20
+        MAX_FILE_SIZE = 2 * 1024 * 1024 * 1024
+
+        file_count = files_collection.count_documents({"user_id": user_id})
+        if file_count >= MAX_FILES_PER_USER:
+            context.abort(
+                grpc.StatusCode.RESOURCE_EXHAUSTED,
+                "Maximum file limit reached (20 files per user)"
+            )
+
         try:
             first_request = next(request_iterator)
             if not first_request.HasField("metadata"):
@@ -90,8 +100,18 @@ class FileService(file_pb2_grpc.FileServiceServicer):
             
             # Collect file chunks
             file_buffer = io.BytesIO()
+            total_size = 0
             for request in request_iterator:
                 if request.HasField("chunk"):
+                    chunk_size = len(request.chunk)
+                    total_size += chunk_size
+
+                    if total_size > MAX_FILE_SIZE:
+                        context.abort(
+                            grpc.StatusCode.RESOURCE_EXHAUSTED,
+                            "File size exceeds maximum allowed size (2GB)"
+                        )
+
                     file_buffer.write(request.chunk)
             
             # Upload to S3

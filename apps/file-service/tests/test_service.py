@@ -5,6 +5,7 @@ import grpc
 from file_service.service import FileService, get_user_id
 from file.v1 import file_pb2
 from auth.v1 import auth_pb2
+from user.v1 import user_pb2
 
 
 class TestGetUserId:
@@ -316,3 +317,74 @@ class TestFileService:
             "Invalid file id format",
         )
         mock_collection.find_one.assert_not_called()
+
+class TestBusinessRules:
+
+    @patch('file_service.service.files_collection')
+    def test_upload_file_exceeds_max_files_per_user(self, mock_collection):
+        mock_collection.count_documents.return_value = 20
+
+        auth_client = Mock()
+        auth_client.validate_token.return_value = auth_pb2.ValidateTokenResponse(
+            valid=True,
+            user=user_pb2.User(id="user-123", username="testuser", role=user_pb2.Role.ROLE_USER)
+        )
+
+        service = FileService(auth_client)
+        context = Mock()
+        context.invocation_metadata.return_value = [("authorization", "Bearer valid-token")]
+        context.abort.side_effect = Exception("Aborted")
+
+        def request_iterator():
+            yield file_pb2.UploadFileRequest(
+                metadata=file_pb2.UploadFileMetadata(
+                    filename="test.txt",
+                    content_type="text/plain"
+                )
+            )
+
+        with pytest.raises(Exception):
+            service.UploadFile(request_iterator(), context)
+
+        context.abort.assert_called_once_with(
+            grpc.StatusCode.RESOURCE_EXHAUSTED,
+            "Maximum file limit reached (20 files per user)"
+        )
+
+    @patch('file_service.service.files_collection')
+    def test_upload_file_exceeds_max_file_size(self, mock_collection):
+        mock_collection.count_documents.return_value = 5
+
+        auth_client = Mock()
+        auth_client.validate_token.return_value = auth_pb2.ValidateTokenResponse(
+            valid=True,
+            user=user_pb2.User(id="user-123", username="testuser", role=user_pb2.Role.ROLE_USER)
+        )
+
+        service = FileService(auth_client)
+        context = Mock()
+        context.invocation_metadata.return_value = [("authorization", "Bearer valid-token")]
+        context.abort.side_effect = Exception("Aborted")
+
+        MAX_FILE_SIZE = 2 * 1024 * 1024 * 1024
+
+        def request_iterator():
+            yield file_pb2.UploadFileRequest(
+                metadata=file_pb2.UploadFileMetadata(
+                    filename="large.bin",
+                    content_type="application/octet-stream"
+                )
+            )
+            chunk_size = 64 * 1024
+            total_sent = 0
+            while total_sent <= MAX_FILE_SIZE:
+                yield file_pb2.UploadFileRequest(chunk=b'x' * chunk_size)
+                total_sent += chunk_size
+
+        with pytest.raises(Exception):
+            service.UploadFile(request_iterator(), context)
+
+        context.abort.assert_called_with(
+            grpc.StatusCode.RESOURCE_EXHAUSTED,
+            "File size exceeds maximum allowed size (2GB)"
+        )
