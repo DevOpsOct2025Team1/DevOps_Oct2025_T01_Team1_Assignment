@@ -1,30 +1,36 @@
-import { useLocation } from "react-router";
-import { useState, useEffect } from "react";
-import { useAuth } from "../contexts/AuthContext";
-import { Badge } from "./ui/badge";
-import { Button } from "./ui/button";
-import { Separator } from "./ui/separator";
+import { useLocation, useNavigate } from "react-router"
+import { useState, useEffect } from "react"
+import { useAuth } from "~/contexts/AuthContext"
+import { Badge } from "./ui/badge"
+import { Button } from "./ui/button"
+import { Separator } from "./ui/separator"
 
-export default function Navigation() {
-  const location = useLocation();
-  const { user } = useAuth();
-  const [mounted, setMounted] = useState(false);
+const Navigation = () => {
+  const location = useLocation()
+  const navigate = useNavigate()
+  const { user, clearAuth } = useAuth()
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
-    setMounted(true);
-  }, []);
+    setMounted(true)
+  }, [])
 
   if (!mounted || location.pathname === "/login") {
-    return null;
+    return null
   }
 
   if (!user) {
-    return null;
+    return null
   }
 
   const userRole = typeof user.role === "number"
     ? (user.role === 2 ? "admin" : "user")
-    : user.role;
+    : user.role
+
+  const handleLogout = () => {
+    clearAuth()
+    navigate("/login")
+  }
 
   return (
     <nav className="bg-background shadow-sm border-b">
@@ -46,12 +52,14 @@ export default function Navigation() {
           <Button
             variant="ghost"
             size="sm"
-            asChild
+            onClick={handleLogout}
           >
-            <a href="/logout">Logout</a>
+            Logout
           </Button>
         </div>
       </div>
     </nav>
-  );
+  )
 }
+
+export default Navigation

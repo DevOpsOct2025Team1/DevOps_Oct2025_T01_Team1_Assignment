@@ -1,32 +1,32 @@
-import { createContext, useContext, useState, type ReactNode } from "react";
+import { createContext, useContext, useState, type ReactNode } from "react"
 import {
   getStoredUser,
   setAuth as setAuthStorage,
   clearAuth as clearAuthStorage,
   type User,
-} from "../utils/auth";
+} from "../utils/auth"
 
 type AuthContextType = {
-  user: User | null;
-  setAuth: (user: User, token: string) => void;
-  clearAuth: () => void;
-  isAuthenticated: boolean;
-};
+  user: User | null
+  setAuth: (user: User, token: string) => void
+  clearAuth: () => void
+  isAuthenticated: boolean
+}
 
-const AuthContext = createContext<AuthContextType | null>(null);
+const AuthContext = createContext<AuthContextType | null>(null)
 
-export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(() => getStoredUser());
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
+  const [user, setUser] = useState<User | null>(() => getStoredUser())
 
   const handleSetAuth = (user: User, token: string) => {
-    setAuthStorage(user, token);
-    setUser(user);
-  };
+    setAuthStorage(user, token)
+    setUser(user)
+  }
 
   const handleClearAuth = () => {
-    clearAuthStorage();
-    setUser(null);
-  };
+    clearAuthStorage()
+    setUser(null)
+  }
 
   return (
     <AuthContext.Provider
@@ -39,13 +39,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     >
       {children}
     </AuthContext.Provider>
-  );
+  )
 }
 
-export function useAuth() {
-  const context = useContext(AuthContext);
+export const useAuth = () => {
+  const context = useContext(AuthContext)
   if (!context) {
-    throw new Error("useAuth must be used within an AuthProvider");
+    throw new Error("useAuth must be used within an AuthProvider")
   }
-  return context;
+  return context
 }
