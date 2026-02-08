@@ -273,6 +273,10 @@ class FileService(file_pb2_grpc.FileServiceServicer):
         content_type = request.content_type or "application/octet-stream"
         total_size = request.total_size
 
+        MAX_FILE_SIZE = 2 * 1024 * 1024 * 1024
+        if total_size > MAX_FILE_SIZE:
+            context.abort(grpc.StatusCode.INVALID_ARGUMENT, f"File size exceeds maximum allowed size of 2GB")
+
         file_id = str(ObjectId())
         s3_key = generate_s3_key(user_id, file_id, filename)
 

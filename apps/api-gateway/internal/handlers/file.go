@@ -389,6 +389,12 @@ func (h *FileHandler) InitiateMultipartUpload(c *gin.Context) {
 		return
 	}
 
+	const maxFileSize = 2 * 1024 * 1024 * 1024 // 2GB
+	if req.TotalSize > maxFileSize {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "file size exceeds maximum allowed size of 2GB"})
+		return
+	}
+
 	ctx := h.contextWithAuth(c)
 	resp, err := h.client.InitiateMultipartUpload(ctx, &filev1.InitiateMultipartUploadRequest{
 		Filename:    req.Filename,

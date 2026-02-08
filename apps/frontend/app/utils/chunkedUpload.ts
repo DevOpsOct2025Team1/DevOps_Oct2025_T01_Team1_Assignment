@@ -19,17 +19,10 @@ interface PartInfo {
   etag: string;
 }
 
-interface AuthHeaders {
-  Authorization?: string;
-  [key: string]: string | undefined;
-}
-
-function getAuthHeaders(): AuthHeaders {
+function getAuthHeaders(): Record<string, string> {
   const token = localStorage.getItem("token");
   if (token) {
-    return {
-      Authorization: `Bearer ${token}`,
-    };
+    return { Authorization: `Bearer ${token}` };
   }
   return {};
 }
@@ -39,10 +32,16 @@ function resolveUrl(path: string): string {
   return `${baseUrl}${path}`;
 }
 
+const MAX_FILE_SIZE = 2 * 1024 * 1024 * 1024;
+
 export async function uploadFileInChunks(
   file: File,
   onProgress?: (percentage: number) => void
 ): Promise<UploadResult> {
+  if (file.size > MAX_FILE_SIZE) {
+    throw new Error("File size exceeds maximum allowed size of 2GB");
+  }
+
   const initiateResponse = await fetch(resolveUrl("/api/files/multipart/initiate"), {
     method: "POST",
     headers: {
