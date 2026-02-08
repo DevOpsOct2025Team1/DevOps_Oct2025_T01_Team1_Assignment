@@ -1,14 +1,20 @@
 basePath: /
 definitions:
-  handlers.AuthResponse:
+  internal_handlers.AuthResponse:
     properties:
       token:
         example: jwt-token-123
         type: string
       user:
-        $ref: '#/definitions/handlers.UserResponse'
+        $ref: '#/definitions/internal_handlers.UserResponse'
     type: object
-  handlers.DeleteUserRequest:
+  internal_handlers.DeleteFileResponse:
+    properties:
+      success:
+        example: true
+        type: boolean
+    type: object
+  internal_handlers.DeleteUserRequest:
     properties:
       id:
         example: 69654eb7a1135a809430d0b7
@@ -16,19 +22,54 @@ definitions:
     required:
     - id
     type: object
-  handlers.DeleteUserResponse:
+  internal_handlers.DeleteUserResponse:
     properties:
       success:
         example: true
         type: boolean
     type: object
-  handlers.ErrorResponse:
+  internal_handlers.ErrorResponse:
     properties:
       error:
         example: error message
         type: string
     type: object
-  handlers.LoginRequest:
+  internal_handlers.FileMetadata:
+    properties:
+      content_type:
+        example: application/pdf
+        type: string
+      created_at:
+        example: 1704067200
+        type: integer
+      filename:
+        example: document.pdf
+        type: string
+      id:
+        example: 507f1f77bcf86cd799439011
+        type: string
+      size:
+        example: 1024000
+        type: integer
+    type: object
+  internal_handlers.FileResponse:
+    properties:
+      file:
+        $ref: '#/definitions/internal_handlers.FileMetadata'
+    type: object
+  internal_handlers.GetFileResponse:
+    properties:
+      file:
+        $ref: '#/definitions/internal_handlers.FileMetadata'
+    type: object
+  internal_handlers.ListFilesResponse:
+    properties:
+      files:
+        items:
+          $ref: '#/definitions/internal_handlers.FileMetadata'
+        type: array
+    type: object
+  internal_handlers.LoginRequest:
     properties:
       password:
         example: password123
@@ -40,7 +81,7 @@ definitions:
     - password
     - username
     type: object
-  handlers.SignUpRequest:
+  internal_handlers.SignUpRequest:
     properties:
       password:
         example: password123
@@ -52,7 +93,7 @@ definitions:
     - password
     - username
     type: object
-  handlers.UserResponse:
+  internal_handlers.UserResponse:
     properties:
       id:
         example: 69654eb7a1135a809430d0b7
@@ -83,30 +124,30 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/handlers.SignUpRequest'
+          $ref: '#/definitions/internal_handlers.SignUpRequest'
       produces:
       - application/json
       responses:
         "200":
           description: User created successfully
           schema:
-            $ref: '#/definitions/handlers.AuthResponse'
+            $ref: '#/definitions/internal_handlers.AuthResponse'
         "400":
           description: Invalid request body
           schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
         "401":
           description: Unauthorized - missing or invalid token
           schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
         "403":
           description: Forbidden - admin role required
           schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Create a new user
@@ -124,34 +165,34 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/handlers.DeleteUserRequest'
+          $ref: '#/definitions/internal_handlers.DeleteUserRequest'
       produces:
       - application/json
       responses:
         "200":
           description: User deleted successfully
           schema:
-            $ref: '#/definitions/handlers.DeleteUserResponse'
+            $ref: '#/definitions/internal_handlers.DeleteUserResponse'
         "400":
           description: Invalid request body or invalid user ID
           schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
         "401":
           description: Unauthorized - missing or invalid token
           schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
         "403":
           description: Forbidden - cannot delete own account or admin accounts
           schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
         "404":
           description: User not found
           schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Delete a user
@@ -187,20 +228,191 @@ paths:
         "400":
           description: Invalid role parameter
           schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
         "401":
           description: Unauthorized - missing or invalid token
           schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
       security:
       - BearerAuth: []
       summary: List all users
       tags:
       - admin
+  /api/files:
+    get:
+      description: Retrieve a list of all files uploaded by the authenticated user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Files retrieved successfully
+          schema:
+            $ref: '#/definitions/internal_handlers.ListFilesResponse'
+        "401":
+          description: Unauthorized - missing or invalid token
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List all files for the authenticated user
+      tags:
+      - files
+    post:
+      consumes:
+      - multipart/form-data
+      description: Upload a file to S3 and save metadata for the authenticated user
+      parameters:
+      - description: File to upload
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: File uploaded successfully
+          schema:
+            $ref: '#/definitions/internal_handlers.FileResponse'
+        "400":
+          description: Invalid file or missing required field
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "401":
+          description: Unauthorized - missing or invalid token
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "429":
+          description: Too many files - limit is 20 per user
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "500":
+          description: Internal server error or file too large
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Upload a file
+      tags:
+      - files
+  /api/files/{id}:
+    delete:
+      description: Delete a file by ID (must be owned by the authenticated user)
+      parameters:
+      - description: File ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: File deleted successfully
+          schema:
+            $ref: '#/definitions/internal_handlers.DeleteFileResponse'
+        "400":
+          description: Invalid file ID
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "401":
+          description: Unauthorized - missing or invalid token
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "404":
+          description: File not found
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete a file
+      tags:
+      - files
+    get:
+      description: Retrieve metadata for a specific file by ID
+      parameters:
+      - description: File ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: File metadata retrieved successfully
+          schema:
+            $ref: '#/definitions/internal_handlers.GetFileResponse'
+        "400":
+          description: Invalid file ID
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "401":
+          description: Unauthorized - missing or invalid token
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "404":
+          description: File not found
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get file metadata
+      tags:
+      - files
+  /api/files/{id}/download:
+    get:
+      description: Download a file by ID (must be owned by the authenticated user)
+      parameters:
+      - description: File ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: File content
+          schema:
+            type: file
+        "400":
+          description: Invalid file ID
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "401":
+          description: Unauthorized - missing or invalid token
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "404":
+          description: File not found
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Download a file
+      tags:
+      - files
   /api/login:
     post:
       consumes:
@@ -212,26 +424,26 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/handlers.LoginRequest'
+          $ref: '#/definitions/internal_handlers.LoginRequest'
       produces:
       - application/json
       responses:
         "200":
           description: Login successful
           schema:
-            $ref: '#/definitions/handlers.AuthResponse'
+            $ref: '#/definitions/internal_handlers.AuthResponse'
         "400":
           description: Invalid request body
           schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
         "401":
           description: Invalid credentials
           schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
         "500":
           description: Server error
           schema:
-            $ref: '#/definitions/handlers.ErrorResponse'
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
       summary: User login
       tags:
       - auth

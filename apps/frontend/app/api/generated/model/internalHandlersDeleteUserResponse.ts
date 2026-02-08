@@ -7,6 +7,6 @@ Provides authentication, user management, file management, and routing to backen
  * OpenAPI spec version: 1.0
  */
 
-export interface HandlersDeleteUserRequest {
-  id: string;
+export interface InternalHandlersDeleteUserResponse {
+  success?: boolean;
 }

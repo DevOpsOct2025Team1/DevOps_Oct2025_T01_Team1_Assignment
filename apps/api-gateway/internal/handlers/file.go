@@ -67,6 +67,16 @@ func mapGRPCError(err error) int {
 	return http.StatusInternalServerError
 }
 
+// ListFiles godoc
+// @Summary      List all files for the authenticated user
+// @Description  Retrieve a list of all files uploaded by the authenticated user
+// @Tags         files
+// @Produce      json
+// @Success      200 {object} ListFilesResponse "Files retrieved successfully"
+// @Failure      401 {object} ErrorResponse "Unauthorized - missing or invalid token"
+// @Failure      500 {object} ErrorResponse "Internal server error"
+// @Security     BearerAuth
+// @Router       /api/files [get]
 func (h *FileHandler) ListFiles(c *gin.Context) {
 	_, err := h.getUserFromContext(c)
 	if err != nil {
@@ -95,6 +105,19 @@ func (h *FileHandler) ListFiles(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"files": files})
 }
 
+// GetFile godoc
+// @Summary      Get file metadata
+// @Description  Retrieve metadata for a specific file by ID
+// @Tags         files
+// @Produce      json
+// @Param        id path string true "File ID"
+// @Success      200 {object} GetFileResponse "File metadata retrieved successfully"
+// @Failure      400 {object} ErrorResponse "Invalid file ID"
+// @Failure      401 {object} ErrorResponse "Unauthorized - missing or invalid token"
+// @Failure      404 {object} ErrorResponse "File not found"
+// @Failure      500 {object} ErrorResponse "Internal server error"
+// @Security     BearerAuth
+// @Router       /api/files/{id} [get]
 func (h *FileHandler) GetFile(c *gin.Context) {
 	_, err := h.getUserFromContext(c)
 	if err != nil {
@@ -128,6 +151,19 @@ func (h *FileHandler) GetFile(c *gin.Context) {
 	})
 }
 
+// DeleteFile godoc
+// @Summary      Delete a file
+// @Description  Delete a file by ID (must be owned by the authenticated user)
+// @Tags         files
+// @Produce      json
+// @Param        id path string true "File ID"
+// @Success      200 {object} DeleteFileResponse "File deleted successfully"
+// @Failure      400 {object} ErrorResponse "Invalid file ID"
+// @Failure      401 {object} ErrorResponse "Unauthorized - missing or invalid token"
+// @Failure      404 {object} ErrorResponse "File not found"
+// @Failure      500 {object} ErrorResponse "Internal server error"
+// @Security     BearerAuth
+// @Router       /api/files/{id} [delete]
 func (h *FileHandler) DeleteFile(c *gin.Context) {
 	user, err := h.getUserFromContext(c)
 	if err != nil {
@@ -154,6 +190,20 @@ func (h *FileHandler) DeleteFile(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"success": resp.Success})
 }
 
+// UploadFile godoc
+// @Summary      Upload a file
+// @Description  Upload a file to S3 and save metadata for the authenticated user
+// @Tags         files
+// @Accept       multipart/form-data
+// @Produce      json
+// @Param        file formData file true "File to upload"
+// @Success      200 {object} FileResponse "File uploaded successfully"
+// @Failure      400 {object} ErrorResponse "Invalid file or missing required field"
+// @Failure      401 {object} ErrorResponse "Unauthorized - missing or invalid token"
+// @Failure      429 {object} ErrorResponse "Too many files - limit is 20 per user"
+// @Failure      500 {object} ErrorResponse "Internal server error or file too large"
+// @Security     BearerAuth
+// @Router       /api/files [post]
 func (h *FileHandler) UploadFile(c *gin.Context) {
 	_, err := h.getUserFromContext(c)
 	if err != nil {
@@ -233,6 +283,19 @@ func (h *FileHandler) UploadFile(c *gin.Context) {
 	})
 }
 
+// DownloadFile godoc
+// @Summary      Download a file
+// @Description  Download a file by ID (must be owned by the authenticated user)
+// @Tags         files
+// @Produce      octet-stream
+// @Param        id path string true "File ID"
+// @Success      200 {file} binary "File content"
+// @Failure      400 {object} ErrorResponse "Invalid file ID"
+// @Failure      401 {object} ErrorResponse "Unauthorized - missing or invalid token"
+// @Failure      404 {object} ErrorResponse "File not found"
+// @Failure      500 {object} ErrorResponse "Internal server error"
+// @Security     BearerAuth
+// @Router       /api/files/{id}/download [get]
 func (h *FileHandler) DownloadFile(c *gin.Context) {
 	_, err := h.getUserFromContext(c)
 	if err != nil {

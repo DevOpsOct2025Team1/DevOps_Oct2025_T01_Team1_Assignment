@@ -28,12 +28,17 @@ import type {
 import type {
   GetApiAdminListUsers200,
   GetApiAdminListUsersParams,
-  HandlersAuthResponse,
-  HandlersDeleteUserRequest,
-  HandlersDeleteUserResponse,
-  HandlersErrorResponse,
-  HandlersLoginRequest,
-  HandlersSignUpRequest
+  InternalHandlersAuthResponse,
+  InternalHandlersDeleteFileResponse,
+  InternalHandlersDeleteUserRequest,
+  InternalHandlersDeleteUserResponse,
+  InternalHandlersErrorResponse,
+  InternalHandlersFileResponse,
+  InternalHandlersGetFileResponse,
+  InternalHandlersListFilesResponse,
+  InternalHandlersLoginRequest,
+  InternalHandlersSignUpRequest,
+  PostApiFilesBody
 } from './model';
 
 import { customFetch } from '../orval-client';
@@ -46,27 +51,27 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
  * @summary Create a new user
  */
 export type postApiAdminCreateUserResponse200 = {
-  data: HandlersAuthResponse
+  data: InternalHandlersAuthResponse
   status: 200
 }
 
 export type postApiAdminCreateUserResponse400 = {
-  data: HandlersErrorResponse
+  data: InternalHandlersErrorResponse
   status: 400
 }
 
 export type postApiAdminCreateUserResponse401 = {
-  data: HandlersErrorResponse
+  data: InternalHandlersErrorResponse
   status: 401
 }
 
 export type postApiAdminCreateUserResponse403 = {
-  data: HandlersErrorResponse
+  data: InternalHandlersErrorResponse
   status: 403
 }
 
 export type postApiAdminCreateUserResponse500 = {
-  data: HandlersErrorResponse
+  data: InternalHandlersErrorResponse
   status: 500
 }
     
@@ -87,7 +92,7 @@ export const getPostApiAdminCreateUserUrl = () => {
   return `/api/admin/create_user`
 }
 
-export const postApiAdminCreateUser = async (handlersSignUpRequest: HandlersSignUpRequest, options?: RequestInit): Promise<postApiAdminCreateUserResponse> => {
+export const postApiAdminCreateUser = async (internalHandlersSignUpRequest: InternalHandlersSignUpRequest, options?: RequestInit): Promise<postApiAdminCreateUserResponse> => {
   
   return customFetch<postApiAdminCreateUserResponse>(getPostApiAdminCreateUserUrl(),
   {      
@@ -95,16 +100,16 @@ export const postApiAdminCreateUser = async (handlersSignUpRequest: HandlersSign
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(
-      handlersSignUpRequest,)
+      internalHandlersSignUpRequest,)
   }
 );}
 
 
 
 
-export const getPostApiAdminCreateUserMutationOptions = <TError = HandlersErrorResponse,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiAdminCreateUser>>, TError,{data: HandlersSignUpRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof postApiAdminCreateUser>>, TError,{data: HandlersSignUpRequest}, TContext> => {
+export const getPostApiAdminCreateUserMutationOptions = <TError = InternalHandlersErrorResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiAdminCreateUser>>, TError,{data: InternalHandlersSignUpRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof postApiAdminCreateUser>>, TError,{data: InternalHandlersSignUpRequest}, TContext> => {
 
 const mutationKey = ['postApiAdminCreateUser'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -116,7 +121,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postApiAdminCreateUser>>, {data: HandlersSignUpRequest}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postApiAdminCreateUser>>, {data: InternalHandlersSignUpRequest}> = (props) => {
           const {data} = props ?? {};
 
           return  postApiAdminCreateUser(data,requestOptions)
@@ -130,18 +135,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type PostApiAdminCreateUserMutationResult = NonNullable<Awaited<ReturnType<typeof postApiAdminCreateUser>>>
-    export type PostApiAdminCreateUserMutationBody = HandlersSignUpRequest
-    export type PostApiAdminCreateUserMutationError = HandlersErrorResponse
+    export type PostApiAdminCreateUserMutationBody = InternalHandlersSignUpRequest
+    export type PostApiAdminCreateUserMutationError = InternalHandlersErrorResponse
 
     /**
  * @summary Create a new user
  */
-export const usePostApiAdminCreateUser = <TError = HandlersErrorResponse,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiAdminCreateUser>>, TError,{data: HandlersSignUpRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+export const usePostApiAdminCreateUser = <TError = InternalHandlersErrorResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiAdminCreateUser>>, TError,{data: InternalHandlersSignUpRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof postApiAdminCreateUser>>,
         TError,
-        {data: HandlersSignUpRequest},
+        {data: InternalHandlersSignUpRequest},
         TContext
       > => {
       return useMutation(getPostApiAdminCreateUserMutationOptions(options), queryClient);
@@ -152,32 +157,32 @@ export const usePostApiAdminCreateUser = <TError = HandlersErrorResponse,
  * @summary Delete a user
  */
 export type deleteApiAdminDeleteUserResponse200 = {
-  data: HandlersDeleteUserResponse
+  data: InternalHandlersDeleteUserResponse
   status: 200
 }
 
 export type deleteApiAdminDeleteUserResponse400 = {
-  data: HandlersErrorResponse
+  data: InternalHandlersErrorResponse
   status: 400
 }
 
 export type deleteApiAdminDeleteUserResponse401 = {
-  data: HandlersErrorResponse
+  data: InternalHandlersErrorResponse
   status: 401
 }
 
 export type deleteApiAdminDeleteUserResponse403 = {
-  data: HandlersErrorResponse
+  data: InternalHandlersErrorResponse
   status: 403
 }
 
 export type deleteApiAdminDeleteUserResponse404 = {
-  data: HandlersErrorResponse
+  data: InternalHandlersErrorResponse
   status: 404
 }
 
 export type deleteApiAdminDeleteUserResponse500 = {
-  data: HandlersErrorResponse
+  data: InternalHandlersErrorResponse
   status: 500
 }
     
@@ -198,7 +203,7 @@ export const getDeleteApiAdminDeleteUserUrl = () => {
   return `/api/admin/delete_user`
 }
 
-export const deleteApiAdminDeleteUser = async (handlersDeleteUserRequest: HandlersDeleteUserRequest, options?: RequestInit): Promise<deleteApiAdminDeleteUserResponse> => {
+export const deleteApiAdminDeleteUser = async (internalHandlersDeleteUserRequest: InternalHandlersDeleteUserRequest, options?: RequestInit): Promise<deleteApiAdminDeleteUserResponse> => {
   
   return customFetch<deleteApiAdminDeleteUserResponse>(getDeleteApiAdminDeleteUserUrl(),
   {      
@@ -206,16 +211,16 @@ export const deleteApiAdminDeleteUser = async (handlersDeleteUserRequest: Handle
     method: 'DELETE',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(
-      handlersDeleteUserRequest,)
+      internalHandlersDeleteUserRequest,)
   }
 );}
 
 
 
 
-export const getDeleteApiAdminDeleteUserMutationOptions = <TError = HandlersErrorResponse,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteApiAdminDeleteUser>>, TError,{data: HandlersDeleteUserRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof deleteApiAdminDeleteUser>>, TError,{data: HandlersDeleteUserRequest}, TContext> => {
+export const getDeleteApiAdminDeleteUserMutationOptions = <TError = InternalHandlersErrorResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteApiAdminDeleteUser>>, TError,{data: InternalHandlersDeleteUserRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteApiAdminDeleteUser>>, TError,{data: InternalHandlersDeleteUserRequest}, TContext> => {
 
 const mutationKey = ['deleteApiAdminDeleteUser'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -227,7 +232,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteApiAdminDeleteUser>>, {data: HandlersDeleteUserRequest}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteApiAdminDeleteUser>>, {data: InternalHandlersDeleteUserRequest}> = (props) => {
           const {data} = props ?? {};
 
           return  deleteApiAdminDeleteUser(data,requestOptions)
@@ -241,18 +246,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type DeleteApiAdminDeleteUserMutationResult = NonNullable<Awaited<ReturnType<typeof deleteApiAdminDeleteUser>>>
-    export type DeleteApiAdminDeleteUserMutationBody = HandlersDeleteUserRequest
-    export type DeleteApiAdminDeleteUserMutationError = HandlersErrorResponse
+    export type DeleteApiAdminDeleteUserMutationBody = InternalHandlersDeleteUserRequest
+    export type DeleteApiAdminDeleteUserMutationError = InternalHandlersErrorResponse
 
     /**
  * @summary Delete a user
  */
-export const useDeleteApiAdminDeleteUser = <TError = HandlersErrorResponse,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteApiAdminDeleteUser>>, TError,{data: HandlersDeleteUserRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+export const useDeleteApiAdminDeleteUser = <TError = InternalHandlersErrorResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteApiAdminDeleteUser>>, TError,{data: InternalHandlersDeleteUserRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof deleteApiAdminDeleteUser>>,
         TError,
-        {data: HandlersDeleteUserRequest},
+        {data: InternalHandlersDeleteUserRequest},
         TContext
       > => {
       return useMutation(getDeleteApiAdminDeleteUserMutationOptions(options), queryClient);
@@ -268,17 +273,17 @@ export type getApiAdminListUsersResponse200 = {
 }
 
 export type getApiAdminListUsersResponse400 = {
-  data: HandlersErrorResponse
+  data: InternalHandlersErrorResponse
   status: 400
 }
 
 export type getApiAdminListUsersResponse401 = {
-  data: HandlersErrorResponse
+  data: InternalHandlersErrorResponse
   status: 401
 }
 
 export type getApiAdminListUsersResponse500 = {
-  data: HandlersErrorResponse
+  data: InternalHandlersErrorResponse
   status: 500
 }
     
@@ -328,7 +333,7 @@ export const getGetApiAdminListUsersQueryKey = (params?: GetApiAdminListUsersPar
     }
 
     
-export const getGetApiAdminListUsersQueryOptions = <TData = Awaited<ReturnType<typeof getApiAdminListUsers>>, TError = HandlersErrorResponse>(params?: GetApiAdminListUsersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiAdminListUsers>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+export const getGetApiAdminListUsersQueryOptions = <TData = Awaited<ReturnType<typeof getApiAdminListUsers>>, TError = InternalHandlersErrorResponse>(params?: GetApiAdminListUsersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiAdminListUsers>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -347,10 +352,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetApiAdminListUsersQueryResult = NonNullable<Awaited<ReturnType<typeof getApiAdminListUsers>>>
-export type GetApiAdminListUsersQueryError = HandlersErrorResponse
+export type GetApiAdminListUsersQueryError = InternalHandlersErrorResponse
 
 
-export function useGetApiAdminListUsers<TData = Awaited<ReturnType<typeof getApiAdminListUsers>>, TError = HandlersErrorResponse>(
+export function useGetApiAdminListUsers<TData = Awaited<ReturnType<typeof getApiAdminListUsers>>, TError = InternalHandlersErrorResponse>(
  params: undefined |  GetApiAdminListUsersParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiAdminListUsers>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getApiAdminListUsers>>,
@@ -360,7 +365,7 @@ export function useGetApiAdminListUsers<TData = Awaited<ReturnType<typeof getApi
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetApiAdminListUsers<TData = Awaited<ReturnType<typeof getApiAdminListUsers>>, TError = HandlersErrorResponse>(
+export function useGetApiAdminListUsers<TData = Awaited<ReturnType<typeof getApiAdminListUsers>>, TError = InternalHandlersErrorResponse>(
  params?: GetApiAdminListUsersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiAdminListUsers>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getApiAdminListUsers>>,
@@ -370,7 +375,7 @@ export function useGetApiAdminListUsers<TData = Awaited<ReturnType<typeof getApi
       >, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetApiAdminListUsers<TData = Awaited<ReturnType<typeof getApiAdminListUsers>>, TError = HandlersErrorResponse>(
+export function useGetApiAdminListUsers<TData = Awaited<ReturnType<typeof getApiAdminListUsers>>, TError = InternalHandlersErrorResponse>(
  params?: GetApiAdminListUsersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiAdminListUsers>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -378,7 +383,7 @@ export function useGetApiAdminListUsers<TData = Awaited<ReturnType<typeof getApi
  * @summary List all users
  */
 
-export function useGetApiAdminListUsers<TData = Awaited<ReturnType<typeof getApiAdminListUsers>>, TError = HandlersErrorResponse>(
+export function useGetApiAdminListUsers<TData = Awaited<ReturnType<typeof getApiAdminListUsers>>, TError = InternalHandlersErrorResponse>(
  params?: GetApiAdminListUsersParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiAdminListUsers>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -395,26 +400,631 @@ export function useGetApiAdminListUsers<TData = Awaited<ReturnType<typeof getApi
 
 
 /**
+ * Retrieve a list of all files uploaded by the authenticated user
+ * @summary List all files for the authenticated user
+ */
+export type getApiFilesResponse200 = {
+  data: InternalHandlersListFilesResponse
+  status: 200
+}
+
+export type getApiFilesResponse401 = {
+  data: InternalHandlersErrorResponse
+  status: 401
+}
+
+export type getApiFilesResponse500 = {
+  data: InternalHandlersErrorResponse
+  status: 500
+}
+    
+export type getApiFilesResponseSuccess = (getApiFilesResponse200) & {
+  headers: Headers;
+};
+export type getApiFilesResponseError = (getApiFilesResponse401 | getApiFilesResponse500) & {
+  headers: Headers;
+};
+
+export type getApiFilesResponse = (getApiFilesResponseSuccess | getApiFilesResponseError)
+
+export const getGetApiFilesUrl = () => {
+
+
+  
+
+  return `/api/files`
+}
+
+export const getApiFiles = async ( options?: RequestInit): Promise<getApiFilesResponse> => {
+  
+  return customFetch<getApiFilesResponse>(getGetApiFilesUrl(),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
+  }
+);}
+
+
+
+
+
+export const getGetApiFilesQueryKey = () => {
+    return [
+    `/api/files`
+    ] as const;
+    }
+
+    
+export const getGetApiFilesQueryOptions = <TData = Awaited<ReturnType<typeof getApiFiles>>, TError = InternalHandlersErrorResponse>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiFiles>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetApiFilesQueryKey();
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getApiFiles>>> = ({ signal }) => getApiFiles({ signal, ...requestOptions });
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getApiFiles>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetApiFilesQueryResult = NonNullable<Awaited<ReturnType<typeof getApiFiles>>>
+export type GetApiFilesQueryError = InternalHandlersErrorResponse
+
+
+export function useGetApiFiles<TData = Awaited<ReturnType<typeof getApiFiles>>, TError = InternalHandlersErrorResponse>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiFiles>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getApiFiles>>,
+          TError,
+          Awaited<ReturnType<typeof getApiFiles>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetApiFiles<TData = Awaited<ReturnType<typeof getApiFiles>>, TError = InternalHandlersErrorResponse>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiFiles>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getApiFiles>>,
+          TError,
+          Awaited<ReturnType<typeof getApiFiles>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetApiFiles<TData = Awaited<ReturnType<typeof getApiFiles>>, TError = InternalHandlersErrorResponse>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiFiles>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List all files for the authenticated user
+ */
+
+export function useGetApiFiles<TData = Awaited<ReturnType<typeof getApiFiles>>, TError = InternalHandlersErrorResponse>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiFiles>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetApiFilesQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+/**
+ * Upload a file to S3 and save metadata for the authenticated user
+ * @summary Upload a file
+ */
+export type postApiFilesResponse200 = {
+  data: InternalHandlersFileResponse
+  status: 200
+}
+
+export type postApiFilesResponse400 = {
+  data: InternalHandlersErrorResponse
+  status: 400
+}
+
+export type postApiFilesResponse401 = {
+  data: InternalHandlersErrorResponse
+  status: 401
+}
+
+export type postApiFilesResponse429 = {
+  data: InternalHandlersErrorResponse
+  status: 429
+}
+
+export type postApiFilesResponse500 = {
+  data: InternalHandlersErrorResponse
+  status: 500
+}
+    
+export type postApiFilesResponseSuccess = (postApiFilesResponse200) & {
+  headers: Headers;
+};
+export type postApiFilesResponseError = (postApiFilesResponse400 | postApiFilesResponse401 | postApiFilesResponse429 | postApiFilesResponse500) & {
+  headers: Headers;
+};
+
+export type postApiFilesResponse = (postApiFilesResponseSuccess | postApiFilesResponseError)
+
+export const getPostApiFilesUrl = () => {
+
+
+  
+
+  return `/api/files`
+}
+
+export const postApiFiles = async (postApiFilesBody: PostApiFilesBody, options?: RequestInit): Promise<postApiFilesResponse> => {
+    const formData = new FormData();
+formData.append(`file`, postApiFilesBody.file);
+
+  return customFetch<postApiFilesResponse>(getPostApiFilesUrl(),
+  {      
+    ...options,
+    method: 'POST'
+    ,
+    body: 
+      formData,
+  }
+);}
+
+
+
+
+export const getPostApiFilesMutationOptions = <TError = InternalHandlersErrorResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiFiles>>, TError,{data: PostApiFilesBody}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof postApiFiles>>, TError,{data: PostApiFilesBody}, TContext> => {
+
+const mutationKey = ['postApiFiles'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postApiFiles>>, {data: PostApiFilesBody}> = (props) => {
+          const {data} = props ?? {};
+
+          return  postApiFiles(data,requestOptions)
+        }
+
+
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostApiFilesMutationResult = NonNullable<Awaited<ReturnType<typeof postApiFiles>>>
+    export type PostApiFilesMutationBody = PostApiFilesBody
+    export type PostApiFilesMutationError = InternalHandlersErrorResponse
+
+    /**
+ * @summary Upload a file
+ */
+export const usePostApiFiles = <TError = InternalHandlersErrorResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiFiles>>, TError,{data: PostApiFilesBody}, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postApiFiles>>,
+        TError,
+        {data: PostApiFilesBody},
+        TContext
+      > => {
+      return useMutation(getPostApiFilesMutationOptions(options), queryClient);
+    }
+    
+/**
+ * Retrieve metadata for a specific file by ID
+ * @summary Get file metadata
+ */
+export type getApiFilesIdResponse200 = {
+  data: InternalHandlersGetFileResponse
+  status: 200
+}
+
+export type getApiFilesIdResponse400 = {
+  data: InternalHandlersErrorResponse
+  status: 400
+}
+
+export type getApiFilesIdResponse401 = {
+  data: InternalHandlersErrorResponse
+  status: 401
+}
+
+export type getApiFilesIdResponse404 = {
+  data: InternalHandlersErrorResponse
+  status: 404
+}
+
+export type getApiFilesIdResponse500 = {
+  data: InternalHandlersErrorResponse
+  status: 500
+}
+    
+export type getApiFilesIdResponseSuccess = (getApiFilesIdResponse200) & {
+  headers: Headers;
+};
+export type getApiFilesIdResponseError = (getApiFilesIdResponse400 | getApiFilesIdResponse401 | getApiFilesIdResponse404 | getApiFilesIdResponse500) & {
+  headers: Headers;
+};
+
+export type getApiFilesIdResponse = (getApiFilesIdResponseSuccess | getApiFilesIdResponseError)
+
+export const getGetApiFilesIdUrl = (id: string,) => {
+
+
+  
+
+  return `/api/files/${id}`
+}
+
+export const getApiFilesId = async (id: string, options?: RequestInit): Promise<getApiFilesIdResponse> => {
+  
+  return customFetch<getApiFilesIdResponse>(getGetApiFilesIdUrl(id),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
+  }
+);}
+
+
+
+
+
+export const getGetApiFilesIdQueryKey = (id: string,) => {
+    return [
+    `/api/files/${id}`
+    ] as const;
+    }
+
+    
+export const getGetApiFilesIdQueryOptions = <TData = Awaited<ReturnType<typeof getApiFilesId>>, TError = InternalHandlersErrorResponse>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiFilesId>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetApiFilesIdQueryKey(id);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getApiFilesId>>> = ({ signal }) => getApiFilesId(id, { signal, ...requestOptions });
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getApiFilesId>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetApiFilesIdQueryResult = NonNullable<Awaited<ReturnType<typeof getApiFilesId>>>
+export type GetApiFilesIdQueryError = InternalHandlersErrorResponse
+
+
+export function useGetApiFilesId<TData = Awaited<ReturnType<typeof getApiFilesId>>, TError = InternalHandlersErrorResponse>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiFilesId>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getApiFilesId>>,
+          TError,
+          Awaited<ReturnType<typeof getApiFilesId>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetApiFilesId<TData = Awaited<ReturnType<typeof getApiFilesId>>, TError = InternalHandlersErrorResponse>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiFilesId>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getApiFilesId>>,
+          TError,
+          Awaited<ReturnType<typeof getApiFilesId>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetApiFilesId<TData = Awaited<ReturnType<typeof getApiFilesId>>, TError = InternalHandlersErrorResponse>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiFilesId>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get file metadata
+ */
+
+export function useGetApiFilesId<TData = Awaited<ReturnType<typeof getApiFilesId>>, TError = InternalHandlersErrorResponse>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiFilesId>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetApiFilesIdQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+/**
+ * Delete a file by ID (must be owned by the authenticated user)
+ * @summary Delete a file
+ */
+export type deleteApiFilesIdResponse200 = {
+  data: InternalHandlersDeleteFileResponse
+  status: 200
+}
+
+export type deleteApiFilesIdResponse400 = {
+  data: InternalHandlersErrorResponse
+  status: 400
+}
+
+export type deleteApiFilesIdResponse401 = {
+  data: InternalHandlersErrorResponse
+  status: 401
+}
+
+export type deleteApiFilesIdResponse404 = {
+  data: InternalHandlersErrorResponse
+  status: 404
+}
+
+export type deleteApiFilesIdResponse500 = {
+  data: InternalHandlersErrorResponse
+  status: 500
+}
+    
+export type deleteApiFilesIdResponseSuccess = (deleteApiFilesIdResponse200) & {
+  headers: Headers;
+};
+export type deleteApiFilesIdResponseError = (deleteApiFilesIdResponse400 | deleteApiFilesIdResponse401 | deleteApiFilesIdResponse404 | deleteApiFilesIdResponse500) & {
+  headers: Headers;
+};
+
+export type deleteApiFilesIdResponse = (deleteApiFilesIdResponseSuccess | deleteApiFilesIdResponseError)
+
+export const getDeleteApiFilesIdUrl = (id: string,) => {
+
+
+  
+
+  return `/api/files/${id}`
+}
+
+export const deleteApiFilesId = async (id: string, options?: RequestInit): Promise<deleteApiFilesIdResponse> => {
+  
+  return customFetch<deleteApiFilesIdResponse>(getDeleteApiFilesIdUrl(id),
+  {      
+    ...options,
+    method: 'DELETE'
+    
+    
+  }
+);}
+
+
+
+
+export const getDeleteApiFilesIdMutationOptions = <TError = InternalHandlersErrorResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteApiFilesId>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteApiFilesId>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['deleteApiFilesId'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteApiFilesId>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  deleteApiFilesId(id,requestOptions)
+        }
+
+
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteApiFilesIdMutationResult = NonNullable<Awaited<ReturnType<typeof deleteApiFilesId>>>
+    
+    export type DeleteApiFilesIdMutationError = InternalHandlersErrorResponse
+
+    /**
+ * @summary Delete a file
+ */
+export const useDeleteApiFilesId = <TError = InternalHandlersErrorResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteApiFilesId>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteApiFilesId>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+      return useMutation(getDeleteApiFilesIdMutationOptions(options), queryClient);
+    }
+    
+/**
+ * Download a file by ID (must be owned by the authenticated user)
+ * @summary Download a file
+ */
+export type getApiFilesIdDownloadResponse200 = {
+  data: Blob
+  status: 200
+}
+
+export type getApiFilesIdDownloadResponse400 = {
+  data: Blob
+  status: 400
+}
+
+export type getApiFilesIdDownloadResponse401 = {
+  data: Blob
+  status: 401
+}
+
+export type getApiFilesIdDownloadResponse404 = {
+  data: Blob
+  status: 404
+}
+
+export type getApiFilesIdDownloadResponse500 = {
+  data: Blob
+  status: 500
+}
+    
+export type getApiFilesIdDownloadResponseSuccess = (getApiFilesIdDownloadResponse200) & {
+  headers: Headers;
+};
+export type getApiFilesIdDownloadResponseError = (getApiFilesIdDownloadResponse400 | getApiFilesIdDownloadResponse401 | getApiFilesIdDownloadResponse404 | getApiFilesIdDownloadResponse500) & {
+  headers: Headers;
+};
+
+export type getApiFilesIdDownloadResponse = (getApiFilesIdDownloadResponseSuccess | getApiFilesIdDownloadResponseError)
+
+export const getGetApiFilesIdDownloadUrl = (id: string,) => {
+
+
+  
+
+  return `/api/files/${id}/download`
+}
+
+export const getApiFilesIdDownload = async (id: string, options?: RequestInit): Promise<getApiFilesIdDownloadResponse> => {
+  
+  return customFetch<getApiFilesIdDownloadResponse>(getGetApiFilesIdDownloadUrl(id),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
+  }
+);}
+
+
+
+
+
+export const getGetApiFilesIdDownloadQueryKey = (id: string,) => {
+    return [
+    `/api/files/${id}/download`
+    ] as const;
+    }
+
+    
+export const getGetApiFilesIdDownloadQueryOptions = <TData = Awaited<ReturnType<typeof getApiFilesIdDownload>>, TError = Blob>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiFilesIdDownload>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetApiFilesIdDownloadQueryKey(id);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getApiFilesIdDownload>>> = ({ signal }) => getApiFilesIdDownload(id, { signal, ...requestOptions });
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getApiFilesIdDownload>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetApiFilesIdDownloadQueryResult = NonNullable<Awaited<ReturnType<typeof getApiFilesIdDownload>>>
+export type GetApiFilesIdDownloadQueryError = Blob
+
+
+export function useGetApiFilesIdDownload<TData = Awaited<ReturnType<typeof getApiFilesIdDownload>>, TError = Blob>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiFilesIdDownload>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getApiFilesIdDownload>>,
+          TError,
+          Awaited<ReturnType<typeof getApiFilesIdDownload>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetApiFilesIdDownload<TData = Awaited<ReturnType<typeof getApiFilesIdDownload>>, TError = Blob>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiFilesIdDownload>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getApiFilesIdDownload>>,
+          TError,
+          Awaited<ReturnType<typeof getApiFilesIdDownload>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetApiFilesIdDownload<TData = Awaited<ReturnType<typeof getApiFilesIdDownload>>, TError = Blob>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiFilesIdDownload>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Download a file
+ */
+
+export function useGetApiFilesIdDownload<TData = Awaited<ReturnType<typeof getApiFilesIdDownload>>, TError = Blob>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiFilesIdDownload>>, TError, TData>>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetApiFilesIdDownloadQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+/**
  * Authenticate a user and receive a JWT token
  * @summary User login
  */
 export type postApiLoginResponse200 = {
-  data: HandlersAuthResponse
+  data: InternalHandlersAuthResponse
   status: 200
 }
 
 export type postApiLoginResponse400 = {
-  data: HandlersErrorResponse
+  data: InternalHandlersErrorResponse
   status: 400
 }
 
 export type postApiLoginResponse401 = {
-  data: HandlersErrorResponse
+  data: InternalHandlersErrorResponse
   status: 401
 }
 
 export type postApiLoginResponse500 = {
-  data: HandlersErrorResponse
+  data: InternalHandlersErrorResponse
   status: 500
 }
     
@@ -435,7 +1045,7 @@ export const getPostApiLoginUrl = () => {
   return `/api/login`
 }
 
-export const postApiLogin = async (handlersLoginRequest: HandlersLoginRequest, options?: RequestInit): Promise<postApiLoginResponse> => {
+export const postApiLogin = async (internalHandlersLoginRequest: InternalHandlersLoginRequest, options?: RequestInit): Promise<postApiLoginResponse> => {
   
   return customFetch<postApiLoginResponse>(getPostApiLoginUrl(),
   {      
@@ -443,16 +1053,16 @@ export const postApiLogin = async (handlersLoginRequest: HandlersLoginRequest, o
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     body: JSON.stringify(
-      handlersLoginRequest,)
+      internalHandlersLoginRequest,)
   }
 );}
 
 
 
 
-export const getPostApiLoginMutationOptions = <TError = HandlersErrorResponse,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiLogin>>, TError,{data: HandlersLoginRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof postApiLogin>>, TError,{data: HandlersLoginRequest}, TContext> => {
+export const getPostApiLoginMutationOptions = <TError = InternalHandlersErrorResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiLogin>>, TError,{data: InternalHandlersLoginRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof postApiLogin>>, TError,{data: InternalHandlersLoginRequest}, TContext> => {
 
 const mutationKey = ['postApiLogin'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -464,7 +1074,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postApiLogin>>, {data: HandlersLoginRequest}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postApiLogin>>, {data: InternalHandlersLoginRequest}> = (props) => {
           const {data} = props ?? {};
 
           return  postApiLogin(data,requestOptions)
@@ -478,18 +1088,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type PostApiLoginMutationResult = NonNullable<Awaited<ReturnType<typeof postApiLogin>>>
-    export type PostApiLoginMutationBody = HandlersLoginRequest
-    export type PostApiLoginMutationError = HandlersErrorResponse
+    export type PostApiLoginMutationBody = InternalHandlersLoginRequest
+    export type PostApiLoginMutationError = InternalHandlersErrorResponse
 
     /**
  * @summary User login
  */
-export const usePostApiLogin = <TError = HandlersErrorResponse,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiLogin>>, TError,{data: HandlersLoginRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+export const usePostApiLogin = <TError = InternalHandlersErrorResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiLogin>>, TError,{data: InternalHandlersLoginRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof postApiLogin>>,
         TError,
-        {data: HandlersLoginRequest},
+        {data: InternalHandlersLoginRequest},
         TContext
       > => {
       return useMutation(getPostApiLoginMutationOptions(options), queryClient);

@@ -6,9 +6,8 @@
 Provides authentication, user management, file management, and routing to backend services.
  * OpenAPI spec version: 1.0
  */
-import type { HandlersUserResponse } from './handlersUserResponse';
+import type { InternalHandlersFileMetadata } from './internalHandlersFileMetadata';
 
-export interface HandlersAuthResponse {
-  token?: string;
-  user?: HandlersUserResponse;
+export interface InternalHandlersListFilesResponse {
+  files?: InternalHandlersFileMetadata[];
 }

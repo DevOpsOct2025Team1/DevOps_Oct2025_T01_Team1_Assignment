@@ -7,6 +7,7 @@ Provides authentication, user management, file management, and routing to backen
  * OpenAPI spec version: 1.0
  */
 
-export interface HandlersErrorResponse {
-  error?: string;
+export interface InternalHandlersSignUpRequest {
+  password: string;
+  username: string;
 }
