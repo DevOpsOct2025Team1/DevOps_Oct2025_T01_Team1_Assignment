@@ -176,7 +176,7 @@ class TestFileService:
         context = Mock()
         context.invocation_metadata.return_value = [("authorization", "Bearer valid-token")]
 
-        request = file_pb2.ListFilesRequest(user_id="other-user")
+        request = file_pb2.ListFilesRequest()
         _ = service.ListFiles(request, context)
 
         mock_collection.find.assert_called_once_with({"user_id": "user-123"})
