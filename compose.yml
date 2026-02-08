@@ -74,7 +74,7 @@ services:
       - ENVIRONMENT=${ENVIRONMENT:-production}
     restart: unless-stopped
     healthcheck:
-      test: [ "CMD", "nc", "-z", "localhost", "50054" ]
+      test: [ "CMD", "python", "-c", "import socket; s=socket.create_connection(('localhost',50054)); s.close()" ]
       interval: 10s
       timeout: 5s
       retries: 3
