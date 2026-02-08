@@ -58,7 +58,6 @@ services:
     container_name: file-service
     ports:
       - "50054:50054"
-      - "3001:3001"
     environment:
       - FILE_SERVICE_PORT=50054
       - HTTP_PORT=3001
