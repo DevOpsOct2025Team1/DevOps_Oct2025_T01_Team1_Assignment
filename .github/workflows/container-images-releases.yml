@@ -76,7 +76,7 @@ jobs:
 
             ${{ steps.meta.outputs.image-name }}:staging
           build-args: |
-            VITE_API_BASE_URL=/api
+            VITE_API_BASE_URL=/
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -183,7 +183,7 @@ jobs:
             ${{ steps.meta.outputs.image-name }}:${{ steps.parse.outputs.version }}
             ${{ steps.meta.outputs.image-name }}:latest
           build-args: |
-            VITE_API_BASE_URL=/api
+            VITE_API_BASE_URL=/
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
