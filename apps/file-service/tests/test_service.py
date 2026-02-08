@@ -17,7 +17,7 @@ class TestGetUserId:
         auth_client = Mock()
         auth_client.validate_token.return_value = auth_pb2.ValidateTokenResponse(
             valid=True,
-            user_id="test-user-123"
+            user=user_pb2.User(id="test-user-123", username="testuser", role=user_pb2.Role.ROLE_USER)
         )
 
         user_id = get_user_id(context, auth_client)
@@ -62,8 +62,7 @@ class TestGetUserId:
 
         auth_client = Mock()
         auth_client.validate_token.return_value = auth_pb2.ValidateTokenResponse(
-            valid=False,
-            user_id=""
+            valid=False
         )
 
         with pytest.raises(Exception):
@@ -84,7 +83,7 @@ class TestFileService:
         auth_client = Mock()
         auth_client.validate_token.return_value = auth_pb2.ValidateTokenResponse(
             valid=True,
-            user_id="user-123"
+            user=user_pb2.User(id="user-123", username="testuser", role=user_pb2.Role.ROLE_USER)
         )
 
         service = FileService(auth_client)
@@ -121,7 +120,7 @@ class TestFileService:
         auth_client = Mock()
         auth_client.validate_token.return_value = auth_pb2.ValidateTokenResponse(
             valid=True,
-            user_id="user-123"
+            user=user_pb2.User(id="user-123", username="testuser", role=user_pb2.Role.ROLE_USER)
         )
 
         service = FileService(auth_client)
@@ -148,7 +147,7 @@ class TestFileService:
         auth_client = Mock()
         auth_client.validate_token.return_value = auth_pb2.ValidateTokenResponse(
             valid=True,
-            user_id="user-123"
+            user=user_pb2.User(id="user-123", username="testuser", role=user_pb2.Role.ROLE_USER)
         )
 
         service = FileService(auth_client)
@@ -170,7 +169,7 @@ class TestFileService:
         auth_client = Mock()
         auth_client.validate_token.return_value = auth_pb2.ValidateTokenResponse(
             valid=True,
-            user_id="user-123"
+            user=user_pb2.User(id="user-123", username="testuser", role=user_pb2.Role.ROLE_USER)
         )
 
         service = FileService(auth_client)
@@ -196,7 +195,7 @@ class TestFileService:
         auth_client = Mock()
         auth_client.validate_token.return_value = auth_pb2.ValidateTokenResponse(
             valid=True,
-            user_id="user-123"
+            user=user_pb2.User(id="user-123", username="testuser", role=user_pb2.Role.ROLE_USER)
         )
 
         service = FileService(auth_client)
@@ -214,7 +213,7 @@ class TestFileService:
         auth_client = Mock()
         auth_client.validate_token.return_value = auth_pb2.ValidateTokenResponse(
             valid=True,
-            user_id="user-123"
+            user=user_pb2.User(id="user-123", username="testuser", role=user_pb2.Role.ROLE_USER)
         )
 
         service = FileService(auth_client)
@@ -239,7 +238,7 @@ class TestFileService:
         auth_client = Mock()
         auth_client.validate_token.return_value = auth_pb2.ValidateTokenResponse(
             valid=True,
-            user_id="user-123"
+            user=user_pb2.User(id="user-123", username="testuser", role=user_pb2.Role.ROLE_USER)
         )
 
         service = FileService(auth_client)
@@ -264,7 +263,7 @@ class TestFileService:
         auth_client = Mock()
         auth_client.validate_token.return_value = auth_pb2.ValidateTokenResponse(
             valid=True,
-            user_id="user-123"
+            user=user_pb2.User(id="user-123", username="testuser", role=user_pb2.Role.ROLE_USER)
         )
 
         service = FileService(auth_client)
@@ -283,7 +282,7 @@ class TestFileService:
         auth_client = Mock()
         auth_client.validate_token.return_value = auth_pb2.ValidateTokenResponse(
             valid=True,
-            user_id="user-123"
+            user=user_pb2.User(id="user-123", username="testuser", role=user_pb2.Role.ROLE_USER)
         )
 
         service = FileService(auth_client)
@@ -300,7 +299,7 @@ class TestFileService:
         auth_client = Mock()
         auth_client.validate_token.return_value = auth_pb2.ValidateTokenResponse(
             valid=True,
-            user_id="user-123"
+            user=user_pb2.User(id="user-123", username="testuser", role=user_pb2.Role.ROLE_USER)
         )
 
         service = FileService(auth_client)
