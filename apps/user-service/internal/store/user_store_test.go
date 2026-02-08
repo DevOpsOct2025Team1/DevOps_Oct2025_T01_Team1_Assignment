@@ -150,3 +150,58 @@ func TestListUsers_NoMatches(t *testing.T) {
 		t.Errorf("expected 0 users, got %d", len(users))
 	}
 }
+
+func TestGetUserByID(t *testing.T) {
+	store, cleanup := setupTestDB(t)
+	defer cleanup()
+
+	ctx := context.Background()
+
+	id, err := store.CreateUser(ctx, &User{
+		Username:       "testuser",
+		HashedPassword: "password",
+		Role:           "user",
+	})
+	if err != nil {
+		t.Fatalf("failed to create user: %v", err)
+	}
+
+	user, err := store.GetUserByID(ctx, id)
+	if err != nil {
+		t.Fatalf("failed to get user: %v", err)
+	}
+
+	if user.Username != "testuser" {
+		t.Errorf("expected username testuser, got %s", user.Username)
+	}
+
+	if user.Id != id {
+		t.Errorf("expected id %s, got %s", id, user.Id)
+	}
+}
+
+func TestDeleteUserByID(t *testing.T) {
+	store, cleanup := setupTestDB(t)
+	defer cleanup()
+
+	ctx := context.Background()
+
+	id, err := store.CreateUser(ctx, &User{
+		Username:       "testuser_delete",
+		HashedPassword: "password",
+		Role:           "user",
+	})
+	if err != nil {
+		t.Fatalf("failed to create user: %v", err)
+	}
+
+	err = store.DeleteUserByID(ctx, id)
+	if err != nil {
+		t.Fatalf("failed to delete user: %v", err)
+	}
+
+	_, err = store.GetUserByID(ctx, id)
+	if err != ErrUserNotFound {
+		t.Errorf("expected ErrUserNotFound, got %v", err)
+	}
+}
