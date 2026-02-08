@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
+import userEvent from "@testing-library/user-event"
 import { BrowserRouter } from "react-router"
 import { renderWithProviders } from "./test-utils"
 import UserPanel from "../app/components/UserPanel"
@@ -98,7 +99,7 @@ describe("UserPanel", () => {
     ]
     getFilesMock.mockReturnValue({ status: 200, data: { files: mockFiles } })
 
-    const { getByPlaceholderText, queryByText, findByText } = renderWithProviders(
+    const { getByPlaceholderText, findByText, queryByText } = renderWithProviders(
       <BrowserRouter>
         <UserPanel />
       </BrowserRouter>
@@ -108,9 +109,9 @@ describe("UserPanel", () => {
     expect(await findByText("banana.jpg")).toBeTruthy()
 
     const searchInput = getByPlaceholderText("Search uploaded files")
-    searchInput.focus()
-    const event = new Event("input", { bubbles: true })
-    Object.defineProperty(event, "target", { value: { value: "apple" } })
-    searchInput.dispatchEvent(new Event("change", { bubbles: true }))
+    await userEvent.type(searchInput, "apple")
+
+    expect(queryByText("apple.txt")).toBeTruthy()
+    expect(queryByText("banana.jpg")).toBeNull()
   })
 })

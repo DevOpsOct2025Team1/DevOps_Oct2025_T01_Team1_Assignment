@@ -45,7 +45,7 @@ export const FileItem = ({ file, onDelete, onDownload }: FileItemProps) => {
           <DropdownMenuContent align="end">
             <DropdownMenuItem
               className="text-red-500"
-              onClick={() => file.id && onDelete(file.id)}
+              onSelect={() => file.id && onDelete(file.id)}
             >
               <Trash className="h-4 w-4" />
               Delete

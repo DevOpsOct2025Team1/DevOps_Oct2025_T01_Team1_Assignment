@@ -39,13 +39,20 @@ export const customFetch = async <T>(
   url: string,
   options: RequestInit = {}
 ): Promise<T> => {
-  const headers = {
-    ...getAuthHeaders(),
-    ...options.headers,
-  } as Record<string, string>;
+  // Start with default auth headers
+  const headers = new Headers(getAuthHeaders());
 
+  // Apply any headers provided in options, regardless of their HeadersInit form
+  if (options.headers) {
+    const optionHeaders = new Headers(options.headers);
+    optionHeaders.forEach((value, key) => {
+      headers.set(key, value);
+    });
+  }
+
+  // Let the browser set the correct Content-Type boundary for FormData
   if (options.body instanceof FormData) {
-    delete headers["Content-Type"];
+    headers.delete("Content-Type");
   }
 
   const response = await fetch(resolveUrl(url), {

@@ -95,13 +95,12 @@ const UserPanel = () => {
   
   const triggerDownload = async (id: string, name: string) => {
       try {
-          const downloadUrl = resolveUrl(getGetApiFilesIdDownloadUrl(id))
-          const headers = getAuthHeaders() as Record<string, string>;
-          // delete content-type for download request as it"s a get
-          delete headers["Content-Type"];
+          const downloadUrl = resolveUrl(getGetApiFilesIdDownloadUrl(id));
+          const headers = new Headers(getAuthHeaders());
+          headers.delete("Content-Type");
 
           const response = await fetch(downloadUrl, {
-            headers
+            headers,
           });
           if (!response.ok) throw new Error("Download failed");
           const blob = await response.blob();

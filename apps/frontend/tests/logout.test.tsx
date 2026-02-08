@@ -1,5 +1,5 @@
 import { render } from "@testing-library/react"
-import { describe, it, expect, beforeEach, vi } from "vitest"
+import { describe, it, expect, beforeEach } from "vitest"
 import { BrowserRouter } from "react-router"
 import Logout from "../app/routes/logout"
 import { AuthProvider } from "../app/contexts/AuthContext"

@@ -37,7 +37,8 @@ export default function AdminPanel() {
   );
 
   const formatRole = (role: string) => {
-    if (role === "ROLE_ADMIN" || role === "2") return "Admin";
+    const normalizedRole = role.toLowerCase();
+    if (normalizedRole === "admin" || role === "ROLE_ADMIN" || role === "2") return "Admin";
     return "User";
   };
 
