@@ -1,216 +1,97 @@
 import { useState } from "react";
-import { usePostApiAdminCreateUser, useDeleteApiAdminDeleteUser } from "../api/generated";
-import { Button } from "./ui/button";
+import { getHours } from "date-fns";
+import { useGetApiAdminListUsers } from "../api/generated";
 import { Input } from "./ui/input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
-import { Badge } from "./ui/badge";
+import { Search, Loader2 } from "lucide-react";
+import { CreateUserDialog } from "./CreateUserDialog";
+import { UserRowActions } from "./UserRowActions";
 
-interface Action {
-  type: "create" | "delete";
+interface User {
+  id: string;
   username: string;
-  timestamp: Date;
+  role: string;
 }
 
 export default function AdminPanel() {
-  const [actions, setActions] = useState<Action[]>([]);
-  const createUserMutation = usePostApiAdminCreateUser();
-  const deleteUserMutation = useDeleteApiAdminDeleteUser();
-
-  const [createUsername, setCreateUsername] = useState("");
-  const [createPassword, setCreatePassword] = useState("");
-  const [createError, setCreateError] = useState("");
-
-  const [deleteUserId, setDeleteUserId] = useState("");
-  const [deleteError, setDeleteError] = useState("");
-
-  const handleCreateUser = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setCreateError("");
-
-    if (!createUsername.trim() || !createPassword.trim()) {
-      setCreateError("Username and password are required");
-      return;
-    }
-
-    try {
-      const response = await createUserMutation.mutateAsync({
-        data: {
-          username: createUsername,
-          password: createPassword,
-        },
-      });
-      const createdUser =
-        response.data && "user" in response.data ? response.data.user : undefined;
-
-      setActions([
-        {
-          type: "create",
-          username: createdUser?.username || createUsername,
-          timestamp: new Date(),
-        },
-        ...actions,
-      ]);
-
-      setCreateUsername("");
-      setCreatePassword("");
-    } catch (err: any) {
-      setCreateError(err?.message || "Failed to create user");
-    }
+  const [search, setSearch] = useState("");
+  
+  const getGreeting = () => {
+    const hours = getHours(new Date());
+    if (hours < 12) return "Good morning";
+    if (hours < 18) return "Good afternoon";
+    return "Good evening";
   };
-
-  const handleDeleteUser = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setDeleteError("");
-
-    if (!deleteUserId.trim()) {
-      setDeleteError("User ID is required");
-      return;
+  
+  const { data: users = [], isLoading } = useGetApiAdminListUsers(
+    search ? { username: search } : {},
+    {
+      query: {
+        select: (data) => {
+          if (data.status === 200 && data.data) {
+             return (data.data['users'] || []) as unknown as User[];
+          }
+          return [];
+        }
+      }
     }
+  );
 
-    try {
-      await deleteUserMutation.mutateAsync({
-        data: {
-          id: deleteUserId,
-        },
-      });
-
-      setActions([
-        {
-          type: "delete",
-          username: `User ${deleteUserId}`,
-          timestamp: new Date(),
-        },
-        ...actions,
-      ]);
-
-      setDeleteUserId("");
-    } catch (err: any) {
-      setDeleteError(err?.message || "Failed to delete user");
-    }
+  const formatRole = (role: string) => {
+    if (role === "ROLE_ADMIN" || role === "2") return "Admin";
+    return "User";
   };
 
   return (
-    <>
-      <div className="grid gap-6 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Create User</CardTitle>
-            <CardDescription>Add a new user to the system</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleCreateUser} className="space-y-4">
-              <div className="space-y-2">
-                <label htmlFor="create-username" className="text-sm font-medium">
-                  Username
-                </label>
-                <Input
-                  id="create-username"
-                  type="text"
-                  value={createUsername}
-                  onChange={(e) => setCreateUsername(e.target.value)}
-                  disabled={createUserMutation.isPending}
-                  placeholder="Enter username"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label htmlFor="create-password" className="text-sm font-medium">
-                  Password
-                </label>
-                <Input
-                  id="create-password"
-                  type="password"
-                  value={createPassword}
-                  onChange={(e) => setCreatePassword(e.target.value)}
-                  disabled={createUserMutation.isPending}
-                  placeholder="Enter password"
-                />
-              </div>
-
-              {createError && (
-                <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-md">
-                  {createError}
-                </div>
-              )}
-
-              <Button
-                type="submit"
-                disabled={createUserMutation.isPending}
-                className="w-full"
-              >
-                {createUserMutation.isPending ? "Creating..." : "Create User"}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Delete User</CardTitle>
-            <CardDescription>Remove a user from the system</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleDeleteUser} className="space-y-4">
-              <div className="space-y-2">
-                <label htmlFor="delete-id" className="text-sm font-medium">
-                  User ID
-                </label>
-                <Input
-                  id="delete-id"
-                  type="text"
-                  value={deleteUserId}
-                  onChange={(e) => setDeleteUserId(e.target.value)}
-                  disabled={deleteUserMutation.isPending}
-                  placeholder="Enter user ID"
-                />
-              </div>
-
-              {deleteError && (
-                <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-md">
-                  {deleteError}
-                </div>
-              )}
-
-              <Button
-                type="submit"
-                disabled={deleteUserMutation.isPending}
-                variant="destructive"
-                className="w-full"
-              >
-                {deleteUserMutation.isPending ? "Deleting..." : "Delete User"}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
+    <div className="space-y-8">
+      <div className="space-y-2">
+        <h1 className="text-4xl font-bold tracking-tight">{getGreeting()} Admin</h1>
+        <p className="text-muted-foreground text-lg">
+          What would you like to manage today?
+        </p>
       </div>
 
-      <Card className="mt-6">
-        <CardHeader>
-          <CardTitle>Recent Actions</CardTitle>
-          <CardDescription>View recent user management activities</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {actions.length === 0 ? (
-            <p className="text-muted-foreground text-center py-4">No actions yet</p>
-          ) : (
-            <div className="space-y-2">
-              {actions.map((action, idx) => (
-                <div key={idx} className="flex items-center justify-between py-2 px-4 bg-muted/50 rounded">
-                  <div className="flex items-center space-x-3">
-                    <Badge variant={action.type === "create" ? "default" : "destructive"}>
-                      {action.type.toUpperCase()}
-                    </Badge>
-                    <span>{action.username}</span>
-                  </div>
-                  <span className="text-sm text-muted-foreground">
-                    {action.timestamp.toLocaleTimeString()}
-                  </span>
-                </div>
-              ))}
+      <div className="flex items-center justify-between gap-4">
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Search Users"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-9 bg-white rounded-full"
+          />
+        </div>
+
+        <CreateUserDialog />
+      </div>
+
+      <div className="space-y-1">
+        {isLoading ? (
+          <div className="flex justify-center py-8">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          </div>
+        ) : users.length === 0 ? (
+          <p className="text-center text-muted-foreground py-8">No users found</p>
+        ) : (
+          users.map((user) => (
+            <div 
+              key={user.id} 
+              className="flex items-center justify-between p-4 hover:bg-gray-50 rounded-lg transition-colors group"
+            >
+              <div className="flex items-center gap-4">
+                <span className="font-medium text-lg">{user.username}</span>
+              </div>
+              
+              <div className="flex items-center gap-6">
+                <span className="text-sm">
+                  {formatRole(user.role)}
+                </span>
+                
+                <UserRowActions user={user} />
+              </div>
             </div>
-          )}
-        </CardContent>
-      </Card>
-    </>
+          ))
+        )}
+      </div>
+    </div>
   );
 }
