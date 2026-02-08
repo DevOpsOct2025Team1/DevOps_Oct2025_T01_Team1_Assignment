@@ -9,11 +9,15 @@ import (
 )
 
 type mockFileClient struct {
-	listFilesFunc    func(ctx context.Context, req *filev1.ListFilesRequest) (*filev1.ListFilesResponse, error)
-	getFileFunc      func(ctx context.Context, req *filev1.GetFileRequest) (*filev1.FileResponse, error)
-	deleteFileFunc   func(ctx context.Context, req *filev1.DeleteFileRequest) (*filev1.DeleteFileResponse, error)
-	uploadFileFunc   func(ctx context.Context) (filev1.FileService_UploadFileClient, error)
-	downloadFileFunc func(ctx context.Context, req *filev1.DownloadFileRequest) (filev1.FileService_DownloadFileClient, error)
+	listFilesFunc         func(ctx context.Context, req *filev1.ListFilesRequest) (*filev1.ListFilesResponse, error)
+	getFileFunc           func(ctx context.Context, req *filev1.GetFileRequest) (*filev1.FileResponse, error)
+	deleteFileFunc        func(ctx context.Context, req *filev1.DeleteFileRequest) (*filev1.DeleteFileResponse, error)
+	uploadFileFunc        func(ctx context.Context) (filev1.FileService_UploadFileClient, error)
+	downloadFileFunc      func(ctx context.Context, req *filev1.DownloadFileRequest) (filev1.FileService_DownloadFileClient, error)
+	initiateMultipartFunc func(ctx context.Context, req *filev1.InitiateMultipartUploadRequest) (*filev1.InitiateMultipartUploadResponse, error)
+	uploadPartFunc        func(ctx context.Context, req *filev1.UploadPartRequest) (*filev1.UploadPartResponse, error)
+	completeMultipartFunc func(ctx context.Context, req *filev1.CompleteMultipartUploadRequest) (*filev1.FileResponse, error)
+	abortMultipartFunc    func(ctx context.Context, req *filev1.AbortMultipartUploadRequest) (*filev1.AbortMultipartUploadResponse, error)
 }
 
 func (m *mockFileClient) ListFiles(ctx context.Context, req *filev1.ListFilesRequest) (*filev1.ListFilesResponse, error) {
@@ -47,6 +51,34 @@ func (m *mockFileClient) UploadFile(ctx context.Context) (filev1.FileService_Upl
 func (m *mockFileClient) DownloadFile(ctx context.Context, req *filev1.DownloadFileRequest) (filev1.FileService_DownloadFileClient, error) {
 	if m.downloadFileFunc != nil {
 		return m.downloadFileFunc(ctx, req)
+	}
+	return nil, errors.New("not implemented")
+}
+
+func (m *mockFileClient) InitiateMultipartUpload(ctx context.Context, req *filev1.InitiateMultipartUploadRequest) (*filev1.InitiateMultipartUploadResponse, error) {
+	if m.initiateMultipartFunc != nil {
+		return m.initiateMultipartFunc(ctx, req)
+	}
+	return nil, errors.New("not implemented")
+}
+
+func (m *mockFileClient) UploadPart(ctx context.Context, req *filev1.UploadPartRequest) (*filev1.UploadPartResponse, error) {
+	if m.uploadPartFunc != nil {
+		return m.uploadPartFunc(ctx, req)
+	}
+	return nil, errors.New("not implemented")
+}
+
+func (m *mockFileClient) CompleteMultipartUpload(ctx context.Context, req *filev1.CompleteMultipartUploadRequest) (*filev1.FileResponse, error) {
+	if m.completeMultipartFunc != nil {
+		return m.completeMultipartFunc(ctx, req)
+	}
+	return nil, errors.New("not implemented")
+}
+
+func (m *mockFileClient) AbortMultipartUpload(ctx context.Context, req *filev1.AbortMultipartUploadRequest) (*filev1.AbortMultipartUploadResponse, error) {
+	if m.abortMultipartFunc != nil {
+		return m.abortMultipartFunc(ctx, req)
 	}
 	return nil, errors.New("not implemented")
 }

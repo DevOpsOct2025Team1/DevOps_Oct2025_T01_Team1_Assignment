@@ -1,5 +1,11 @@
 basePath: /
 definitions:
+  internal_handlers.AbortMultipartUploadResponse:
+    properties:
+      success:
+        example: true
+        type: boolean
+    type: object
   internal_handlers.AuthResponse:
     properties:
       token:
@@ -7,6 +13,15 @@ definitions:
         type: string
       user:
         $ref: '#/definitions/internal_handlers.UserResponse'
+    type: object
+  internal_handlers.CompleteMultipartUploadRequest:
+    properties:
+      parts:
+        items:
+          $ref: '#/definitions/internal_handlers.PartInfo'
+        type: array
+    required:
+    - parts
     type: object
   internal_handlers.DeleteFileResponse:
     properties:
@@ -62,6 +77,33 @@ definitions:
       file:
         $ref: '#/definitions/internal_handlers.FileMetadata'
     type: object
+  internal_handlers.InitiateMultipartUploadRequest:
+    properties:
+      content_type:
+        example: video/mp4
+        type: string
+      filename:
+        example: large-video.mp4
+        type: string
+      total_size:
+        example: 1073741824
+        type: integer
+    required:
+    - filename
+    - total_size
+    type: object
+  internal_handlers.InitiateMultipartUploadResponse:
+    properties:
+      chunk_size:
+        example: 10485760
+        type: integer
+      total_parts:
+        example: 10
+        type: integer
+      upload_id:
+        example: abc123
+        type: string
+    type: object
   internal_handlers.ListFilesResponse:
     properties:
       files:
@@ -81,6 +123,15 @@ definitions:
     - password
     - username
     type: object
+  internal_handlers.PartInfo:
+    properties:
+      etag:
+        example: '"etag1"'
+        type: string
+      part_number:
+        example: 1
+        type: integer
+    type: object
   internal_handlers.SignUpRequest:
     properties:
       password:
@@ -92,6 +143,15 @@ definitions:
     required:
     - password
     - username
+    type: object
+  internal_handlers.UploadPartResponse:
+    properties:
+      etag:
+        example: '"etag1"'
+        type: string
+      part_number:
+        example: 1
+        type: integer
     type: object
   internal_handlers.UserResponse:
     properties:
@@ -411,6 +471,161 @@ paths:
       security:
       - BearerAuth: []
       summary: Download a file
+      tags:
+      - files
+  /api/files/multipart/{upload_id}:
+    delete:
+      description: Cancel an in-progress multipart upload and clean up resources
+      parameters:
+      - description: Upload session ID
+        in: path
+        name: upload_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Upload aborted successfully
+          schema:
+            $ref: '#/definitions/internal_handlers.AbortMultipartUploadResponse'
+        "401":
+          description: Unauthorized - missing or invalid token
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Abort a multipart upload
+      tags:
+      - files
+  /api/files/multipart/{upload_id}/complete:
+    post:
+      consumes:
+      - application/json
+      description: Finalize a multipart upload by providing all part ETags
+      parameters:
+      - description: Upload session ID
+        in: path
+        name: upload_id
+        required: true
+        type: string
+      - description: Parts to complete
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handlers.CompleteMultipartUploadRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: File uploaded successfully
+          schema:
+            $ref: '#/definitions/internal_handlers.FileResponse'
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "401":
+          description: Unauthorized - missing or invalid token
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "404":
+          description: Upload session not found
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Complete a multipart upload
+      tags:
+      - files
+  /api/files/multipart/{upload_id}/part/{part_number}:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Upload a single chunk of a file as part of a multipart upload
+      parameters:
+      - description: Upload session ID
+        in: path
+        name: upload_id
+        required: true
+        type: string
+      - description: Part number
+        in: path
+        name: part_number
+        required: true
+        type: integer
+      - description: File chunk to upload
+        in: formData
+        name: chunk
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Part uploaded successfully
+          schema:
+            $ref: '#/definitions/internal_handlers.UploadPartResponse'
+        "400":
+          description: Invalid part number or missing chunk
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "401":
+          description: Unauthorized - missing or invalid token
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Upload a part of a multipart upload
+      tags:
+      - files
+  /api/files/multipart/initiate:
+    post:
+      consumes:
+      - application/json
+      description: Start a new multipart upload session for large files
+      parameters:
+      - description: Upload initiation request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handlers.InitiateMultipartUploadRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Upload session created
+          schema:
+            $ref: '#/definitions/internal_handlers.InitiateMultipartUploadResponse'
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "401":
+          description: Unauthorized - missing or invalid token
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/internal_handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Initiate a multipart upload
       tags:
       - files
   /api/login:

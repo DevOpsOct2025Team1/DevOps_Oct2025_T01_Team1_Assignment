@@ -3,7 +3,9 @@ package features
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
+	"mime/multipart"
 	"net/http"
 	"strings"
 	"time"
@@ -57,6 +59,55 @@ func (h *healthTestContext) iSetHeaders(headers string) error {
 			}
 		}
 	}
+	return nil
+}
+
+func (h *healthTestContext) iSendAMultipartFormPOSTToWithFileContaining(endpoint, fieldName, content string) error {
+	start := time.Now()
+
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+	part, err := writer.CreateFormFile(fieldName, "chunk.bin")
+	if err != nil {
+		return fmt.Errorf("failed to create form file: %w", err)
+	}
+	part.Write([]byte(content))
+	writer.Close()
+
+	req, err := http.NewRequest("POST", h.server.URL+endpoint, body)
+	if err != nil {
+		return fmt.Errorf("failed to create request: %w", err)
+	}
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+
+	if h.customAuthHeader != "" {
+		req.Header.Set("Authorization", h.customAuthHeader)
+	} else if h.authToken != "" {
+		req.Header.Set("Authorization", "Bearer "+h.authToken)
+	}
+
+	client := &http.Client{Timeout: 5 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		return fmt.Errorf("failed to send request: %w", err)
+	}
+
+	h.responseTime = time.Since(start)
+
+	if h.response != nil && h.response.Body != nil {
+		_ = h.response.Body.Close()
+	}
+	h.response = resp
+
+	raw, _ := io.ReadAll(resp.Body)
+	_ = resp.Body.Close()
+	resp.Body = io.NopCloser(bytes.NewReader(raw))
+	h.responseRaw = raw
+
+	var m map[string]interface{}
+	_ = json.Unmarshal(raw, &m)
+	h.responseBody = m
+
 	return nil
 }
 

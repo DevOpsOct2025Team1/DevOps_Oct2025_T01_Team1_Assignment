@@ -357,3 +357,215 @@ func (h *FileHandler) DownloadFile(c *gin.Context) {
 		}
 	}
 }
+
+// InitiateMultipartUpload godoc
+// @Summary      Initiate a multipart upload
+// @Description  Start a new multipart upload session for large files
+// @Tags         files
+// @Accept       json
+// @Produce      json
+// @Param        body body InitiateMultipartUploadRequest true "Upload initiation request"
+// @Success      200 {object} InitiateMultipartUploadResponse "Upload session created"
+// @Failure      400 {object} ErrorResponse "Invalid request body"
+// @Failure      401 {object} ErrorResponse "Unauthorized - missing or invalid token"
+// @Failure      500 {object} ErrorResponse "Internal server error"
+// @Security     BearerAuth
+// @Router       /api/files/multipart/initiate [post]
+func (h *FileHandler) InitiateMultipartUpload(c *gin.Context) {
+	_, err := h.getUserFromContext(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		return
+	}
+
+	var req struct {
+		Filename    string `json:"filename" binding:"required"`
+		ContentType string `json:"content_type"`
+		TotalSize   int64  `json:"total_size" binding:"required"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
+		return
+	}
+
+	ctx := h.contextWithAuth(c)
+	resp, err := h.client.InitiateMultipartUpload(ctx, &filev1.InitiateMultipartUploadRequest{
+		Filename:    req.Filename,
+		ContentType: req.ContentType,
+		TotalSize:   req.TotalSize,
+	})
+	if err != nil {
+		c.JSON(mapGRPCError(err), gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"upload_id":   resp.UploadId,
+		"chunk_size":  resp.ChunkSize,
+		"total_parts": resp.TotalParts,
+	})
+}
+
+// UploadPart godoc
+// @Summary      Upload a part of a multipart upload
+// @Description  Upload a single chunk of a file as part of a multipart upload
+// @Tags         files
+// @Accept       multipart/form-data
+// @Produce      json
+// @Param        upload_id path string true "Upload session ID"
+// @Param        part_number path int true "Part number"
+// @Param        chunk formData file true "File chunk to upload"
+// @Success      200 {object} UploadPartResponse "Part uploaded successfully"
+// @Failure      400 {object} ErrorResponse "Invalid part number or missing chunk"
+// @Failure      401 {object} ErrorResponse "Unauthorized - missing or invalid token"
+// @Failure      500 {object} ErrorResponse "Internal server error"
+// @Security     BearerAuth
+// @Router       /api/files/multipart/{upload_id}/part/{part_number} [post]
+func (h *FileHandler) UploadPart(c *gin.Context) {
+	_, err := h.getUserFromContext(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		return
+	}
+
+	uploadID := c.Param("upload_id")
+	partNumberStr := c.Param("part_number")
+	partNumber, err := strconv.Atoi(partNumberStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid part number"})
+		return
+	}
+
+	file, err := c.FormFile("chunk")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "chunk is required"})
+		return
+	}
+
+	src, err := file.Open()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to open chunk"})
+		return
+	}
+	defer src.Close()
+
+	chunk, err := io.ReadAll(src)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to read chunk"})
+		return
+	}
+
+	ctx := h.contextWithAuth(c)
+	resp, err := h.client.UploadPart(ctx, &filev1.UploadPartRequest{
+		UploadId:   uploadID,
+		PartNumber: int32(partNumber),
+		Chunk:      chunk,
+	})
+	if err != nil {
+		c.JSON(mapGRPCError(err), gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"etag":        resp.Etag,
+		"part_number": resp.PartNumber,
+	})
+}
+
+// CompleteMultipartUpload godoc
+// @Summary      Complete a multipart upload
+// @Description  Finalize a multipart upload by providing all part ETags
+// @Tags         files
+// @Accept       json
+// @Produce      json
+// @Param        upload_id path string true "Upload session ID"
+// @Param        body body CompleteMultipartUploadRequest true "Parts to complete"
+// @Success      200 {object} FileResponse "File uploaded successfully"
+// @Failure      400 {object} ErrorResponse "Invalid request body"
+// @Failure      401 {object} ErrorResponse "Unauthorized - missing or invalid token"
+// @Failure      404 {object} ErrorResponse "Upload session not found"
+// @Failure      500 {object} ErrorResponse "Internal server error"
+// @Security     BearerAuth
+// @Router       /api/files/multipart/{upload_id}/complete [post]
+func (h *FileHandler) CompleteMultipartUpload(c *gin.Context) {
+	_, err := h.getUserFromContext(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		return
+	}
+
+	uploadID := c.Param("upload_id")
+
+	var req struct {
+		Parts []struct {
+			PartNumber int32  `json:"part_number"`
+			Etag       string `json:"etag"`
+		} `json:"parts" binding:"required"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
+		return
+	}
+
+	parts := make([]*filev1.PartInfo, len(req.Parts))
+	for i, p := range req.Parts {
+		parts[i] = &filev1.PartInfo{
+			PartNumber: p.PartNumber,
+			Etag:       p.Etag,
+		}
+	}
+
+	ctx := h.contextWithAuth(c)
+	resp, err := h.client.CompleteMultipartUpload(ctx, &filev1.CompleteMultipartUploadRequest{
+		UploadId: uploadID,
+		Parts:    parts,
+	})
+	if err != nil {
+		c.JSON(mapGRPCError(err), gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"file": map[string]interface{}{
+			"id":           resp.File.Id,
+			"filename":     resp.File.Filename,
+			"size":         resp.File.Size,
+			"content_type": resp.File.ContentType,
+			"created_at":   resp.File.CreatedAt,
+		},
+	})
+}
+
+// AbortMultipartUpload godoc
+// @Summary      Abort a multipart upload
+// @Description  Cancel an in-progress multipart upload and clean up resources
+// @Tags         files
+// @Produce      json
+// @Param        upload_id path string true "Upload session ID"
+// @Success      200 {object} AbortMultipartUploadResponse "Upload aborted successfully"
+// @Failure      401 {object} ErrorResponse "Unauthorized - missing or invalid token"
+// @Failure      500 {object} ErrorResponse "Internal server error"
+// @Security     BearerAuth
+// @Router       /api/files/multipart/{upload_id} [delete]
+func (h *FileHandler) AbortMultipartUpload(c *gin.Context) {
+	_, err := h.getUserFromContext(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		return
+	}
+
+	uploadID := c.Param("upload_id")
+
+	ctx := h.contextWithAuth(c)
+	resp, err := h.client.AbortMultipartUpload(ctx, &filev1.AbortMultipartUploadRequest{
+		UploadId: uploadID,
+	})
+	if err != nil {
+		c.JSON(mapGRPCError(err), gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"success": resp.Success})
+}

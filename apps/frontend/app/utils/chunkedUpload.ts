@@ -1,0 +1,135 @@
+interface UploadProgress {
+  uploadedParts: number;
+  totalParts: number;
+  percentage: number;
+}
+
+interface UploadResult {
+  file: {
+    id: string;
+    filename: string;
+    size: number;
+    content_type: string;
+    created_at: number;
+  };
+}
+
+interface PartInfo {
+  part_number: number;
+  etag: string;
+}
+
+interface AuthHeaders {
+  Authorization?: string;
+  [key: string]: string | undefined;
+}
+
+function getAuthHeaders(): AuthHeaders {
+  const token = localStorage.getItem("token");
+  if (token) {
+    return {
+      Authorization: `Bearer ${token}`,
+    };
+  }
+  return {};
+}
+
+function resolveUrl(path: string): string {
+  const baseUrl = import.meta.env.VITE_API_URL || "http://localhost:3001";
+  return `${baseUrl}${path}`;
+}
+
+export async function uploadFileInChunks(
+  file: File,
+  onProgress?: (percentage: number) => void
+): Promise<UploadResult> {
+  const initiateResponse = await fetch(resolveUrl("/api/files/multipart/initiate"), {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...getAuthHeaders(),
+    },
+    body: JSON.stringify({
+      filename: file.name,
+      content_type: file.type || "application/octet-stream",
+      total_size: file.size,
+    }),
+  });
+
+  if (!initiateResponse.ok) {
+    const error = await initiateResponse.json();
+    throw new Error(error.error || "Failed to initiate upload");
+  }
+
+  const initiateData = await initiateResponse.json();
+  const { upload_id, chunk_size, total_parts } = initiateData;
+
+  const parts: PartInfo[] = [];
+  let uploadedParts = 0;
+
+  try {
+    for (let partNumber = 1; partNumber <= total_parts; partNumber++) {
+      const start = (partNumber - 1) * chunk_size;
+      const end = Math.min(start + chunk_size, file.size);
+      const chunk = file.slice(start, end);
+
+      const formData = new FormData();
+      formData.append("chunk", chunk);
+
+      const response = await fetch(
+        resolveUrl(`/api/files/multipart/${upload_id}/part/${partNumber}`),
+        {
+          method: "POST",
+          headers: getAuthHeaders(),
+          body: formData,
+        }
+      );
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to upload chunk");
+      }
+
+      const partResponse = await response.json();
+      parts.push({
+        part_number: partNumber,
+        etag: partResponse.etag,
+      });
+
+      uploadedParts++;
+      if (onProgress) {
+        onProgress(Math.round((uploadedParts / total_parts) * 100));
+      }
+    }
+
+    const completeResponse = await fetch(
+      resolveUrl(`/api/files/multipart/${upload_id}/complete`),
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...getAuthHeaders(),
+        },
+        body: JSON.stringify({ parts }),
+      }
+    );
+
+    if (!completeResponse.ok) {
+      const error = await completeResponse.json();
+      throw new Error(error.error || "Failed to complete upload");
+    }
+
+    const completeData = await completeResponse.json();
+    return completeData;
+  } catch (error) {
+    try {
+      await fetch(resolveUrl(`/api/files/multipart/${upload_id}`), {
+        method: "DELETE",
+        headers: getAuthHeaders(),
+      });
+    } catch (abortError) {
+      console.error("Failed to abort upload:", abortError);
+    }
+    throw error;
+  }
+}

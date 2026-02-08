@@ -11,6 +11,10 @@ service FileService {
   rpc GetFile(GetFileRequest) returns (FileResponse);
   rpc DownloadFile(DownloadFileRequest) returns (stream DownloadFileResponse);
   rpc DeleteFile(DeleteFileRequest) returns (DeleteFileResponse);
+  rpc InitiateMultipartUpload(InitiateMultipartUploadRequest) returns (InitiateMultipartUploadResponse);
+  rpc UploadPart(UploadPartRequest) returns (UploadPartResponse);
+  rpc CompleteMultipartUpload(CompleteMultipartUploadRequest) returns (FileResponse);
+  rpc AbortMultipartUpload(AbortMultipartUploadRequest) returns (AbortMultipartUploadResponse);
 }
 
 message File {
@@ -78,4 +82,45 @@ message DownloadFileMetadata {
   string filename = 1;
   string content_type = 2;
   int64 size = 3;
+}
+
+message InitiateMultipartUploadRequest {
+  string filename = 1;
+  string content_type = 2;
+  int64 total_size = 3;
+}
+
+message InitiateMultipartUploadResponse {
+  string upload_id = 1;
+  int32 chunk_size = 2;
+  int32 total_parts = 3;
+}
+
+message UploadPartRequest {
+  string upload_id = 1;
+  int32 part_number = 2;
+  bytes chunk = 3;
+}
+
+message UploadPartResponse {
+  string etag = 1;
+  int32 part_number = 2;
+}
+
+message CompleteMultipartUploadRequest {
+  string upload_id = 1;
+  repeated PartInfo parts = 2;
+}
+
+message PartInfo {
+  int32 part_number = 1;
+  string etag = 2;
+}
+
+message AbortMultipartUploadRequest {
+  string upload_id = 1;
+}
+
+message AbortMultipartUploadResponse {
+  bool success = 1;
 }

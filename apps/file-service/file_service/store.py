@@ -7,6 +7,7 @@ client = MongoClient(MONGO_URI)
 DB_NAME = os.getenv("MONGODB_DATABASE", "file_service")
 db = client[DB_NAME]
 files_collection = db["files"]
+upload_sessions_collection = db["upload_sessions"]
 
 # Initialize S3 client
 s3_config = {
@@ -28,3 +29,12 @@ s3_client = boto3.client(**s3_config)
 def generate_s3_key(user_id: str, file_id: str, filename: str) -> str:
     """Generate unique S3 key for file storage."""
     return f"{user_id}/{file_id}/{filename}"
+
+def init_upload_session_indexes():
+    upload_sessions_collection.create_index(
+        "created_at",
+        expireAfterSeconds=7 * 24 * 60 * 60
+    )
+    upload_sessions_collection.create_index("upload_id", unique=True)
+
+init_upload_session_indexes()

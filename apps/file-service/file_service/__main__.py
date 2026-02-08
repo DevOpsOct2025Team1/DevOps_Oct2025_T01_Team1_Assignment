@@ -22,7 +22,14 @@ def serve():
 
     auth_client = AuthClient()
 
-    server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
+    max_msg_size = 20 * 1024 * 1024
+    server = grpc.server(
+        futures.ThreadPoolExecutor(max_workers=10),
+        options=[
+            ("grpc.max_receive_message_length", max_msg_size),
+            ("grpc.max_send_message_length", max_msg_size),
+        ],
+    )
     file_pb2_grpc.add_FileServiceServicer_to_server(FileService(auth_client), server)
     register_health(server)
 

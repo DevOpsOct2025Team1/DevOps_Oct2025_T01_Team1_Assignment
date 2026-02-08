@@ -310,6 +310,248 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/files/multipart/initiate": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Start a new multipart upload session for large files",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "files"
+                ],
+                "summary": "Initiate a multipart upload",
+                "parameters": [
+                    {
+                        "description": "Upload initiation request",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.InitiateMultipartUploadRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Upload session created",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.InitiateMultipartUploadResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - missing or invalid token",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/files/multipart/{upload_id}": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Cancel an in-progress multipart upload and clean up resources",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "files"
+                ],
+                "summary": "Abort a multipart upload",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Upload session ID",
+                        "name": "upload_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Upload aborted successfully",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.AbortMultipartUploadResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - missing or invalid token",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/files/multipart/{upload_id}/complete": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Finalize a multipart upload by providing all part ETags",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "files"
+                ],
+                "summary": "Complete a multipart upload",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Upload session ID",
+                        "name": "upload_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Parts to complete",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.CompleteMultipartUploadRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "File uploaded successfully",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.FileResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - missing or invalid token",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Upload session not found",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/files/multipart/{upload_id}/part/{part_number}": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Upload a single chunk of a file as part of a multipart upload",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "files"
+                ],
+                "summary": "Upload a part of a multipart upload",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Upload session ID",
+                        "name": "upload_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Part number",
+                        "name": "part_number",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "file",
+                        "description": "File chunk to upload",
+                        "name": "chunk",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Part uploaded successfully",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.UploadPartResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid part number or missing chunk",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - missing or invalid token",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/files/{id}": {
             "get": {
                 "security": [
@@ -536,6 +778,15 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "internal_handlers.AbortMultipartUploadResponse": {
+            "type": "object",
+            "properties": {
+                "success": {
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
         "internal_handlers.AuthResponse": {
             "type": "object",
             "properties": {
@@ -545,6 +796,20 @@ const docTemplate = `{
                 },
                 "user": {
                     "$ref": "#/definitions/internal_handlers.UserResponse"
+                }
+            }
+        },
+        "internal_handlers.CompleteMultipartUploadRequest": {
+            "type": "object",
+            "required": [
+                "parts"
+            ],
+            "properties": {
+                "parts": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/internal_handlers.PartInfo"
+                    }
                 }
             }
         },
@@ -628,6 +893,44 @@ const docTemplate = `{
                 }
             }
         },
+        "internal_handlers.InitiateMultipartUploadRequest": {
+            "type": "object",
+            "required": [
+                "filename",
+                "total_size"
+            ],
+            "properties": {
+                "content_type": {
+                    "type": "string",
+                    "example": "video/mp4"
+                },
+                "filename": {
+                    "type": "string",
+                    "example": "large-video.mp4"
+                },
+                "total_size": {
+                    "type": "integer",
+                    "example": 1073741824
+                }
+            }
+        },
+        "internal_handlers.InitiateMultipartUploadResponse": {
+            "type": "object",
+            "properties": {
+                "chunk_size": {
+                    "type": "integer",
+                    "example": 10485760
+                },
+                "total_parts": {
+                    "type": "integer",
+                    "example": 10
+                },
+                "upload_id": {
+                    "type": "string",
+                    "example": "abc123"
+                }
+            }
+        },
         "internal_handlers.ListFilesResponse": {
             "type": "object",
             "properties": {
@@ -656,6 +959,19 @@ const docTemplate = `{
                 }
             }
         },
+        "internal_handlers.PartInfo": {
+            "type": "object",
+            "properties": {
+                "etag": {
+                    "type": "string",
+                    "example": "\"etag1\""
+                },
+                "part_number": {
+                    "type": "integer",
+                    "example": 1
+                }
+            }
+        },
         "internal_handlers.SignUpRequest": {
             "type": "object",
             "required": [
@@ -670,6 +986,19 @@ const docTemplate = `{
                 "username": {
                     "type": "string",
                     "example": "testing"
+                }
+            }
+        },
+        "internal_handlers.UploadPartResponse": {
+            "type": "object",
+            "properties": {
+                "etag": {
+                    "type": "string",
+                    "example": "\"etag1\""
+                },
+                "part_number": {
+                    "type": "integer",
+                    "example": 1
                 }
             }
         },

@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogClose } from "~/components/ui/dialog"
 import { useGetApiFiles, usePostApiFiles, useDeleteApiFilesId } from "~/api/generated"
 import { resolveUrl, getAuthHeaders } from "~/api/orval-client"
 import { getGetApiFilesIdDownloadUrl } from "~/api/generated"
+import { uploadFileInChunks } from "~/utils/chunkedUpload"
 import { FileList } from "./FileList"
 import type { InternalHandlersFileMetadata } from "~/api/generated/model"
 
@@ -27,6 +28,8 @@ const UserPanel = () => {
   const [isUploadOpen, setIsUploadOpen] = useState(false)
   const [fileToDelete, setFileToDelete] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
+  const [uploadProgress, setUploadProgress] = useState<number>(0)
+  const [isChunkedUploading, setIsChunkedUploading] = useState(false)
 
   const getGreeting = () => {
     const hours = getHours(new Date())
@@ -65,8 +68,30 @@ const UserPanel = () => {
     },
   })
 
-  const handleFileUpload = (file: File) => {
-    uploadFile({ data: { file } })
+  const CHUNK_THRESHOLD = 50 * 1024 * 1024
+
+  const handleFileUpload = async (file: File) => {
+    if (file.size > CHUNK_THRESHOLD) {
+      setIsChunkedUploading(true)
+      setUploadProgress(0)
+
+      try {
+        await uploadFileInChunks(file, (percentage) => {
+          setUploadProgress(percentage)
+        })
+
+        setIsUploadOpen(false)
+        setUploadProgress(0)
+        await refetch()
+      } catch (error) {
+        console.error("Upload failed:", error)
+        alert("Upload failed. Please try again.")
+      } finally {
+        setIsChunkedUploading(false)
+      }
+    } else {
+      uploadFile({ data: { file } })
+    }
   }
 
   const handleDeleteConfirm = () => {
@@ -182,16 +207,31 @@ const UserPanel = () => {
                    type="file"
                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                    onChange={onFileInputChange}
-                   disabled={isUploading}
+                   disabled={isUploading || isChunkedUploading}
                  />
                  <Button
                      size="lg"
-                     disabled={isUploading}
+                     disabled={isUploading || isChunkedUploading}
                  >
                    <Upload className="mr-2 h-4 w-4" />
-                   {isUploading ? "Uploading..." : "Upload"}
+                   {isUploading || isChunkedUploading ? "Uploading..." : "Upload"}
                  </Button>
                </div>
+               {isChunkedUploading && (
+                 <div className="mt-4 w-full max-w-xs">
+                   <div className="flex items-center justify-between mb-2">
+                     <span className="text-sm text-gray-600">
+                       Uploading... {uploadProgress}%
+                     </span>
+                   </div>
+                   <div className="w-full bg-gray-200 rounded-full h-2">
+                     <div
+                       className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                       style={{ width: `${uploadProgress}%` }}
+                     />
+                   </div>
+                 </div>
+               )}
                <p className="mt-4 text-sm text-gray-500">Max size: 2GB</p>
             </div>
           </div>
