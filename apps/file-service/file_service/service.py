@@ -1,5 +1,6 @@
 import time
 import io
+import tempfile
 from bson import ObjectId
 from bson.errors import InvalidId
 import grpc
@@ -24,7 +25,11 @@ def get_user_id(context, auth_client):
 
     token = parts[1]
 
-    response = auth_client.validate_token(token)
+    try:
+        response = auth_client.validate_token(token)
+    except grpc.RpcError as e:
+        context.abort(grpc.StatusCode.UNAVAILABLE, f"Auth service unavailable: {e}")
+
     if not response or not response.valid:
         context.abort(grpc.StatusCode.UNAUTHENTICATED, "Invalid token")
 
@@ -98,8 +103,7 @@ class FileService(file_pb2_grpc.FileServiceServicer):
             file_id = str(ObjectId())
             s3_key = generate_s3_key(user_id, file_id, filename)
             
-            # Collect file chunks
-            file_buffer = io.BytesIO()
+            file_buffer = tempfile.SpooledTemporaryFile(max_size=10 * 1024 * 1024)
             total_size = 0
             for request in request_iterator:
                 if request.HasField("chunk"):
@@ -107,16 +111,17 @@ class FileService(file_pb2_grpc.FileServiceServicer):
                     total_size += chunk_size
 
                     if total_size > MAX_FILE_SIZE:
+                        file_buffer.close()
                         context.abort(
                             grpc.StatusCode.RESOURCE_EXHAUSTED,
                             "File size exceeds maximum allowed size (2GB)"
                         )
 
                     file_buffer.write(request.chunk)
-            
+
             # Upload to S3
             file_buffer.seek(0)
-            file_size = file_buffer.getbuffer().nbytes
+            file_size = total_size
             
             try:
                 s3_client.upload_fileobj(
@@ -127,6 +132,8 @@ class FileService(file_pb2_grpc.FileServiceServicer):
                 )
             except ClientError as e:
                 context.abort(grpc.StatusCode.INTERNAL, f"Failed to upload file to S3: {str(e)}")
+            finally:
+                file_buffer.close()
             
             # Save metadata to MongoDB
             doc = {
@@ -245,8 +252,8 @@ class FileService(file_pb2_grpc.FileServiceServicer):
             context.abort(grpc.StatusCode.INVALID_ARGUMENT, "Invalid file id format")
         
         if not doc:
-            return file_pb2.DeleteFileResponse(success=False)
-        
+            context.abort(grpc.StatusCode.NOT_FOUND, "File not found")
+
         # Delete from S3 if s3_key exists
         s3_key = doc.get("s3_key")
         if s3_key:

@@ -60,6 +60,10 @@ func mapGRPCError(err error) int {
 			return http.StatusUnauthorized
 		case codes.AlreadyExists:
 			return http.StatusConflict
+		case codes.ResourceExhausted:
+			return http.StatusTooManyRequests
+		case codes.Unavailable:
+			return http.StatusServiceUnavailable
 		default:
 			return http.StatusInternalServerError
 		}
@@ -341,6 +345,8 @@ func (h *FileHandler) DownloadFile(c *gin.Context) {
 			break
 		}
 		if err != nil {
+			// Headers already sent, log the error and abort the connection
+			fmt.Printf("Error streaming file download: %v\n", err)
 			return
 		}
 

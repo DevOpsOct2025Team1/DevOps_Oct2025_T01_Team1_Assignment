@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, MagicMock, patch
 import grpc
 
 from file_service.service import FileService, get_user_id
@@ -54,6 +54,20 @@ class TestGetUserId:
             grpc.StatusCode.UNAUTHENTICATED,
             "Invalid authorization header format"
         )
+
+    def test_get_user_id_auth_service_unavailable(self):
+        context = Mock()
+        context.invocation_metadata.return_value = [("authorization", "Bearer valid-token")]
+        context.abort.side_effect = Exception("Aborted")
+
+        auth_client = Mock()
+        auth_client.validate_token.side_effect = grpc.RpcError()
+
+        with pytest.raises(Exception):
+            get_user_id(context, auth_client)
+
+        context.abort.assert_called_once()
+        assert context.abort.call_args[0][0] == grpc.StatusCode.UNAVAILABLE
 
     def test_get_user_id_invalid_token(self):
         context = Mock()
@@ -288,11 +302,16 @@ class TestFileService:
         service = FileService(auth_client)
         context = Mock()
         context.invocation_metadata.return_value = [("authorization", "Bearer valid-token")]
+        context.abort.side_effect = Exception("Aborted")
 
         request = file_pb2.DeleteFileRequest(id="507f1f77bcf86cd799439011")
-        response = service.DeleteFile(request, context)
+        with pytest.raises(Exception):
+            service.DeleteFile(request, context)
 
-        assert response.success is False
+        context.abort.assert_called_once_with(
+            grpc.StatusCode.NOT_FOUND,
+            "File not found",
+        )
 
     @patch('file_service.service.files_collection')
     def test_delete_file_invalid_id_aborts(self, mock_collection):
@@ -387,3 +406,143 @@ class TestBusinessRules:
             grpc.StatusCode.RESOURCE_EXHAUSTED,
             "File size exceeds maximum allowed size (2GB)"
         )
+
+
+class TestDownloadFile:
+
+    @patch('file_service.service.s3_client')
+    @patch('file_service.service.files_collection')
+    def test_download_file_success(self, mock_collection, mock_s3):
+        mock_collection.find_one.return_value = {
+            "_id": "507f1f77bcf86cd799439011",
+            "user_id": "user-123",
+            "filename": "test.txt",
+            "size": 11,
+            "content_type": "text/plain",
+            "s3_key": "user-123/507f1f77bcf86cd799439011/test.txt",
+            "created_at": 1234567890,
+        }
+
+        body_mock = MagicMock()
+        body_mock.read.side_effect = [b"hello world", b""]
+        mock_s3.get_object.return_value = {"Body": body_mock}
+
+        auth_client = Mock()
+        auth_client.validate_token.return_value = auth_pb2.ValidateTokenResponse(
+            valid=True,
+            user=user_pb2.User(id="user-123", username="testuser", role=user_pb2.Role.ROLE_USER)
+        )
+
+        service = FileService(auth_client)
+        context = Mock()
+        context.invocation_metadata.return_value = [("authorization", "Bearer valid-token")]
+
+        request = file_pb2.DownloadFileRequest(id="507f1f77bcf86cd799439011")
+        responses = list(service.DownloadFile(request, context))
+
+        # First response should be metadata
+        assert responses[0].HasField("metadata")
+        assert responses[0].metadata.filename == "test.txt"
+        assert responses[0].metadata.content_type == "text/plain"
+        assert responses[0].metadata.size == 11
+
+        # Second response should be the chunk
+        assert responses[1].chunk == b"hello world"
+
+        body_mock.close.assert_called_once()
+
+    @patch('file_service.service.s3_client')
+    @patch('file_service.service.files_collection')
+    def test_download_file_streams_multiple_chunks(self, mock_collection, mock_s3):
+        mock_collection.find_one.return_value = {
+            "_id": "507f1f77bcf86cd799439011",
+            "user_id": "user-123",
+            "filename": "big.bin",
+            "size": 200,
+            "content_type": "application/octet-stream",
+            "s3_key": "user-123/507f1f77bcf86cd799439011/big.bin",
+            "created_at": 1234567890,
+        }
+
+        body_mock = MagicMock()
+        body_mock.read.side_effect = [b"a" * 100, b"b" * 100, b""]
+        mock_s3.get_object.return_value = {"Body": body_mock}
+
+        auth_client = Mock()
+        auth_client.validate_token.return_value = auth_pb2.ValidateTokenResponse(
+            valid=True,
+            user=user_pb2.User(id="user-123", username="testuser", role=user_pb2.Role.ROLE_USER)
+        )
+
+        service = FileService(auth_client)
+        context = Mock()
+        context.invocation_metadata.return_value = [("authorization", "Bearer valid-token")]
+
+        request = file_pb2.DownloadFileRequest(id="507f1f77bcf86cd799439011")
+        responses = list(service.DownloadFile(request, context))
+
+        assert len(responses) == 3  # 1 metadata + 2 chunks
+        assert responses[1].chunk == b"a" * 100
+        assert responses[2].chunk == b"b" * 100
+
+    @patch('file_service.service.files_collection')
+    def test_download_file_not_found(self, mock_collection):
+        mock_collection.find_one.return_value = None
+
+        auth_client = Mock()
+        auth_client.validate_token.return_value = auth_pb2.ValidateTokenResponse(
+            valid=True,
+            user=user_pb2.User(id="user-123", username="testuser", role=user_pb2.Role.ROLE_USER)
+        )
+
+        service = FileService(auth_client)
+        context = Mock()
+        context.invocation_metadata.return_value = [("authorization", "Bearer valid-token")]
+        context.abort.side_effect = Exception("Aborted")
+
+        request = file_pb2.DownloadFileRequest(id="507f1f77bcf86cd799439011")
+        with pytest.raises(Exception):
+            list(service.DownloadFile(request, context))
+
+        context.abort.assert_called_once_with(
+            grpc.StatusCode.NOT_FOUND,
+            "File not found",
+        )
+
+    @patch('file_service.service.s3_client')
+    @patch('file_service.service.files_collection')
+    def test_download_file_s3_error(self, mock_collection, mock_s3):
+        from botocore.exceptions import ClientError
+
+        mock_collection.find_one.return_value = {
+            "_id": "507f1f77bcf86cd799439011",
+            "user_id": "user-123",
+            "filename": "test.txt",
+            "size": 11,
+            "content_type": "text/plain",
+            "s3_key": "user-123/507f1f77bcf86cd799439011/test.txt",
+            "created_at": 1234567890,
+        }
+
+        mock_s3.get_object.side_effect = ClientError(
+            {"Error": {"Code": "NoSuchKey", "Message": "Not found"}},
+            "GetObject"
+        )
+
+        auth_client = Mock()
+        auth_client.validate_token.return_value = auth_pb2.ValidateTokenResponse(
+            valid=True,
+            user=user_pb2.User(id="user-123", username="testuser", role=user_pb2.Role.ROLE_USER)
+        )
+
+        service = FileService(auth_client)
+        context = Mock()
+        context.invocation_metadata.return_value = [("authorization", "Bearer valid-token")]
+        context.abort.side_effect = Exception("Aborted")
+
+        request = file_pb2.DownloadFileRequest(id="507f1f77bcf86cd799439011")
+        with pytest.raises(Exception):
+            list(service.DownloadFile(request, context))
+
+        context.abort.assert_called_once()
+        assert context.abort.call_args[0][0] == grpc.StatusCode.INTERNAL

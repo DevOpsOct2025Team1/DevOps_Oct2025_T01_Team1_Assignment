@@ -12,7 +12,7 @@ class AuthClient:
             return self.stub.ValidateToken(auth_pb2.ValidateTokenRequest(token=token))
         except grpc.RpcError as e:
             print(f"Auth verification failed: {e}")
-            return None
+            raise
 
     def close(self):
         self.channel.close()
