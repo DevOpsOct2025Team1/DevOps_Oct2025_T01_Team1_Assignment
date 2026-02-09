@@ -37,8 +37,10 @@ def test_initiate_multipart_upload(file_service, mock_context):
     )
 
     with patch('file_service.service.s3_client') as mock_s3, \
-         patch('file_service.service.upload_sessions_collection') as mock_sessions:
+         patch('file_service.service.upload_sessions_collection') as mock_sessions, \
+         patch('file_service.service.files_collection') as mock_files:
 
+        mock_files.count_documents.return_value = 0
         mock_s3.create_multipart_upload.return_value = {
             'UploadId': 'test_upload_id_123'
         }
