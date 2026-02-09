@@ -84,7 +84,7 @@ type InitiateMultipartUploadRequest struct {
 // InitiateMultipartUploadResponse represents the response for initiating a multipart upload
 type InitiateMultipartUploadResponse struct {
 	UploadID   string `json:"upload_id" example:"abc123"`
-	ChunkSize  int64  `json:"chunk_size" example:"10485760"`
+	ChunkSize  int32  `json:"chunk_size" example:"10485760"`
 	TotalParts int32  `json:"total_parts" example:"10"`
 }
 

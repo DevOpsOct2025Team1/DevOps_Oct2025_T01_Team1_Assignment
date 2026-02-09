@@ -1,6 +1,7 @@
 import time
 import io
 import tempfile
+from datetime import datetime, timezone
 from bson import ObjectId
 from bson.errors import InvalidId
 import grpc
@@ -275,7 +276,15 @@ class FileService(file_pb2_grpc.FileServiceServicer):
 
         MAX_FILE_SIZE = 2 * 1024 * 1024 * 1024
         if total_size > MAX_FILE_SIZE:
-            context.abort(grpc.StatusCode.INVALID_ARGUMENT, f"File size exceeds maximum allowed size of 2GB")
+            context.abort(grpc.StatusCode.INVALID_ARGUMENT, "File size exceeds maximum allowed size of 2GB")
+
+        MAX_FILES_PER_USER = 20
+        file_count = files_collection.count_documents({"user_id": user_id})
+        if file_count >= MAX_FILES_PER_USER:
+            context.abort(
+                grpc.StatusCode.RESOURCE_EXHAUSTED,
+                "Maximum file limit reached (20 files per user)"
+            )
 
         file_id = str(ObjectId())
         s3_key = generate_s3_key(user_id, file_id, filename)
@@ -300,7 +309,7 @@ class FileService(file_pb2_grpc.FileServiceServicer):
                 "total_size": total_size,
                 "s3_key": s3_key,
                 "parts": [],
-                "created_at": int(time.time()),
+                "created_at": datetime.now(timezone.utc),
                 "status": "in_progress"
             }
             upload_sessions_collection.insert_one(session_doc)
@@ -342,16 +351,20 @@ class FileService(file_pb2_grpc.FileServiceServicer):
             etag = response['ETag']
 
             upload_sessions_collection.update_one(
-                {"upload_id": upload_id},
-                {
-                    "$pull": {"parts": {"part_number": part_number}},
-                }
-            )
-            upload_sessions_collection.update_one(
-                {"upload_id": upload_id},
-                {
-                    "$push": {"parts": {"part_number": part_number, "etag": etag}}
-                }
+                {"upload_id": upload_id, "user_id": user_id},
+                [
+                    {"$set": {
+                        "parts": {
+                            "$concatArrays": [
+                                {"$filter": {
+                                    "input": "$parts",
+                                    "cond": {"$ne": ["$$this.part_number", part_number]}
+                                }},
+                                [{"part_number": part_number, "etag": etag}]
+                            ]
+                        }
+                    }}
+                ]
             )
 
             return file_pb2.UploadPartResponse(

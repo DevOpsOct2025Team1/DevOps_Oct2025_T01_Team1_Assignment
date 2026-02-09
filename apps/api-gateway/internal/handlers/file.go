@@ -378,11 +378,7 @@ func (h *FileHandler) InitiateMultipartUpload(c *gin.Context) {
 		return
 	}
 
-	var req struct {
-		Filename    string `json:"filename" binding:"required"`
-		ContentType string `json:"content_type"`
-		TotalSize   int64  `json:"total_size" binding:"required"`
-	}
+	var req InitiateMultipartUploadRequest
 
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
@@ -450,6 +446,12 @@ func (h *FileHandler) UploadPart(c *gin.Context) {
 		return
 	}
 
+	const maxChunkSize = 10 * 1024 * 1024
+	if file.Size > maxChunkSize {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "chunk size exceeds maximum of 10MB"})
+		return
+	}
+
 	src, err := file.Open()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to open chunk"})
@@ -504,12 +506,7 @@ func (h *FileHandler) CompleteMultipartUpload(c *gin.Context) {
 
 	uploadID := c.Param("upload_id")
 
-	var req struct {
-		Parts []struct {
-			PartNumber int32  `json:"part_number"`
-			Etag       string `json:"etag"`
-		} `json:"parts" binding:"required"`
-	}
+	var req CompleteMultipartUploadRequest
 
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})

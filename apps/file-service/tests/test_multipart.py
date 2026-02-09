@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 from bson import ObjectId
 from file.v1 import file_pb2
 from file_service.service import FileService
@@ -80,7 +80,7 @@ def test_upload_part(file_service, mock_context):
         assert response.part_number == 1
 
         mock_s3.upload_part.assert_called_once()
-        assert mock_sessions.update_one.call_count == 2
+        mock_sessions.update_one.assert_called_once()
 
 def test_complete_multipart_upload(file_service, mock_context):
     file_id = str(ObjectId())
