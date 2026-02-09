@@ -28,17 +28,23 @@ import type {
 import type {
   GetApiAdminListUsers200,
   GetApiAdminListUsersParams,
+  InternalHandlersAbortMultipartUploadResponse,
   InternalHandlersAuthResponse,
+  InternalHandlersCompleteMultipartUploadRequest,
   InternalHandlersDeleteFileResponse,
   InternalHandlersDeleteUserRequest,
   InternalHandlersDeleteUserResponse,
   InternalHandlersErrorResponse,
   InternalHandlersFileResponse,
   InternalHandlersGetFileResponse,
+  InternalHandlersInitiateMultipartUploadRequest,
+  InternalHandlersInitiateMultipartUploadResponse,
   InternalHandlersListFilesResponse,
   InternalHandlersLoginRequest,
   InternalHandlersSignUpRequest,
-  PostApiFilesBody
+  InternalHandlersUploadPartResponse,
+  PostApiFilesBody,
+  PostApiFilesMultipartUploadIdPartPartNumberBody
 } from './model';
 
 import { customFetch } from '../orval-client';
@@ -629,6 +635,415 @@ export const usePostApiFiles = <TError = InternalHandlersErrorResponse,
         TContext
       > => {
       return useMutation(getPostApiFilesMutationOptions(options), queryClient);
+    }
+    
+/**
+ * Start a new multipart upload session for large files
+ * @summary Initiate a multipart upload
+ */
+export type postApiFilesMultipartInitiateResponse200 = {
+  data: InternalHandlersInitiateMultipartUploadResponse
+  status: 200
+}
+
+export type postApiFilesMultipartInitiateResponse400 = {
+  data: InternalHandlersErrorResponse
+  status: 400
+}
+
+export type postApiFilesMultipartInitiateResponse401 = {
+  data: InternalHandlersErrorResponse
+  status: 401
+}
+
+export type postApiFilesMultipartInitiateResponse500 = {
+  data: InternalHandlersErrorResponse
+  status: 500
+}
+    
+export type postApiFilesMultipartInitiateResponseSuccess = (postApiFilesMultipartInitiateResponse200) & {
+  headers: Headers;
+};
+export type postApiFilesMultipartInitiateResponseError = (postApiFilesMultipartInitiateResponse400 | postApiFilesMultipartInitiateResponse401 | postApiFilesMultipartInitiateResponse500) & {
+  headers: Headers;
+};
+
+export type postApiFilesMultipartInitiateResponse = (postApiFilesMultipartInitiateResponseSuccess | postApiFilesMultipartInitiateResponseError)
+
+export const getPostApiFilesMultipartInitiateUrl = () => {
+
+
+  
+
+  return `/api/files/multipart/initiate`
+}
+
+export const postApiFilesMultipartInitiate = async (internalHandlersInitiateMultipartUploadRequest: InternalHandlersInitiateMultipartUploadRequest, options?: RequestInit): Promise<postApiFilesMultipartInitiateResponse> => {
+  
+  return customFetch<postApiFilesMultipartInitiateResponse>(getPostApiFilesMultipartInitiateUrl(),
+  {      
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      internalHandlersInitiateMultipartUploadRequest,)
+  }
+);}
+
+
+
+
+export const getPostApiFilesMultipartInitiateMutationOptions = <TError = InternalHandlersErrorResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiFilesMultipartInitiate>>, TError,{data: InternalHandlersInitiateMultipartUploadRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof postApiFilesMultipartInitiate>>, TError,{data: InternalHandlersInitiateMultipartUploadRequest}, TContext> => {
+
+const mutationKey = ['postApiFilesMultipartInitiate'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postApiFilesMultipartInitiate>>, {data: InternalHandlersInitiateMultipartUploadRequest}> = (props) => {
+          const {data} = props ?? {};
+
+          return  postApiFilesMultipartInitiate(data,requestOptions)
+        }
+
+
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostApiFilesMultipartInitiateMutationResult = NonNullable<Awaited<ReturnType<typeof postApiFilesMultipartInitiate>>>
+    export type PostApiFilesMultipartInitiateMutationBody = InternalHandlersInitiateMultipartUploadRequest
+    export type PostApiFilesMultipartInitiateMutationError = InternalHandlersErrorResponse
+
+    /**
+ * @summary Initiate a multipart upload
+ */
+export const usePostApiFilesMultipartInitiate = <TError = InternalHandlersErrorResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiFilesMultipartInitiate>>, TError,{data: InternalHandlersInitiateMultipartUploadRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postApiFilesMultipartInitiate>>,
+        TError,
+        {data: InternalHandlersInitiateMultipartUploadRequest},
+        TContext
+      > => {
+      return useMutation(getPostApiFilesMultipartInitiateMutationOptions(options), queryClient);
+    }
+    
+/**
+ * Cancel an in-progress multipart upload and clean up resources
+ * @summary Abort a multipart upload
+ */
+export type deleteApiFilesMultipartUploadIdResponse200 = {
+  data: InternalHandlersAbortMultipartUploadResponse
+  status: 200
+}
+
+export type deleteApiFilesMultipartUploadIdResponse401 = {
+  data: InternalHandlersErrorResponse
+  status: 401
+}
+
+export type deleteApiFilesMultipartUploadIdResponse500 = {
+  data: InternalHandlersErrorResponse
+  status: 500
+}
+    
+export type deleteApiFilesMultipartUploadIdResponseSuccess = (deleteApiFilesMultipartUploadIdResponse200) & {
+  headers: Headers;
+};
+export type deleteApiFilesMultipartUploadIdResponseError = (deleteApiFilesMultipartUploadIdResponse401 | deleteApiFilesMultipartUploadIdResponse500) & {
+  headers: Headers;
+};
+
+export type deleteApiFilesMultipartUploadIdResponse = (deleteApiFilesMultipartUploadIdResponseSuccess | deleteApiFilesMultipartUploadIdResponseError)
+
+export const getDeleteApiFilesMultipartUploadIdUrl = (uploadId: string,) => {
+
+
+  
+
+  return `/api/files/multipart/${uploadId}`
+}
+
+export const deleteApiFilesMultipartUploadId = async (uploadId: string, options?: RequestInit): Promise<deleteApiFilesMultipartUploadIdResponse> => {
+  
+  return customFetch<deleteApiFilesMultipartUploadIdResponse>(getDeleteApiFilesMultipartUploadIdUrl(uploadId),
+  {      
+    ...options,
+    method: 'DELETE'
+    
+    
+  }
+);}
+
+
+
+
+export const getDeleteApiFilesMultipartUploadIdMutationOptions = <TError = InternalHandlersErrorResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteApiFilesMultipartUploadId>>, TError,{uploadId: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteApiFilesMultipartUploadId>>, TError,{uploadId: string}, TContext> => {
+
+const mutationKey = ['deleteApiFilesMultipartUploadId'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteApiFilesMultipartUploadId>>, {uploadId: string}> = (props) => {
+          const {uploadId} = props ?? {};
+
+          return  deleteApiFilesMultipartUploadId(uploadId,requestOptions)
+        }
+
+
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteApiFilesMultipartUploadIdMutationResult = NonNullable<Awaited<ReturnType<typeof deleteApiFilesMultipartUploadId>>>
+    
+    export type DeleteApiFilesMultipartUploadIdMutationError = InternalHandlersErrorResponse
+
+    /**
+ * @summary Abort a multipart upload
+ */
+export const useDeleteApiFilesMultipartUploadId = <TError = InternalHandlersErrorResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteApiFilesMultipartUploadId>>, TError,{uploadId: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteApiFilesMultipartUploadId>>,
+        TError,
+        {uploadId: string},
+        TContext
+      > => {
+      return useMutation(getDeleteApiFilesMultipartUploadIdMutationOptions(options), queryClient);
+    }
+    
+/**
+ * Finalize a multipart upload by providing all part ETags
+ * @summary Complete a multipart upload
+ */
+export type postApiFilesMultipartUploadIdCompleteResponse200 = {
+  data: InternalHandlersFileResponse
+  status: 200
+}
+
+export type postApiFilesMultipartUploadIdCompleteResponse400 = {
+  data: InternalHandlersErrorResponse
+  status: 400
+}
+
+export type postApiFilesMultipartUploadIdCompleteResponse401 = {
+  data: InternalHandlersErrorResponse
+  status: 401
+}
+
+export type postApiFilesMultipartUploadIdCompleteResponse404 = {
+  data: InternalHandlersErrorResponse
+  status: 404
+}
+
+export type postApiFilesMultipartUploadIdCompleteResponse500 = {
+  data: InternalHandlersErrorResponse
+  status: 500
+}
+    
+export type postApiFilesMultipartUploadIdCompleteResponseSuccess = (postApiFilesMultipartUploadIdCompleteResponse200) & {
+  headers: Headers;
+};
+export type postApiFilesMultipartUploadIdCompleteResponseError = (postApiFilesMultipartUploadIdCompleteResponse400 | postApiFilesMultipartUploadIdCompleteResponse401 | postApiFilesMultipartUploadIdCompleteResponse404 | postApiFilesMultipartUploadIdCompleteResponse500) & {
+  headers: Headers;
+};
+
+export type postApiFilesMultipartUploadIdCompleteResponse = (postApiFilesMultipartUploadIdCompleteResponseSuccess | postApiFilesMultipartUploadIdCompleteResponseError)
+
+export const getPostApiFilesMultipartUploadIdCompleteUrl = (uploadId: string,) => {
+
+
+  
+
+  return `/api/files/multipart/${uploadId}/complete`
+}
+
+export const postApiFilesMultipartUploadIdComplete = async (uploadId: string,
+    internalHandlersCompleteMultipartUploadRequest: InternalHandlersCompleteMultipartUploadRequest, options?: RequestInit): Promise<postApiFilesMultipartUploadIdCompleteResponse> => {
+  
+  return customFetch<postApiFilesMultipartUploadIdCompleteResponse>(getPostApiFilesMultipartUploadIdCompleteUrl(uploadId),
+  {      
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      internalHandlersCompleteMultipartUploadRequest,)
+  }
+);}
+
+
+
+
+export const getPostApiFilesMultipartUploadIdCompleteMutationOptions = <TError = InternalHandlersErrorResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiFilesMultipartUploadIdComplete>>, TError,{uploadId: string;data: InternalHandlersCompleteMultipartUploadRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof postApiFilesMultipartUploadIdComplete>>, TError,{uploadId: string;data: InternalHandlersCompleteMultipartUploadRequest}, TContext> => {
+
+const mutationKey = ['postApiFilesMultipartUploadIdComplete'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postApiFilesMultipartUploadIdComplete>>, {uploadId: string;data: InternalHandlersCompleteMultipartUploadRequest}> = (props) => {
+          const {uploadId,data} = props ?? {};
+
+          return  postApiFilesMultipartUploadIdComplete(uploadId,data,requestOptions)
+        }
+
+
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostApiFilesMultipartUploadIdCompleteMutationResult = NonNullable<Awaited<ReturnType<typeof postApiFilesMultipartUploadIdComplete>>>
+    export type PostApiFilesMultipartUploadIdCompleteMutationBody = InternalHandlersCompleteMultipartUploadRequest
+    export type PostApiFilesMultipartUploadIdCompleteMutationError = InternalHandlersErrorResponse
+
+    /**
+ * @summary Complete a multipart upload
+ */
+export const usePostApiFilesMultipartUploadIdComplete = <TError = InternalHandlersErrorResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiFilesMultipartUploadIdComplete>>, TError,{uploadId: string;data: InternalHandlersCompleteMultipartUploadRequest}, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postApiFilesMultipartUploadIdComplete>>,
+        TError,
+        {uploadId: string;data: InternalHandlersCompleteMultipartUploadRequest},
+        TContext
+      > => {
+      return useMutation(getPostApiFilesMultipartUploadIdCompleteMutationOptions(options), queryClient);
+    }
+    
+/**
+ * Upload a single chunk of a file as part of a multipart upload
+ * @summary Upload a part of a multipart upload
+ */
+export type postApiFilesMultipartUploadIdPartPartNumberResponse200 = {
+  data: InternalHandlersUploadPartResponse
+  status: 200
+}
+
+export type postApiFilesMultipartUploadIdPartPartNumberResponse400 = {
+  data: InternalHandlersErrorResponse
+  status: 400
+}
+
+export type postApiFilesMultipartUploadIdPartPartNumberResponse401 = {
+  data: InternalHandlersErrorResponse
+  status: 401
+}
+
+export type postApiFilesMultipartUploadIdPartPartNumberResponse500 = {
+  data: InternalHandlersErrorResponse
+  status: 500
+}
+    
+export type postApiFilesMultipartUploadIdPartPartNumberResponseSuccess = (postApiFilesMultipartUploadIdPartPartNumberResponse200) & {
+  headers: Headers;
+};
+export type postApiFilesMultipartUploadIdPartPartNumberResponseError = (postApiFilesMultipartUploadIdPartPartNumberResponse400 | postApiFilesMultipartUploadIdPartPartNumberResponse401 | postApiFilesMultipartUploadIdPartPartNumberResponse500) & {
+  headers: Headers;
+};
+
+export type postApiFilesMultipartUploadIdPartPartNumberResponse = (postApiFilesMultipartUploadIdPartPartNumberResponseSuccess | postApiFilesMultipartUploadIdPartPartNumberResponseError)
+
+export const getPostApiFilesMultipartUploadIdPartPartNumberUrl = (uploadId: string,
+    partNumber: number,) => {
+
+
+  
+
+  return `/api/files/multipart/${uploadId}/part/${partNumber}`
+}
+
+export const postApiFilesMultipartUploadIdPartPartNumber = async (uploadId: string,
+    partNumber: number,
+    postApiFilesMultipartUploadIdPartPartNumberBody: PostApiFilesMultipartUploadIdPartPartNumberBody, options?: RequestInit): Promise<postApiFilesMultipartUploadIdPartPartNumberResponse> => {
+    const formData = new FormData();
+formData.append(`chunk`, postApiFilesMultipartUploadIdPartPartNumberBody.chunk);
+
+  return customFetch<postApiFilesMultipartUploadIdPartPartNumberResponse>(getPostApiFilesMultipartUploadIdPartPartNumberUrl(uploadId,partNumber),
+  {      
+    ...options,
+    method: 'POST'
+    ,
+    body: 
+      formData,
+  }
+);}
+
+
+
+
+export const getPostApiFilesMultipartUploadIdPartPartNumberMutationOptions = <TError = InternalHandlersErrorResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiFilesMultipartUploadIdPartPartNumber>>, TError,{uploadId: string;partNumber: number;data: PostApiFilesMultipartUploadIdPartPartNumberBody}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof postApiFilesMultipartUploadIdPartPartNumber>>, TError,{uploadId: string;partNumber: number;data: PostApiFilesMultipartUploadIdPartPartNumberBody}, TContext> => {
+
+const mutationKey = ['postApiFilesMultipartUploadIdPartPartNumber'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postApiFilesMultipartUploadIdPartPartNumber>>, {uploadId: string;partNumber: number;data: PostApiFilesMultipartUploadIdPartPartNumberBody}> = (props) => {
+          const {uploadId,partNumber,data} = props ?? {};
+
+          return  postApiFilesMultipartUploadIdPartPartNumber(uploadId,partNumber,data,requestOptions)
+        }
+
+
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PostApiFilesMultipartUploadIdPartPartNumberMutationResult = NonNullable<Awaited<ReturnType<typeof postApiFilesMultipartUploadIdPartPartNumber>>>
+    export type PostApiFilesMultipartUploadIdPartPartNumberMutationBody = PostApiFilesMultipartUploadIdPartPartNumberBody
+    export type PostApiFilesMultipartUploadIdPartPartNumberMutationError = InternalHandlersErrorResponse
+
+    /**
+ * @summary Upload a part of a multipart upload
+ */
+export const usePostApiFilesMultipartUploadIdPartPartNumber = <TError = InternalHandlersErrorResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiFilesMultipartUploadIdPartPartNumber>>, TError,{uploadId: string;partNumber: number;data: PostApiFilesMultipartUploadIdPartPartNumberBody}, TContext>, request?: SecondParameter<typeof customFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof postApiFilesMultipartUploadIdPartPartNumber>>,
+        TError,
+        {uploadId: string;partNumber: number;data: PostApiFilesMultipartUploadIdPartPartNumberBody},
+        TContext
+      > => {
+      return useMutation(getPostApiFilesMultipartUploadIdPartPartNumberMutationOptions(options), queryClient);
     }
     
 /**

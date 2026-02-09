@@ -6,7 +6,9 @@ def test_serve_wires_grpc_and_telemetry_without_running_real_server():
 
     import file_service.__main__ as main
 
-    with patch.object(main, "init_telemetry") as init_telemetry, patch.object(
+    with patch.object(main, "init_upload_session_indexes"), patch.object(
+        main, "init_telemetry"
+    ) as init_telemetry, patch.object(
         main.grpc, "server", return_value=server
     ) as grpc_server, patch.object(
         main.futures, "ThreadPoolExecutor"

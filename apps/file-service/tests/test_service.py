@@ -369,6 +369,7 @@ class TestBusinessRules:
             "Maximum file limit reached (20 files per user)"
         )
 
+    @pytest.mark.integration
     @patch('file_service.service.files_collection')
     def test_upload_file_exceeds_max_file_size(self, mock_collection):
         mock_collection.count_documents.return_value = 5
