@@ -274,6 +274,9 @@ class FileService(file_pb2_grpc.FileServiceServicer):
         content_type = request.content_type or "application/octet-stream"
         total_size = request.total_size
 
+        if total_size <= 0:
+            context.abort(grpc.StatusCode.INVALID_ARGUMENT, "total_size must be greater than 0")
+
         MAX_FILE_SIZE = 2 * 1024 * 1024 * 1024
         if total_size > MAX_FILE_SIZE:
             context.abort(grpc.StatusCode.INVALID_ARGUMENT, "File size exceeds maximum allowed size of 2GB")
@@ -328,6 +331,13 @@ class FileService(file_pb2_grpc.FileServiceServicer):
         upload_id = request.upload_id
         part_number = request.part_number
         chunk = request.chunk
+
+        if part_number < 1:
+            context.abort(grpc.StatusCode.INVALID_ARGUMENT, "part_number must be >= 1")
+
+        CHUNK_SIZE = 10 * 1024 * 1024
+        if len(chunk) > CHUNK_SIZE:
+            context.abort(grpc.StatusCode.INVALID_ARGUMENT, "Chunk size exceeds maximum allowed size of 10MB")
 
         session = upload_sessions_collection.find_one({
             "upload_id": upload_id,

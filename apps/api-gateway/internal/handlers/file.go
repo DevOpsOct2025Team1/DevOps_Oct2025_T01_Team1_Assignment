@@ -385,6 +385,11 @@ func (h *FileHandler) InitiateMultipartUpload(c *gin.Context) {
 		return
 	}
 
+	if req.TotalSize <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "total_size must be greater than 0"})
+		return
+	}
+
 	const maxFileSize = 2 * 1024 * 1024 * 1024 // 2GB
 	if req.TotalSize > maxFileSize {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "file size exceeds maximum allowed size of 2GB"})
@@ -436,6 +441,10 @@ func (h *FileHandler) UploadPart(c *gin.Context) {
 	partNumberParsed, err := strconv.ParseInt(partNumberStr, 10, 32)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid part number"})
+		return
+	}
+	if partNumberParsed <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "part number must be >= 1"})
 		return
 	}
 	partNumber := int32(partNumberParsed)
