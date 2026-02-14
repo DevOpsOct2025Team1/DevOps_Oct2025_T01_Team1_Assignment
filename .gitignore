@@ -1,5 +1,8 @@
 .env
-
+.package-lock.json
+node_modules/
+.bun
+bun.lockb
 __pycache__/
 *.py[cod]
 *.pyo
@@ -7,3 +10,6 @@ __pycache__/
 .nx/installation
 .nx/cache
 .nx/workspace-data
+
+.secrets
+act-event.json

@@ -112,6 +112,39 @@ jobs:
           echo "- ${{ steps.meta.outputs.image-name }}:${{ steps.parse.outputs.version }}"
           echo "- ${{ steps.meta.outputs.image-name }}:staging"
 
+  notify-build-break-staging:
+    needs: build-staging
+    if: failure() && endsWith(github.ref_name, '-staging')
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - name: Send build break email (staging release)
+        uses: dawidd6/action-send-mail@v9
+        with:
+          server_address: ${{ secrets.SMTP_HOST }}
+          server_port: ${{ secrets.SMTP_PORT }}
+          username: ${{ secrets.SMTP_USER }}
+          password: ${{ secrets.SMTP_PASS }}
+          subject: "[build] Release build failed (staging)"
+          to: ${{ secrets.DEV_EMAIL_TO }}
+          from: ${{ secrets.NOTIFY_EMAIL_FROM }}
+          body: |
+            Hello Developers,
+
+            You are receiving this email because the staging release build failed.
+
+            Status: failure
+            Service: ${{ needs.build-staging.outputs.service || 'N/A' }}
+            Version: ${{ needs.build-staging.outputs.version || 'N/A' }}
+            Tag: ${{ github.ref_name }}
+            Commit SHA: ${{ github.sha }}
+            Commit Message: ${{ github.event.head_commit.message || 'N/A' }}
+            Triggered By: ${{ github.actor }}
+            Event: ${{ github.event_name }}
+            Repository: ${{ github.repository }}
+            Workflow: ${{ github.workflow }}
+            Run URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
   deploy-staging:
     needs: build-staging
     uses: ./.github/workflows/deploy.yml
@@ -125,41 +158,6 @@ jobs:
       ref_name: ${{ github.ref_name }}
     secrets: inherit
 
-  notify-release-staging:
-    needs: build-staging
-    if: endsWith(github.ref_name, '-staging')
-    runs-on: ubuntu-latest
-    environment: staging
-    steps:
-      - name: Send release email (staging)
-        uses: dawidd6/action-send-mail@v9
-        with:
-          server_address: ${{ secrets.SMTP_HOST }}
-          server_port: ${{ secrets.SMTP_PORT }}
-          username: ${{ secrets.SMTP_USER }}
-          password: ${{ secrets.SMTP_PASS }}
-          subject: "[release][staging] ${{ needs.build-staging.result }}"
-          to: ${{ secrets.NOTIFY_EMAIL_TO }}
-          from: ${{ secrets.NOTIFY_EMAIL_FROM }}
-          body: |
-            Hello Advisor,
-
-            This email is to inform you that a staging release build
-            has completed for review and verification.
-
-            Result: ${{ needs.build-staging.result }}
-            Service: ${{ needs.build-staging.outputs.service }}
-            Version: ${{ needs.build-staging.outputs.version }}
-            Commit SHA: ${{ github.sha }}
-            Commit Message: ${{ github.event.head_commit.message || 'N/A' }}
-            Author: ${{ github.actor }}
-            Tag: ${{ github.ref_name }}
-            Repository: ${{ github.repository }}
-            Workflow: ${{ github.workflow }}
-            Run ID: ${{ github.run_id }}
-            Run URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
-
-            If the result is failure, please review the run URL for logs.
 
   build-prod:
     if: "!endsWith(github.ref_name, '-staging')"
@@ -288,6 +286,39 @@ jobs:
           echo "- ${{ steps.meta.outputs.image-name }}:latest"
           echo "GitHub Release created: ${{ steps.parse.outputs.service }} v${{ steps.parse.outputs.version }}"
 
+  notify-build-break-production:
+    needs: build-prod
+    if: failure() && !endsWith(github.ref_name, '-staging')
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Send build break email (production release)
+        uses: dawidd6/action-send-mail@v9
+        with:
+          server_address: ${{ secrets.SMTP_HOST }}
+          server_port: ${{ secrets.SMTP_PORT }}
+          username: ${{ secrets.SMTP_USER }}
+          password: ${{ secrets.SMTP_PASS }}
+          subject: "[build] Release build failed (production)"
+          to: ${{ secrets.DEV_EMAIL_TO }}
+          from: ${{ secrets.NOTIFY_EMAIL_FROM }}
+          body: |
+            Hello Developers,
+
+            You are receiving this email because the production release build failed.
+
+            Status: failure
+            Service: ${{ needs.build-prod.outputs.service || 'N/A' }}
+            Version: ${{ needs.build-prod.outputs.version || 'N/A' }}
+            Tag: ${{ github.ref_name }}
+            Commit SHA: ${{ github.sha }}
+            Commit Message: ${{ github.event.head_commit.message || 'N/A' }}
+            Triggered By: ${{ github.actor }}
+            Event: ${{ github.event_name }}
+            Repository: ${{ github.repository }}
+            Workflow: ${{ github.workflow }}
+            Run URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
   deploy-production:
     needs: build-prod
     uses: ./.github/workflows/deploy.yml
@@ -301,38 +332,3 @@ jobs:
       ref_name: ${{ github.ref_name }}
     secrets: inherit
 
-  notify-release-production:
-    needs: build-prod
-    if: "!endsWith(github.ref_name, '-staging')"
-    runs-on: ubuntu-latest
-    environment: production
-    steps:
-      - name: Send release email (production)
-        uses: dawidd6/action-send-mail@v9
-        with:
-          server_address: ${{ secrets.SMTP_HOST }}
-          server_port: ${{ secrets.SMTP_PORT }}
-          username: ${{ secrets.SMTP_USER }}
-          password: ${{ secrets.SMTP_PASS }}
-          subject: "[release][production] ${{ needs.build-prod.result }}"
-          to: ${{ secrets.NOTIFY_EMAIL_TO }}
-          from: ${{ secrets.NOTIFY_EMAIL_FROM }}
-          body: |
-            Hello Advisor,
-
-            This email is to inform you that a production release build
-            has completed.
-
-            Result: ${{ needs.build-prod.result }}
-            Service: ${{ needs.build-prod.outputs.service }}
-            Version: ${{ needs.build-prod.outputs.version }}
-            Commit SHA: ${{ github.sha }}
-            Commit Message: ${{ github.event.head_commit.message || 'N/A' }}
-            Author: ${{ github.actor }}
-            Tag: ${{ github.ref_name }}
-            Repository: ${{ github.repository }}
-            Workflow: ${{ github.workflow }}
-            Run ID: ${{ github.run_id }}
-            Run URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
-
-            If the result is failure, please review the run URL for logs.

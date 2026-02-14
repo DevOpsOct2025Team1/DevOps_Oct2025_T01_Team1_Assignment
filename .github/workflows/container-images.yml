@@ -117,3 +117,33 @@ jobs:
       author: ${{ github.event.workflow_run.actor.login }}
       ref_name: ${{ github.event.workflow_run.head_branch }}
     secrets: inherit
+
+  notify-build-break:
+    needs: build-dev
+    if: failure()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send build break email (container images)
+        uses: dawidd6/action-send-mail@v9
+        with:
+          server_address: ${{ secrets.SMTP_HOST }}
+          server_port: ${{ secrets.SMTP_PORT }}
+          username: ${{ secrets.SMTP_USER }}
+          password: ${{ secrets.SMTP_PASS }}
+          subject: "[build] Container images failed"
+          to: ${{ secrets.DEV_EMAIL_TO }}
+          from: ${{ secrets.NOTIFY_EMAIL_FROM }}
+          body: |
+            Hello Developers,
+
+            You are receiving this email because the container image build failed.
+
+            Status: failure
+            Repository: ${{ github.repository }}
+            Workflow: ${{ github.workflow }}
+            Ref: ${{ github.event.workflow_run.head_branch }}
+            Commit SHA: ${{ github.event.workflow_run.head_sha }}
+            Commit Message: ${{ github.event.workflow_run.head_commit.message || 'N/A' }}
+            Triggered By: ${{ github.event.workflow_run.actor.login }}
+            Event: ${{ github.event_name }}
+            Run URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}

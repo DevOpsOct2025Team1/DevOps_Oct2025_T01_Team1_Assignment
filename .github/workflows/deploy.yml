@@ -65,38 +65,74 @@ jobs:
         run: |
           ssh deploy-target "set -e && cd ~/apps/${{ inputs.environment }} && docker compose -f compose.${{ inputs.environment }}.yml pull && docker compose -f compose.${{ inputs.environment }}.yml up -d"
 
-  notify:
+  notify-success:
     needs: deploy
-    if: always()
+    if: success() && (inputs.environment == 'staging' || inputs.environment == 'production')
     runs-on: ubuntu-latest
     steps:
-      - name: Send deploy email
+      - name: Send deploy success email to stakeholders
         uses: dawidd6/action-send-mail@v9
         with:
-          server_address: ${{ secrets.SMTP_HOST }} # email service SMTP server (e.g., smtp.gmail.com)
-          server_port: ${{ secrets.SMTP_PORT }} # email service SMTP port (e.g., 587)
-          username: ${{ secrets.SMTP_USER }} # email service username (e.g., your email address)
-          password: ${{ secrets.SMTP_PASS }} # email service password put in github secrets (e.g., app password or email password)
-          subject: "[${{ inputs.environment }}] Deploy ${{ needs.deploy.result }}"
-          to: ${{ secrets.NOTIFY_EMAIL_TO }} # recipient email address put in github secrets
-          from: ${{ secrets.NOTIFY_EMAIL_FROM }} # sender email address put in github secrets
+          server_address: ${{ secrets.SMTP_HOST }}
+          server_port: ${{ secrets.SMTP_PORT }}
+          username: ${{ secrets.SMTP_USER }}
+          password: ${{ secrets.SMTP_PASS }}
+          subject: "[${{ inputs.environment }}] Deploy success"
+          to: ${{ secrets.NOTIFY_EMAIL_TO }}
+          from: ${{ secrets.NOTIFY_EMAIL_FROM }}
           body: |
-            Hello Advisor,
+            Hello Stakeholders,
 
-            This email is to inform you that a deployment to the
-            ${{ inputs.environment }} environment has completed.
+            You are receiving this email because a deployment to the
+            ${{ inputs.environment }} environment has completed successfully.
 
-            Result: ${{ needs.deploy.result }}
+            Status: success
             Environment: ${{ inputs.environment }}
             Service: ${{ inputs.service || 'N/A' }}
             Version: ${{ inputs.version || 'N/A' }}
             Commit SHA: ${{ inputs.commit_sha || github.sha }}
             Commit Message: ${{ inputs.commit_message || github.event.head_commit.message || 'N/A' }}
-            Author: ${{ inputs.author || github.triggering_actor || github.actor }}
+            Triggered By: ${{ inputs.author || github.triggering_actor || github.actor }}
             Ref: ${{ inputs.ref_name || github.ref_name }}
+            Event: ${{ github.event_name }}
             Repository: ${{ github.repository }}
             Workflow: ${{ github.workflow }}
             Run ID: ${{ github.run_id }}
             Run URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
-            If the result is failure, please review the run URL for logs.
+  notify-failure:
+    needs: deploy
+    if: failure()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send deploy failure email to dev team
+        uses: dawidd6/action-send-mail@v9
+        with:
+          server_address: ${{ secrets.SMTP_HOST }}
+          server_port: ${{ secrets.SMTP_PORT }}
+          username: ${{ secrets.SMTP_USER }}
+          password: ${{ secrets.SMTP_PASS }}
+          subject: "[${{ inputs.environment }}] Deploy failure"
+          to: ${{ secrets.DEV_EMAIL_TO }}
+          from: ${{ secrets.NOTIFY_EMAIL_FROM }}
+          body: |
+            Hello Dev Team,
+
+            You are receiving this email because a deployment to the
+            ${{ inputs.environment }} environment has failed.
+
+            Status: failure
+            Environment: ${{ inputs.environment }}
+            Service: ${{ inputs.service || 'N/A' }}
+            Version: ${{ inputs.version || 'N/A' }}
+            Commit SHA: ${{ inputs.commit_sha || github.sha }}
+            Commit Message: ${{ inputs.commit_message || github.event.head_commit.message || 'N/A' }}
+            Triggered By: ${{ inputs.author || github.triggering_actor || github.actor }}
+            Ref: ${{ inputs.ref_name || github.ref_name }}
+            Event: ${{ github.event_name }}
+            Repository: ${{ github.repository }}
+            Workflow: ${{ github.workflow }}
+            Run ID: ${{ github.run_id }}
+            Run URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+            Please review the run URL for logs and fix the issue.
