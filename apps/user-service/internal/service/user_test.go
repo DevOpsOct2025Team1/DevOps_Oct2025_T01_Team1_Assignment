@@ -429,7 +429,10 @@ func TestGetUserByUsername_InternalError(t *testing.T) {
 }
 
 func TestVerifyPassword_Valid(t *testing.T) {
-	hashedPw, _ := bcrypt.GenerateFromPassword([]byte("correct"), bcrypt.MinCost)
+	hashedPw, err := bcrypt.GenerateFromPassword([]byte("correct"), bcrypt.MinCost)
+	if err != nil {
+		t.Fatalf("failed to hash password: %v", err)
+	}
 	mockStore := &mockUserStore{
 		getUserByUsernameFunc: func(ctx context.Context, username string) (*store.User, error) {
 			return &store.User{Id: "u1", Username: username, HashedPassword: string(hashedPw), Role: "user"}, nil
@@ -448,7 +451,10 @@ func TestVerifyPassword_Valid(t *testing.T) {
 }
 
 func TestVerifyPassword_Invalid(t *testing.T) {
-	hashedPw, _ := bcrypt.GenerateFromPassword([]byte("correct"), bcrypt.MinCost)
+	hashedPw, err := bcrypt.GenerateFromPassword([]byte("correct"), bcrypt.MinCost)
+	if err != nil {
+		t.Fatalf("failed to hash password: %v", err)
+	}
 	mockStore := &mockUserStore{
 		getUserByUsernameFunc: func(ctx context.Context, username string) (*store.User, error) {
 			return &store.User{Id: "u1", Username: username, HashedPassword: string(hashedPw), Role: "user"}, nil

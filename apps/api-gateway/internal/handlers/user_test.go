@@ -78,7 +78,7 @@ func makeUserRequest(t *testing.T, router *gin.Engine, method, path string, body
 	return w
 }
 
-func TestDeleteAccount_Success(t *testing.T) {
+func TestDeleteUser_Success(t *testing.T) {
 	currentUser := &userv1.User{
 		Id:       "admin",
 		Username: "admin",
@@ -123,7 +123,7 @@ func TestDeleteAccount_Success(t *testing.T) {
 	}
 }
 
-func TestDeleteAccount_MissingId(t *testing.T) {
+func TestDeleteUser_MissingId(t *testing.T) {
 	currentUser := &userv1.User{
 		Id:       "admin",
 		Username: "admin",
@@ -141,7 +141,7 @@ func TestDeleteAccount_MissingId(t *testing.T) {
 	}
 }
 
-func TestDeleteAccount_EmptyId(t *testing.T) {
+func TestDeleteUser_EmptyId(t *testing.T) {
 	currentUser := &userv1.User{
 		Id:       "admin",
 		Username: "admin",
@@ -161,7 +161,7 @@ func TestDeleteAccount_EmptyId(t *testing.T) {
 	}
 }
 
-func TestDeleteAccount_InvalidJSON(t *testing.T) {
+func TestDeleteUser_InvalidJSON(t *testing.T) {
 	currentUser := &userv1.User{
 		Id:       "admin",
 		Username: "admin",
@@ -183,7 +183,7 @@ func TestDeleteAccount_InvalidJSON(t *testing.T) {
 	}
 }
 
-func TestDeleteAccount_UserNotFound(t *testing.T) {
+func TestDeleteUser_UserNotFound(t *testing.T) {
 	currentUser := &userv1.User{
 		Id:       "admin",
 		Username: "admin",
@@ -208,7 +208,7 @@ func TestDeleteAccount_UserNotFound(t *testing.T) {
 	}
 }
 
-func TestDeleteAccount_SelfDeletion(t *testing.T) {
+func TestDeleteUser_SelfDeletion(t *testing.T) {
 	currentUser := &userv1.User{
 		Id:       "admin",
 		Username: "admin",
@@ -237,7 +237,7 @@ func TestDeleteAccount_SelfDeletion(t *testing.T) {
 	}
 }
 
-func TestDeleteAccount_AdminDeletion(t *testing.T) {
+func TestDeleteUser_AdminDeletion(t *testing.T) {
 	currentUser := &userv1.User{
 		Id:       "admin",
 		Username: "admin",
@@ -277,7 +277,7 @@ func TestDeleteAccount_AdminDeletion(t *testing.T) {
 	}
 }
 
-func TestDeleteAccount_NoUserInContext(t *testing.T) {
+func TestDeleteUser_NoUserInContext(t *testing.T) {
 	mock := &mockUserClient{}
 	handler := NewUserHandler(mock)
 	router := setupUserTestRouter(handler, nil)
@@ -460,7 +460,7 @@ func TestListUsers_InvalidRole(t *testing.T) {
 	}
 }
 
-func TestDeleteAccount_GetUserInvalidArgument(t *testing.T) {
+func TestDeleteUser_GetUserInvalidArgument(t *testing.T) {
 	currentUser := &userv1.User{Id: "admin", Username: "admin", Role: userv1.Role_ROLE_ADMIN}
 	mock := &mockUserClient{
 		getUserFunc: func(ctx context.Context, req *userv1.GetUserRequest) (*userv1.GetUserResponse, error) {
@@ -476,7 +476,7 @@ func TestDeleteAccount_GetUserInvalidArgument(t *testing.T) {
 	}
 }
 
-func TestDeleteAccount_DeleteAccountNotFound(t *testing.T) {
+func TestDeleteUser_DeleteNotFound(t *testing.T) {
 	currentUser := &userv1.User{Id: "admin", Username: "admin", Role: userv1.Role_ROLE_ADMIN}
 	mock := &mockUserClient{
 		getUserFunc: func(ctx context.Context, req *userv1.GetUserRequest) (*userv1.GetUserResponse, error) {

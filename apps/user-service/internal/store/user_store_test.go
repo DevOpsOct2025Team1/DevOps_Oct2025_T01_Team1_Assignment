@@ -6,7 +6,7 @@ import (
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
-func TestGetUserByID_InvalidHex_Unit(t *testing.T) {
+func TestObjectIDFromHex_InvalidHex(t *testing.T) {
 	invalidHexID := "not-a-valid-hex-id"
 	_, err := bson.ObjectIDFromHex(invalidHexID)
 	if err == nil {
@@ -14,7 +14,7 @@ func TestGetUserByID_InvalidHex_Unit(t *testing.T) {
 	}
 }
 
-func TestDeleteUserByID_InvalidHex_Unit(t *testing.T) {
+func TestObjectIDFromHex_InvalidHex_Short(t *testing.T) {
 	invalidHexID := "xyz123"
 	_, err := bson.ObjectIDFromHex(invalidHexID)
 	if err == nil {
@@ -112,10 +112,10 @@ func TestUserStructure(t *testing.T) {
 
 func TestErrorVariables(t *testing.T) {
 	if ErrUserNotFound == nil {
-		t.Error("ErrUserNotFound should be defined")
+		t.Fatal("ErrUserNotFound should be defined")
 	}
 	if ErrUserExists == nil {
-		t.Error("ErrUserExists should be defined")
+		t.Fatal("ErrUserExists should be defined")
 	}
 	if ErrUserNotFound.Error() != "user not found" {
 		t.Errorf("expected 'user not found', got %s", ErrUserNotFound.Error())

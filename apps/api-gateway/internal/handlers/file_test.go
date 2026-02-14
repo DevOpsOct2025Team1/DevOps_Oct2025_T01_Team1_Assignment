@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"io"
 	"mime/multipart"
 	"net/http"
@@ -385,7 +386,7 @@ func TestMapGRPCError(t *testing.T) {
 		{"Unavailable", status.Error(codes.Unavailable, "down"), http.StatusServiceUnavailable},
 		{"Internal", status.Error(codes.Internal, "err"), http.StatusInternalServerError},
 		{"Unimplemented", status.Error(codes.Unimplemented, "not impl"), http.StatusInternalServerError},
-		{"NonGRPC", nil, http.StatusInternalServerError},
+		{"NonGRPC", errors.New("non-grpc error"), http.StatusInternalServerError},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
