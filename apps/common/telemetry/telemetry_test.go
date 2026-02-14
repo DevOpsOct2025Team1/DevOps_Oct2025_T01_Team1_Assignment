@@ -32,6 +32,36 @@ func TestInitTelemetrySetsProviderAndPropagator(t *testing.T) {
 	}
 }
 
+func TestInitTelemetry_EmptyServiceName(t *testing.T) {
+	_, err := InitTelemetry(context.Background(), Config{
+		Token:   "tok",
+		Dataset: "ds",
+	})
+	if err == nil || err.Error() != "telemetry: ServiceName is required" {
+		t.Fatalf("expected ServiceName error, got %v", err)
+	}
+}
+
+func TestInitTelemetry_EmptyToken(t *testing.T) {
+	_, err := InitTelemetry(context.Background(), Config{
+		ServiceName: "svc",
+		Dataset:     "ds",
+	})
+	if err == nil || err.Error() != "telemetry: Token is required" {
+		t.Fatalf("expected Token error, got %v", err)
+	}
+}
+
+func TestInitTelemetry_EmptyDataset(t *testing.T) {
+	_, err := InitTelemetry(context.Background(), Config{
+		ServiceName: "svc",
+		Token:       "tok",
+	})
+	if err == nil || err.Error() != "telemetry: Dataset is required" {
+		t.Fatalf("expected Dataset error, got %v", err)
+	}
+}
+
 func containsAll(fields []string, want ...string) bool {
 	set := make(map[string]struct{}, len(fields))
 	for _, field := range fields {
