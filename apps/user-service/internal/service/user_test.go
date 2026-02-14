@@ -7,6 +7,7 @@ import (
 
 	userv1 "github.com/provsalt/DOP_P01_Team1/common/user/v1"
 	"github.com/provsalt/DOP_P01_Team1/user-service/internal/store"
+	"golang.org/x/crypto/bcrypt"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -82,22 +83,38 @@ func TestRoleConversions(t *testing.T) {
 }
 
 type mockUserStore struct {
-	listUsersFunc func(ctx context.Context, roleFilter string, usernameFilter string) ([]*store.User, error)
+	createUserFunc        func(ctx context.Context, user *store.User) (string, error)
+	getUserByIDFunc       func(ctx context.Context, id string) (*store.User, error)
+	getUserByUsernameFunc func(ctx context.Context, username string) (*store.User, error)
+	deleteUserByIDFunc    func(ctx context.Context, id string) error
+	listUsersFunc         func(ctx context.Context, roleFilter string, usernameFilter string) ([]*store.User, error)
 }
 
 func (m *mockUserStore) CreateUser(ctx context.Context, user *store.User) (string, error) {
+	if m.createUserFunc != nil {
+		return m.createUserFunc(ctx, user)
+	}
 	return "", nil
 }
 
 func (m *mockUserStore) GetUserByID(ctx context.Context, id string) (*store.User, error) {
+	if m.getUserByIDFunc != nil {
+		return m.getUserByIDFunc(ctx, id)
+	}
 	return nil, nil
 }
 
 func (m *mockUserStore) GetUserByUsername(ctx context.Context, username string) (*store.User, error) {
+	if m.getUserByUsernameFunc != nil {
+		return m.getUserByUsernameFunc(ctx, username)
+	}
 	return nil, nil
 }
 
 func (m *mockUserStore) DeleteUserByID(ctx context.Context, id string) error {
+	if m.deleteUserByIDFunc != nil {
+		return m.deleteUserByIDFunc(ctx, id)
+	}
 	return nil
 }
 
@@ -247,5 +264,273 @@ func TestListUsers_StoreError(t *testing.T) {
 
 	if status.Code(err) != codes.Internal {
 		t.Fatalf("expected Internal error, got %v", status.Code(err))
+	}
+}
+
+func TestCreateUser_Success(t *testing.T) {
+	mockStore := &mockUserStore{
+		createUserFunc: func(ctx context.Context, user *store.User) (string, error) {
+			return "abc123", nil
+		},
+	}
+	srv := NewUserServiceServer(mockStore)
+	resp, err := srv.CreateUser(context.Background(), &userv1.CreateUserRequest{
+		Username:       "newuser",
+		HashedPassword: "hashed",
+		Role:           userv1.Role_ROLE_USER,
+	})
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+	if resp.User.Id != "abc123" {
+		t.Errorf("expected id abc123, got %s", resp.User.Id)
+	}
+}
+
+func TestCreateUser_AlreadyExists(t *testing.T) {
+	mockStore := &mockUserStore{
+		createUserFunc: func(ctx context.Context, user *store.User) (string, error) {
+			return "", store.ErrUserExists
+		},
+	}
+	srv := NewUserServiceServer(mockStore)
+	_, err := srv.CreateUser(context.Background(), &userv1.CreateUserRequest{
+		Username:       "existing",
+		HashedPassword: "hashed",
+	})
+	if status.Code(err) != codes.AlreadyExists {
+		t.Fatalf("expected AlreadyExists, got %v", status.Code(err))
+	}
+}
+
+func TestCreateUser_InternalError(t *testing.T) {
+	mockStore := &mockUserStore{
+		createUserFunc: func(ctx context.Context, user *store.User) (string, error) {
+			return "", errors.New("db down")
+		},
+	}
+	srv := NewUserServiceServer(mockStore)
+	_, err := srv.CreateUser(context.Background(), &userv1.CreateUserRequest{
+		Username:       "user",
+		HashedPassword: "hashed",
+	})
+	if status.Code(err) != codes.Internal {
+		t.Fatalf("expected Internal, got %v", status.Code(err))
+	}
+}
+
+func TestCreateUser_DefaultRole(t *testing.T) {
+	var capturedRole string
+	mockStore := &mockUserStore{
+		createUserFunc: func(ctx context.Context, user *store.User) (string, error) {
+			capturedRole = user.Role
+			return "id1", nil
+		},
+	}
+	srv := NewUserServiceServer(mockStore)
+	resp, err := srv.CreateUser(context.Background(), &userv1.CreateUserRequest{
+		Username:       "user",
+		HashedPassword: "hashed",
+		Role:           userv1.Role_ROLE_UNSPECIFIED,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if capturedRole != "user" {
+		t.Errorf("expected role 'user', got %q", capturedRole)
+	}
+	if resp.User.Role != userv1.Role_ROLE_USER {
+		t.Errorf("expected ROLE_USER in response, got %v", resp.User.Role)
+	}
+}
+
+func TestGetUser_Success(t *testing.T) {
+	mockStore := &mockUserStore{
+		getUserByIDFunc: func(ctx context.Context, id string) (*store.User, error) {
+			return &store.User{Id: id, Username: "found", Role: "admin"}, nil
+		},
+	}
+	srv := NewUserServiceServer(mockStore)
+	resp, err := srv.GetUser(context.Background(), &userv1.GetUserRequest{Id: "u1"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if resp.User.Username != "found" {
+		t.Errorf("expected 'found', got %q", resp.User.Username)
+	}
+}
+
+func TestGetUser_NotFound(t *testing.T) {
+	mockStore := &mockUserStore{
+		getUserByIDFunc: func(ctx context.Context, id string) (*store.User, error) {
+			return nil, store.ErrUserNotFound
+		},
+	}
+	srv := NewUserServiceServer(mockStore)
+	_, err := srv.GetUser(context.Background(), &userv1.GetUserRequest{Id: "missing"})
+	if status.Code(err) != codes.NotFound {
+		t.Fatalf("expected NotFound, got %v", status.Code(err))
+	}
+}
+
+func TestGetUser_InternalError(t *testing.T) {
+	mockStore := &mockUserStore{
+		getUserByIDFunc: func(ctx context.Context, id string) (*store.User, error) {
+			return nil, errors.New("db error")
+		},
+	}
+	srv := NewUserServiceServer(mockStore)
+	_, err := srv.GetUser(context.Background(), &userv1.GetUserRequest{Id: "u1"})
+	if status.Code(err) != codes.Internal {
+		t.Fatalf("expected Internal, got %v", status.Code(err))
+	}
+}
+
+func TestGetUserByUsername_Success(t *testing.T) {
+	mockStore := &mockUserStore{
+		getUserByUsernameFunc: func(ctx context.Context, username string) (*store.User, error) {
+			return &store.User{Id: "u1", Username: username, Role: "user"}, nil
+		},
+	}
+	srv := NewUserServiceServer(mockStore)
+	resp, err := srv.GetUserByUsername(context.Background(), &userv1.GetUserByUsernameRequest{Username: "alice"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if resp.User.Username != "alice" {
+		t.Errorf("expected alice, got %s", resp.User.Username)
+	}
+}
+
+func TestGetUserByUsername_NotFound(t *testing.T) {
+	mockStore := &mockUserStore{
+		getUserByUsernameFunc: func(ctx context.Context, username string) (*store.User, error) {
+			return nil, store.ErrUserNotFound
+		},
+	}
+	srv := NewUserServiceServer(mockStore)
+	_, err := srv.GetUserByUsername(context.Background(), &userv1.GetUserByUsernameRequest{Username: "nobody"})
+	if status.Code(err) != codes.NotFound {
+		t.Fatalf("expected NotFound, got %v", status.Code(err))
+	}
+}
+
+func TestGetUserByUsername_InternalError(t *testing.T) {
+	mockStore := &mockUserStore{
+		getUserByUsernameFunc: func(ctx context.Context, username string) (*store.User, error) {
+			return nil, errors.New("db error")
+		},
+	}
+	srv := NewUserServiceServer(mockStore)
+	_, err := srv.GetUserByUsername(context.Background(), &userv1.GetUserByUsernameRequest{Username: "alice"})
+	if status.Code(err) != codes.Internal {
+		t.Fatalf("expected Internal, got %v", status.Code(err))
+	}
+}
+
+func TestVerifyPassword_Valid(t *testing.T) {
+	hashedPw, _ := bcrypt.GenerateFromPassword([]byte("correct"), bcrypt.MinCost)
+	mockStore := &mockUserStore{
+		getUserByUsernameFunc: func(ctx context.Context, username string) (*store.User, error) {
+			return &store.User{Id: "u1", Username: username, HashedPassword: string(hashedPw), Role: "user"}, nil
+		},
+	}
+	srv := NewUserServiceServer(mockStore)
+	resp, err := srv.VerifyPassword(context.Background(), &userv1.VerifyPasswordRequest{
+		Username: "alice", Password: "correct",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !resp.Valid {
+		t.Fatal("expected valid=true")
+	}
+}
+
+func TestVerifyPassword_Invalid(t *testing.T) {
+	hashedPw, _ := bcrypt.GenerateFromPassword([]byte("correct"), bcrypt.MinCost)
+	mockStore := &mockUserStore{
+		getUserByUsernameFunc: func(ctx context.Context, username string) (*store.User, error) {
+			return &store.User{Id: "u1", Username: username, HashedPassword: string(hashedPw), Role: "user"}, nil
+		},
+	}
+	srv := NewUserServiceServer(mockStore)
+	resp, err := srv.VerifyPassword(context.Background(), &userv1.VerifyPasswordRequest{
+		Username: "alice", Password: "wrong",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if resp.Valid {
+		t.Fatal("expected valid=false")
+	}
+}
+
+func TestVerifyPassword_UserNotFound(t *testing.T) {
+	mockStore := &mockUserStore{
+		getUserByUsernameFunc: func(ctx context.Context, username string) (*store.User, error) {
+			return nil, store.ErrUserNotFound
+		},
+	}
+	srv := NewUserServiceServer(mockStore)
+	resp, err := srv.VerifyPassword(context.Background(), &userv1.VerifyPasswordRequest{
+		Username: "nobody", Password: "any",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if resp.Valid {
+		t.Fatal("expected valid=false")
+	}
+}
+
+func TestVerifyPassword_InternalError(t *testing.T) {
+	mockStore := &mockUserStore{
+		getUserByUsernameFunc: func(ctx context.Context, username string) (*store.User, error) {
+			return nil, errors.New("db error")
+		},
+	}
+	srv := NewUserServiceServer(mockStore)
+	_, err := srv.VerifyPassword(context.Background(), &userv1.VerifyPasswordRequest{
+		Username: "alice", Password: "any",
+	})
+	if status.Code(err) != codes.Internal {
+		t.Fatalf("expected Internal, got %v", status.Code(err))
+	}
+}
+
+func TestDeleteUser_Success(t *testing.T) {
+	mockStore := &mockUserStore{
+		deleteUserByIDFunc: func(ctx context.Context, id string) error { return nil },
+	}
+	srv := NewUserServiceServer(mockStore)
+	resp, err := srv.DeleteUser(context.Background(), &userv1.DeleteUserByIdRequest{Id: "u1"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !resp.Success {
+		t.Fatal("expected success=true")
+	}
+}
+
+func TestDeleteUser_NotFound(t *testing.T) {
+	mockStore := &mockUserStore{
+		deleteUserByIDFunc: func(ctx context.Context, id string) error { return store.ErrUserNotFound },
+	}
+	srv := NewUserServiceServer(mockStore)
+	_, err := srv.DeleteUser(context.Background(), &userv1.DeleteUserByIdRequest{Id: "missing"})
+	if status.Code(err) != codes.NotFound {
+		t.Fatalf("expected NotFound, got %v", status.Code(err))
+	}
+}
+
+func TestDeleteUser_InternalError(t *testing.T) {
+	mockStore := &mockUserStore{
+		deleteUserByIDFunc: func(ctx context.Context, id string) error { return errors.New("db error") },
+	}
+	srv := NewUserServiceServer(mockStore)
+	_, err := srv.DeleteUser(context.Background(), &userv1.DeleteUserByIdRequest{Id: "u1"})
+	if status.Code(err) != codes.Internal {
+		t.Fatalf("expected Internal, got %v", status.Code(err))
 	}
 }

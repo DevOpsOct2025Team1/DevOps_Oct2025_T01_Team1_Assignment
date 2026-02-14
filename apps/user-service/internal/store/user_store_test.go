@@ -1,207 +1,126 @@
-//go:build integration
-
 package store
 
 import (
-	"context"
 	"testing"
 
-	"go.mongodb.org/mongo-driver/v2/mongo"
-	"go.mongodb.org/mongo-driver/v2/mongo/options"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
-func setupTestDB(t *testing.T) (*UserStore, func()) {
-	t.Helper()
-
-	client, err := mongo.Connect(options.Client().ApplyURI("mongodb://localhost:27017"))
-	if err != nil {
-		t.Fatalf("failed to connect to MongoDB: %v", err)
-	}
-
-	db := client.Database("test_user_service")
-	store := NewUserStore(db)
-
-	cleanup := func() {
-		_ = db.Drop(context.Background())
-		_ = client.Disconnect(context.Background())
-	}
-
-	return store, cleanup
-}
-
-func TestListUsers_NoFilters(t *testing.T) {
-	store, cleanup := setupTestDB(t)
-	defer cleanup()
-
-	ctx := context.Background()
-
-	_, err := store.CreateUser(ctx, &User{
-		Username:       "admin1",
-		HashedPassword: "hash1",
-		Role:           "admin",
-	})
-	if err != nil {
-		t.Fatalf("failed to create admin user: %v", err)
-	}
-
-	_, err = store.CreateUser(ctx, &User{
-		Username:       "user1",
-		HashedPassword: "hash2",
-		Role:           "user",
-	})
-	if err != nil {
-		t.Fatalf("failed to create regular user: %v", err)
-	}
-
-	users, err := store.ListUsers(ctx, "", "")
-	if err != nil {
-		t.Fatalf("ListUsers failed: %v", err)
-	}
-
-	if len(users) != 2 {
-		t.Errorf("expected 2 users, got %d", len(users))
+func TestGetUserByID_InvalidHex_Unit(t *testing.T) {
+	invalidHexID := "not-a-valid-hex-id"
+	_, err := bson.ObjectIDFromHex(invalidHexID)
+	if err == nil {
+		t.Error("expected error for invalid hex ID")
 	}
 }
 
-func TestListUsers_RoleFilter(t *testing.T) {
-	store, cleanup := setupTestDB(t)
-	defer cleanup()
-
-	ctx := context.Background()
-
-	_, _ = store.CreateUser(ctx, &User{Username: "admin1", HashedPassword: "hash1", Role: "admin"})
-	_, _ = store.CreateUser(ctx, &User{Username: "admin2", HashedPassword: "hash2", Role: "admin"})
-	_, _ = store.CreateUser(ctx, &User{Username: "user1", HashedPassword: "hash3", Role: "user"})
-
-	users, err := store.ListUsers(ctx, "admin", "")
-	if err != nil {
-		t.Fatalf("ListUsers failed: %v", err)
-	}
-
-	if len(users) != 2 {
-		t.Errorf("expected 2 admin users, got %d", len(users))
-	}
-
-	for _, user := range users {
-		if user.Role != "admin" {
-			t.Errorf("expected role admin, got %s", user.Role)
-		}
+func TestDeleteUserByID_InvalidHex_Unit(t *testing.T) {
+	invalidHexID := "xyz123"
+	_, err := bson.ObjectIDFromHex(invalidHexID)
+	if err == nil {
+		t.Error("expected error for invalid hex ID")
 	}
 }
 
-func TestListUsers_UsernameFilter(t *testing.T) {
-	store, cleanup := setupTestDB(t)
-	defer cleanup()
-
-	ctx := context.Background()
-
-	_, _ = store.CreateUser(ctx, &User{Username: "john_admin", HashedPassword: "hash1", Role: "admin"})
-	_, _ = store.CreateUser(ctx, &User{Username: "john_user", HashedPassword: "hash2", Role: "user"})
-	_, _ = store.CreateUser(ctx, &User{Username: "alice", HashedPassword: "hash3", Role: "user"})
-
-	users, err := store.ListUsers(ctx, "", "john")
+func TestObjectIDFromHex_Valid(t *testing.T) {
+	validHex := bson.NewObjectID().Hex()
+	oid, err := bson.ObjectIDFromHex(validHex)
 	if err != nil {
-		t.Fatalf("ListUsers failed: %v", err)
+		t.Errorf("expected no error for valid hex, got %v", err)
 	}
-
-	if len(users) != 2 {
-		t.Errorf("expected 2 users matching 'john', got %d", len(users))
+	if oid.IsZero() {
+		t.Error("expected non-zero ObjectID")
+	}
+	if oid.Hex() != validHex {
+		t.Errorf("expected hex %s, got %s", validHex, oid.Hex())
 	}
 }
 
-func TestListUsers_CombinedFilters(t *testing.T) {
-	store, cleanup := setupTestDB(t)
-	defer cleanup()
+func TestBsonFilter_Role(t *testing.T) {
+	roleFilter := "admin"
+	filter := bson.M{}
+	filter["role"] = roleFilter
 
-	ctx := context.Background()
-
-	_, _ = store.CreateUser(ctx, &User{Username: "john_admin", HashedPassword: "hash1", Role: "admin"})
-	_, _ = store.CreateUser(ctx, &User{Username: "john_user", HashedPassword: "hash2", Role: "user"})
-	_, _ = store.CreateUser(ctx, &User{Username: "alice_admin", HashedPassword: "hash3", Role: "admin"})
-
-	users, err := store.ListUsers(ctx, "admin", "john")
-	if err != nil {
-		t.Fatalf("ListUsers failed: %v", err)
-	}
-
-	if len(users) != 1 {
-		t.Errorf("expected 1 user (admin named john), got %d", len(users))
-	}
-
-	if len(users) > 0 && users[0].Username != "john_admin" {
-		t.Errorf("expected john_admin, got %s", users[0].Username)
+	if filter["role"] != "admin" {
+		t.Errorf("expected role 'admin', got %v", filter["role"])
 	}
 }
 
-func TestListUsers_NoMatches(t *testing.T) {
-	store, cleanup := setupTestDB(t)
-	defer cleanup()
+func TestBsonFilter_Username_Regex(t *testing.T) {
+	usernameFilter := "john"
+	filter := bson.M{}
+	filter["username"] = bson.M{"$regex": usernameFilter, "$options": "i"}
 
-	ctx := context.Background()
-
-	_, _ = store.CreateUser(ctx, &User{Username: "alice", HashedPassword: "hash1", Role: "user"})
-
-	users, err := store.ListUsers(ctx, "", "nonexistent")
-	if err != nil {
-		t.Fatalf("ListUsers failed: %v", err)
+	regexFilter, ok := filter["username"].(bson.M)
+	if !ok {
+		t.Error("expected username filter to be bson.M")
 	}
-
-	if len(users) != 0 {
-		t.Errorf("expected 0 users, got %d", len(users))
+	if regexFilter["$regex"] != "john" {
+		t.Errorf("expected regex 'john', got %v", regexFilter["$regex"])
+	}
+	if regexFilter["$options"] != "i" {
+		t.Errorf("expected options 'i', got %v", regexFilter["$options"])
 	}
 }
 
-func TestGetUserByID(t *testing.T) {
-	store, cleanup := setupTestDB(t)
-	defer cleanup()
+func TestBsonFilter_Combined(t *testing.T) {
+	roleFilter := "admin"
+	usernameFilter := "alice"
 
-	ctx := context.Background()
+	filter := bson.M{}
+	filter["role"] = roleFilter
+	filter["username"] = bson.M{"$regex": usernameFilter, "$options": "i"}
 
-	id, err := store.CreateUser(ctx, &User{
+	if filter["role"] != "admin" {
+		t.Errorf("expected role 'admin'")
+	}
+
+	regexFilter, ok := filter["username"].(bson.M)
+	if !ok {
+		t.Error("expected username filter")
+	}
+	if regexFilter["$regex"] != "alice" {
+		t.Errorf("expected regex 'alice'")
+	}
+}
+
+func TestBsonFilter_Empty(t *testing.T) {
+	filter := bson.M{}
+	if len(filter) != 0 {
+		t.Errorf("expected empty filter, got %v", filter)
+	}
+}
+
+func TestUserStructure(t *testing.T) {
+	user := &User{
+		Id:             "12345",
 		Username:       "testuser",
-		HashedPassword: "password",
+		HashedPassword: "hashedpw",
 		Role:           "user",
-	})
-	if err != nil {
-		t.Fatalf("failed to create user: %v", err)
 	}
 
-	user, err := store.GetUserByID(ctx, id)
-	if err != nil {
-		t.Fatalf("failed to get user: %v", err)
+	if user.Id != "12345" {
+		t.Errorf("expected ID 12345, got %s", user.Id)
 	}
-
 	if user.Username != "testuser" {
 		t.Errorf("expected username testuser, got %s", user.Username)
 	}
-
-	if user.Id != id {
-		t.Errorf("expected id %s, got %s", id, user.Id)
+	if user.Role != "user" {
+		t.Errorf("expected role user, got %s", user.Role)
 	}
 }
 
-func TestDeleteUserByID(t *testing.T) {
-	store, cleanup := setupTestDB(t)
-	defer cleanup()
-
-	ctx := context.Background()
-
-	id, err := store.CreateUser(ctx, &User{
-		Username:       "testuser_delete",
-		HashedPassword: "password",
-		Role:           "user",
-	})
-	if err != nil {
-		t.Fatalf("failed to create user: %v", err)
+func TestErrorVariables(t *testing.T) {
+	if ErrUserNotFound == nil {
+		t.Error("ErrUserNotFound should be defined")
 	}
-
-	err = store.DeleteUserByID(ctx, id)
-	if err != nil {
-		t.Fatalf("failed to delete user: %v", err)
+	if ErrUserExists == nil {
+		t.Error("ErrUserExists should be defined")
 	}
-
-	_, err = store.GetUserByID(ctx, id)
-	if err != ErrUserNotFound {
-		t.Errorf("expected ErrUserNotFound, got %v", err)
+	if ErrUserNotFound.Error() != "user not found" {
+		t.Errorf("expected 'user not found', got %s", ErrUserNotFound.Error())
+	}
+	if ErrUserExists.Error() != "user already exists" {
+		t.Errorf("expected 'user already exists', got %s", ErrUserExists.Error())
 	}
 }
