@@ -49,13 +49,13 @@ jobs:
       - name: Send deploy email
         uses: dawidd6/action-send-mail@v3
         with:
-          server_address: ${{ secrets.SMTP_HOST }}
-          server_port: ${{ secrets.SMTP_PORT }}
-          username: ${{ secrets.SMTP_USER }}
-          password: ${{ secrets.SMTP_PASS }}
+          server_address: ${{ secrets.SMTP_HOST }} # email service SMTP server (e.g., smtp.gmail.com)
+          server_port: ${{ secrets.SMTP_PORT }} # email service SMTP port (e.g., 587)
+          username: ${{ secrets.SMTP_USER }} # email service username (e.g., your email address)
+          password: ${{ secrets.SMTP_PASS }} # email service password put in github secrets (e.g., app password or email password)
           subject: "[${{ inputs.environment }}] Deploy ${{ needs.deploy.result }}"
-          to: ${{ secrets.NOTIFY_EMAIL_TO }}
-          from: ${{ secrets.NOTIFY_EMAIL_FROM }}
+          to: ${{ secrets.NOTIFY_EMAIL_TO }} # recipient email address put in github secrets
+          from: ${{ secrets.NOTIFY_EMAIL_FROM }} # sender email address put in github secrets
           body: |
             Repo: ${{ github.repository }}
             Workflow: ${{ github.workflow }}
