@@ -40,3 +40,26 @@ jobs:
       - name: Deploy to ${{ inputs.environment }}
         run: |
           ssh deploy-target "set -e && cd ~/apps/${{ inputs.environment }} && docker compose -f compose.${{ inputs.environment }}.yml pull && docker compose -f compose.${{ inputs.environment }}.yml up -d"
+
+  notify:
+    needs: deploy
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send deploy email
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: ${{ secrets.SMTP_HOST }}
+          server_port: ${{ secrets.SMTP_PORT }}
+          username: ${{ secrets.SMTP_USER }}
+          password: ${{ secrets.SMTP_PASS }}
+          subject: "[${{ inputs.environment }}] Deploy ${{ needs.deploy.result }}"
+          to: ${{ secrets.NOTIFY_EMAIL_TO }}
+          from: ${{ secrets.NOTIFY_EMAIL_FROM }}
+          body: |
+            Repo: ${{ github.repository }}
+            Workflow: ${{ github.workflow }}
+            Run ID: ${{ github.run_id }}
+            Run URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            Environment: ${{ inputs.environment }}
+            Result: ${{ needs.deploy.result }}
