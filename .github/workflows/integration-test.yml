@@ -87,3 +87,32 @@ jobs:
           flags: ${{ matrix.service }}
           token: ${{ secrets.CODECOV_TOKEN }}
           working-directory: apps/${{ matrix.service }}
+
+  notify-build-break:
+    needs: integration-tests
+    if: failure()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send build break email (integration tests)
+        uses: dawidd6/action-send-mail@v9
+        with:
+          server_address: ${{ secrets.SMTP_HOST }}
+          server_port: ${{ secrets.SMTP_PORT }}
+          username: ${{ secrets.SMTP_USER }}
+          password: ${{ secrets.SMTP_PASS }}
+          subject: "[build] Integration tests failed"
+          to: ${{ secrets.DEV_EMAIL_TO }}
+          from: ${{ secrets.NOTIFY_EMAIL_FROM }}
+          body: |
+            Hello Developers,
+
+            You are receiving this email because integration tests failed.
+
+            Status: failure
+            Repository: ${{ github.repository }}
+            Workflow: ${{ github.workflow }}
+            Ref: ${{ github.ref_name }}
+            Commit SHA: ${{ github.sha }}
+            Triggered By: ${{ github.actor }}
+            Event: ${{ github.event_name }}
+            Run URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}

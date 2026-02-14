@@ -51,3 +51,33 @@ jobs:
       - name: Stop containers
         if: always()
         run: docker compose -f compose.yml -f compose.ci.yml down
+
+  notify-security:
+    needs: zap_scan
+    if: failure()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send security alert email (DAST)
+        uses: dawidd6/action-send-mail@v9
+        with:
+          server_address: ${{ secrets.SMTP_HOST }}
+          server_port: ${{ secrets.SMTP_PORT }}
+          username: ${{ secrets.SMTP_USER }}
+          password: ${{ secrets.SMTP_PASS }}
+          subject: "[security] DAST scan failed"
+          to: ${{ secrets.QA_EMAIL_TO }}
+          from: ${{ secrets.NOTIFY_EMAIL_FROM }}
+          body: |
+            Hello QA Team,
+
+            You are receiving this email because the security scan for DAST failed.
+
+            Scan: DAST (OWASP ZAP)
+            Status: failure
+            Repository: ${{ github.repository }}
+            Workflow: ${{ github.workflow }}
+            Ref: ${{ github.ref_name }}
+            Commit SHA: ${{ github.sha }}
+            Triggered By: ${{ github.actor }}
+            Event: ${{ github.event_name }}
+            Run URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}

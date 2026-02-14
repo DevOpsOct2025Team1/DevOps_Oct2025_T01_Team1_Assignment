@@ -88,3 +88,28 @@ jobs:
           flags: ${{ matrix.service }}
           token: ${{ secrets.CODECOV_TOKEN }}
           working-directory: apps/${{ matrix.service }}
+
+  notify-build-break:
+    needs: unit-tests
+    if: failure()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send build break email (unit tests)
+        uses: dawidd6/action-send-mail@v9
+        with:
+          server_address: ${{ secrets.SMTP_HOST }}
+          server_port: ${{ secrets.SMTP_PORT }}
+          username: ${{ secrets.SMTP_USER }}
+          password: ${{ secrets.SMTP_PASS }}
+          subject: "[build] Unit tests failed"
+          to: ${{ secrets.DEV_EMAIL_TO }}
+          from: ${{ secrets.NOTIFY_EMAIL_FROM }}
+          body: |
+            Hello Developers,
+
+            This email is to inform you that unit tests failed in this workflow run.
+
+            Repository: ${{ github.repository }}
+            Workflow: ${{ github.workflow }}
+            Ref: ${{ github.ref_name }}
+            Run URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}

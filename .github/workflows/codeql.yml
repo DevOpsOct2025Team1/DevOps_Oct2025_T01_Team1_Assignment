@@ -71,3 +71,33 @@ jobs:
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v4
+
+  notify-security:
+    needs: analyze
+    if: failure()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send security alert email (CodeQL)
+        uses: dawidd6/action-send-mail@v9
+        with:
+          server_address: ${{ secrets.SMTP_HOST }}
+          server_port: ${{ secrets.SMTP_PORT }}
+          username: ${{ secrets.SMTP_USER }}
+          password: ${{ secrets.SMTP_PASS }}
+          subject: "[security] CodeQL scan failed"
+          to: ${{ secrets.QA_EMAIL_TO }}
+          from: ${{ secrets.NOTIFY_EMAIL_FROM }}
+          body: |
+            Hello QA Team,
+
+            You are receiving this email the security scan for code analysis failed.
+
+            Scan: CodeQL
+            Status: failure
+            Repository: ${{ github.repository }}
+            Workflow: ${{ github.workflow }}
+            Ref: ${{ github.ref_name }}
+            Commit SHA: ${{ github.sha }}
+            Triggered By: ${{ github.actor }}
+            Event: ${{ github.event_name }}
+            Run URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
