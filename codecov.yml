@@ -1,0 +1,25 @@
+flags:
+  api-gateway:
+    paths:
+      - apps/api-gateway/
+    carryforward: true
+  auth-service:
+    paths:
+      - apps/auth-service/
+    carryforward: true
+  user-service:
+    paths:
+      - apps/user-service/
+    carryforward: true
+  file-service:
+    paths:
+      - apps/file-service/
+    carryforward: true
+  frontend:
+    paths:
+      - apps/frontend/
+    carryforward: true
+  common:
+    paths:
+      - apps/common/
+    carryforward: true
