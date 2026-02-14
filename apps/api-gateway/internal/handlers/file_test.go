@@ -97,6 +97,44 @@ func TestListFiles_NoUser(t *testing.T) {
 	}
 }
 
+func TestListFiles_ServiceError(t *testing.T) {
+	mockClient := &mockFileClient{
+		listFilesFunc: func(ctx context.Context, req *filev1.ListFilesRequest) (*filev1.ListFilesResponse, error) {
+			return nil, status.Error(codes.Internal, "db error")
+		},
+	}
+	handler := NewFileHandler(mockClient)
+	router := setupFileTestRouter(handler)
+
+	req, _ := http.NewRequest("GET", "/api/files", nil)
+	req.Header.Set("Authorization", "Bearer test-token")
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusInternalServerError {
+		t.Errorf("expected %d, got %d", http.StatusInternalServerError, w.Code)
+	}
+}
+
+func TestListFiles_PermissionDenied(t *testing.T) {
+	mockClient := &mockFileClient{
+		listFilesFunc: func(ctx context.Context, req *filev1.ListFilesRequest) (*filev1.ListFilesResponse, error) {
+			return nil, status.Error(codes.PermissionDenied, "not authorized")
+		},
+	}
+	handler := NewFileHandler(mockClient)
+	router := setupFileTestRouter(handler)
+
+	req, _ := http.NewRequest("GET", "/api/files", nil)
+	req.Header.Set("Authorization", "Bearer test-token")
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusForbidden {
+		t.Errorf("expected %d, got %d", http.StatusForbidden, w.Code)
+	}
+}
+
 func TestGetFile_Success(t *testing.T) {
 	mockClient := &mockFileClient{
 		getFileFunc: func(ctx context.Context, req *filev1.GetFileRequest) (*filev1.FileResponse, error) {
@@ -346,6 +384,7 @@ func TestMapGRPCError(t *testing.T) {
 		{"ResourceExhausted", status.Error(codes.ResourceExhausted, "limit"), http.StatusTooManyRequests},
 		{"Unavailable", status.Error(codes.Unavailable, "down"), http.StatusServiceUnavailable},
 		{"Internal", status.Error(codes.Internal, "err"), http.StatusInternalServerError},
+		{"Unimplemented", status.Error(codes.Unimplemented, "not impl"), http.StatusInternalServerError},
 		{"NonGRPC", nil, http.StatusInternalServerError},
 	}
 	for _, tt := range tests {
@@ -390,6 +429,44 @@ func TestDeleteFile_GRPCError(t *testing.T) {
 
 	if w.Code != http.StatusNotFound {
 		t.Errorf("expected %d, got %d", http.StatusNotFound, w.Code)
+	}
+}
+
+func TestDeleteFile_PermissionDenied(t *testing.T) {
+	mockClient := &mockFileClient{
+		deleteFileFunc: func(ctx context.Context, req *filev1.DeleteFileRequest) (*filev1.DeleteFileResponse, error) {
+			return nil, status.Error(codes.PermissionDenied, "not yours")
+		},
+	}
+	handler := NewFileHandler(mockClient)
+	router := setupFileTestRouter(handler)
+
+	req, _ := http.NewRequest("DELETE", "/api/files/file-1", nil)
+	req.Header.Set("Authorization", "Bearer test-token")
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusForbidden {
+		t.Errorf("expected %d, got %d", http.StatusForbidden, w.Code)
+	}
+}
+
+func TestDeleteFile_InternalError(t *testing.T) {
+	mockClient := &mockFileClient{
+		deleteFileFunc: func(ctx context.Context, req *filev1.DeleteFileRequest) (*filev1.DeleteFileResponse, error) {
+			return nil, status.Error(codes.Internal, "db error")
+		},
+	}
+	handler := NewFileHandler(mockClient)
+	router := setupFileTestRouter(handler)
+
+	req, _ := http.NewRequest("DELETE", "/api/files/file-1", nil)
+	req.Header.Set("Authorization", "Bearer test-token")
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusInternalServerError {
+		t.Errorf("expected %d, got %d", http.StatusInternalServerError, w.Code)
 	}
 }
 
@@ -448,5 +525,203 @@ func TestDownloadFile_StreamError(t *testing.T) {
 
 	if w.Code != http.StatusNotFound {
 		t.Errorf("expected %d, got %d", http.StatusNotFound, w.Code)
+	}
+}
+
+func TestGetFile_NoUser(t *testing.T) {
+	mockClient := &mockFileClient{}
+	handler := NewFileHandler(mockClient)
+	gin.SetMode(gin.TestMode)
+	router := gin.New()
+	router.GET("/api/files/:id", handler.GetFile)
+
+	req, _ := http.NewRequest("GET", "/api/files/file-1", nil)
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusUnauthorized {
+		t.Errorf("expected %d, got %d", http.StatusUnauthorized, w.Code)
+	}
+}
+
+func TestGetFile_PermissionDenied(t *testing.T) {
+	mockClient := &mockFileClient{
+		getFileFunc: func(ctx context.Context, req *filev1.GetFileRequest) (*filev1.FileResponse, error) {
+			return nil, status.Error(codes.PermissionDenied, "not authorized")
+		},
+	}
+	handler := NewFileHandler(mockClient)
+	router := setupFileTestRouter(handler)
+
+	req, _ := http.NewRequest("GET", "/api/files/file-1", nil)
+	req.Header.Set("Authorization", "Bearer test-token")
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusForbidden {
+		t.Errorf("expected %d, got %d", http.StatusForbidden, w.Code)
+	}
+}
+
+func TestGetFile_InternalError(t *testing.T) {
+	mockClient := &mockFileClient{
+		getFileFunc: func(ctx context.Context, req *filev1.GetFileRequest) (*filev1.FileResponse, error) {
+			return nil, status.Error(codes.Internal, "db error")
+		},
+	}
+	handler := NewFileHandler(mockClient)
+	router := setupFileTestRouter(handler)
+
+	req, _ := http.NewRequest("GET", "/api/files/file-1", nil)
+	req.Header.Set("Authorization", "Bearer test-token")
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusInternalServerError {
+		t.Errorf("expected %d, got %d", http.StatusInternalServerError, w.Code)
+	}
+}
+
+func TestGetFile_InvalidArgument(t *testing.T) {
+	mockClient := &mockFileClient{
+		getFileFunc: func(ctx context.Context, req *filev1.GetFileRequest) (*filev1.FileResponse, error) {
+			return nil, status.Error(codes.InvalidArgument, "invalid file id")
+		},
+	}
+	handler := NewFileHandler(mockClient)
+	router := setupFileTestRouter(handler)
+
+	req, _ := http.NewRequest("GET", "/api/files/bad-id", nil)
+	req.Header.Set("Authorization", "Bearer test-token")
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Errorf("expected %d, got %d", http.StatusBadRequest, w.Code)
+	}
+}
+
+func TestUploadFile_SendError(t *testing.T) {
+	mockStream := &mockUploadStream{
+		sendFunc: func(req *filev1.UploadFileRequest) error {
+			return status.Error(codes.Unavailable, "service down")
+		},
+	}
+	mockClient := &mockFileClient{
+		uploadFileFunc: func(ctx context.Context) (filev1.FileService_UploadFileClient, error) {
+			return mockStream, nil
+		},
+	}
+	handler := NewFileHandler(mockClient)
+	router := setupFileTestRouter(handler)
+
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+	part, _ := writer.CreateFormFile("file", "test.txt")
+	part.Write([]byte("content"))
+	writer.Close()
+
+	req, _ := http.NewRequest("POST", "/api/files", body)
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+	req.Header.Set("Authorization", "Bearer test-token")
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusInternalServerError {
+		t.Errorf("expected %d, got %d", http.StatusInternalServerError, w.Code)
+	}
+}
+
+func TestUploadFile_AlreadyExists(t *testing.T) {
+	mockStream := &mockUploadStream{
+		sendFunc: func(req *filev1.UploadFileRequest) error { return nil },
+		closeAndRecvFunc: func() (*filev1.FileResponse, error) {
+			return nil, status.Error(codes.AlreadyExists, "file exists")
+		},
+	}
+	mockClient := &mockFileClient{
+		uploadFileFunc: func(ctx context.Context) (filev1.FileService_UploadFileClient, error) {
+			return mockStream, nil
+		},
+	}
+	handler := NewFileHandler(mockClient)
+	router := setupFileTestRouter(handler)
+
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+	part, _ := writer.CreateFormFile("file", "test.txt")
+	part.Write([]byte("content"))
+	writer.Close()
+
+	req, _ := http.NewRequest("POST", "/api/files", body)
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+	req.Header.Set("Authorization", "Bearer test-token")
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusConflict {
+		t.Errorf("expected %d, got %d", http.StatusConflict, w.Code)
+	}
+}
+
+func TestDownloadFile_RecvMetadataError(t *testing.T) {
+	mockStream := &mockDownloadStream{
+		recvFunc: func() (*filev1.DownloadFileResponse, error) {
+			return nil, status.Error(codes.Internal, "stream error")
+		},
+	}
+	mockClient := &mockFileClient{
+		downloadFileFunc: func(ctx context.Context, req *filev1.DownloadFileRequest) (filev1.FileService_DownloadFileClient, error) {
+			return mockStream, nil
+		},
+	}
+	handler := NewFileHandler(mockClient)
+	router := setupFileTestRouter(handler)
+
+	req, _ := http.NewRequest("GET", "/api/files/f1/download", nil)
+	req.Header.Set("Authorization", "Bearer test-token")
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusInternalServerError {
+		t.Errorf("expected %d, got %d", http.StatusInternalServerError, w.Code)
+	}
+}
+
+func TestDownloadFile_PermissionDenied(t *testing.T) {
+	mockClient := &mockFileClient{
+		downloadFileFunc: func(ctx context.Context, req *filev1.DownloadFileRequest) (filev1.FileService_DownloadFileClient, error) {
+			return nil, status.Error(codes.PermissionDenied, "not yours")
+		},
+	}
+	handler := NewFileHandler(mockClient)
+	router := setupFileTestRouter(handler)
+
+	req, _ := http.NewRequest("GET", "/api/files/f1/download", nil)
+	req.Header.Set("Authorization", "Bearer test-token")
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusForbidden {
+		t.Errorf("expected %d, got %d", http.StatusForbidden, w.Code)
+	}
+}
+
+func TestDownloadFile_InvalidArgument(t *testing.T) {
+	mockClient := &mockFileClient{
+		downloadFileFunc: func(ctx context.Context, req *filev1.DownloadFileRequest) (filev1.FileService_DownloadFileClient, error) {
+			return nil, status.Error(codes.InvalidArgument, "invalid file id")
+		},
+	}
+	handler := NewFileHandler(mockClient)
+	router := setupFileTestRouter(handler)
+
+	req, _ := http.NewRequest("GET", "/api/files/bad-id/download", nil)
+	req.Header.Set("Authorization", "Bearer test-token")
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Errorf("expected %d, got %d", http.StatusBadRequest, w.Code)
 	}
 }
