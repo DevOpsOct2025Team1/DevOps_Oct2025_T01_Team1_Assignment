@@ -153,7 +153,6 @@ jobs:
             Commit SHA: ${{ github.sha }}
             Commit Message: ${{ github.event.head_commit.message || 'N/A' }}
             Author: ${{ github.actor }}
-            Ref: ${{ github.ref_name }}
             Tag: ${{ github.ref_name }}
             Repository: ${{ github.repository }}
             Workflow: ${{ github.workflow }}
@@ -330,7 +329,6 @@ jobs:
             Commit SHA: ${{ github.sha }}
             Commit Message: ${{ github.event.head_commit.message || 'N/A' }}
             Author: ${{ github.actor }}
-            Ref: ${{ github.ref_name }}
             Tag: ${{ github.ref_name }}
             Repository: ${{ github.repository }}
             Workflow: ${{ github.workflow }}

@@ -106,7 +106,7 @@ jobs:
           echo "- ${{ steps.meta.outputs.image-name }}:main-${{ steps.meta.outputs.short-sha }}"
 
   deploy-dev:
-    needs: build-dev
+    needs: [build-dev, detect-affected]
     uses: ./.github/workflows/deploy.yml
     with:
       environment: dev
