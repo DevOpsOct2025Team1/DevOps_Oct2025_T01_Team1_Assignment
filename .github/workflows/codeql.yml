@@ -38,6 +38,14 @@ jobs:
         if: matrix.language == 'javascript'
         uses: oven-sh/setup-bun@v2
 
+      - name: Cache Bun dependencies
+        if: matrix.language == 'javascript'
+        uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ runner.os }}-${{ hashFiles('apps/frontend/bun.lock') }}
+          restore-keys: bun-${{ runner.os }}-
+
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:

@@ -51,6 +51,14 @@ jobs:
         if: matrix.service == 'frontend'
         uses: oven-sh/setup-bun@v2
 
+      - name: Cache Bun dependencies
+        if: matrix.service == 'frontend'
+        uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ runner.os }}-${{ hashFiles('apps/frontend/bun.lock') }}
+          restore-keys: bun-${{ runner.os }}-
+
       - name: Install frontend dependencies
         if: matrix.service == 'frontend'
         run: |
@@ -62,6 +70,13 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: "24"
+
+      - name: Cache NX
+        uses: actions/cache@v4
+        with:
+          path: .nx/cache
+          key: nx-${{ runner.os }}-${{ hashFiles('nx.json', '**/project.json') }}-${{ github.sha }}
+          restore-keys: nx-${{ runner.os }}-${{ hashFiles('nx.json', '**/project.json') }}-
 
       - name: Run tests
         run: ./nx test ${{ matrix.service }}
