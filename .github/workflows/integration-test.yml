@@ -66,7 +66,7 @@ jobs:
         run: |
           file="apps/${{ matrix.service }}/project.json"
           if [ -f "$file" ]; then
-            if jq -e '.targets | has("integration-test")' "$file" > /dev/null; then
+            if jq -e '.targets | has("integration-coverage")' "$file" > /dev/null; then
               echo "has=true" >> $GITHUB_OUTPUT
             else
               echo "has=false" >> $GITHUB_OUTPUT
@@ -77,4 +77,13 @@ jobs:
 
       - name: Run integration tests
         if: steps.has_integration.outputs.has == 'true'
-        run: ./nx run ${{ matrix.service }}:integration-test
+        run: ./nx run ${{ matrix.service }}:integration-coverage
+
+      - name: Upload coverage to Codecov
+        if: always() && steps.has_integration.outputs.has == 'true'
+        uses: codecov/codecov-action@v5
+        with:
+          files: coverage-integration.out
+          flags: ${{ matrix.service }}
+          token: ${{ secrets.CODECOV_TOKEN }}
+          working-directory: apps/${{ matrix.service }}

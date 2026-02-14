@@ -9,4 +9,5 @@ __pycache__/
 .nx/workspace-data
 
 coverage.out
+coverage-integration.out
 coverage.xml
