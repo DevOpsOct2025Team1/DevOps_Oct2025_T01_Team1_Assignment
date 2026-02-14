@@ -114,4 +114,12 @@ describe("UserPanel", () => {
     expect(queryByText("apple.txt")).toBeTruthy()
     expect(queryByText("banana.jpg")).toBeNull()
   })
+
+  it("shows empty state when no files", async () => {
+    getFilesMock.mockReturnValue({ status: 200, data: { files: [] } })
+    const { findByText } = renderWithProviders(
+      <BrowserRouter><UserPanel /></BrowserRouter>
+    )
+    expect(await findByText("No files uploaded yet")).toBeTruthy()
+  })
 })
