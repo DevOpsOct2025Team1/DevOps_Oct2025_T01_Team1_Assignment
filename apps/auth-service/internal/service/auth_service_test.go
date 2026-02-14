@@ -9,6 +9,8 @@ import (
 	"github.com/provsalt/DOP_P01_Team1/auth-service/internal/jwt"
 	authv1 "github.com/provsalt/DOP_P01_Team1/common/auth/v1"
 	userv1 "github.com/provsalt/DOP_P01_Team1/common/user/v1"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 // --------------------
@@ -100,6 +102,17 @@ func TestSignUp_MissingPassword(t *testing.T) {
 	}
 }
 
+func TestSignUp_DuplicateUsername(t *testing.T) {
+	svc := setupAuthService()
+	_, err := svc.SignUp(context.Background(), &authv1.SignUpRequest{
+		Username: "duplicate",
+		Password: "secret123",
+	})
+	if err == nil {
+		t.Fatal("expected error for duplicate username")
+	}
+}
+
 // --------------------
 // Login Tests
 // --------------------
@@ -146,6 +159,19 @@ func TestLogin_WrongPassword(t *testing.T) {
 	}
 }
 
+func TestLogin_VerifyPasswordError(t *testing.T) {
+	svc := setupAuthService()
+	_, err := svc.Login(context.Background(), &authv1.LoginRequest{
+		Username: "testing",
+		Password: "123456",
+	})
+	if err == nil {
+		t.Fatal("expected error")
+	}
+	if status.Code(err) != codes.Unauthenticated {
+		t.Fatalf("expected Unauthenticated, got %v", status.Code(err))
+	}
+}
 
 // --------------------
 // Validate Token Tests
@@ -219,5 +245,17 @@ func TestValidateToken_ExpiredToken(t *testing.T) {
 	}
 	if resp.Valid {
 		t.Fatal("expected token to be invalid")
+	}
+}
+
+func TestStringToRole(t *testing.T) {
+	if stringToRole("ROLE_ADMIN") != userv1.Role_ROLE_ADMIN {
+		t.Fatal("expected ROLE_ADMIN")
+	}
+	if stringToRole("ROLE_USER") != userv1.Role_ROLE_USER {
+		t.Fatal("expected ROLE_USER")
+	}
+	if stringToRole("garbage") != userv1.Role_ROLE_USER {
+		t.Fatal("expected default ROLE_USER")
 	}
 }
