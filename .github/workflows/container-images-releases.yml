@@ -116,6 +116,29 @@ jobs:
       environment: staging
     secrets: inherit
 
+  notify-release-staging:
+    needs: build-staging
+    if: endsWith(github.ref_name, '-staging')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send release email (staging)
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: ${{ secrets.SMTP_HOST }}
+          server_port: ${{ secrets.SMTP_PORT }}
+          username: ${{ secrets.SMTP_USER }}
+          password: ${{ secrets.SMTP_PASS }}
+          subject: "[release][staging] ${{ needs.build-staging.result }}"
+          to: ${{ secrets.NOTIFY_EMAIL_TO }}
+          from: ${{ secrets.NOTIFY_EMAIL_FROM }}
+          body: |
+            Repo: ${{ github.repository }}
+            Workflow: ${{ github.workflow }}
+            Run ID: ${{ github.run_id }}
+            Run URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            Tag: ${{ github.ref_name }}
+            Result: ${{ needs.build-staging.result }}
+
   build-prod:
     if: "!endsWith(github.ref_name, '-staging')"
     runs-on: ubuntu-latest
@@ -246,3 +269,26 @@ jobs:
     with:
       environment: production
     secrets: inherit
+
+  notify-release-production:
+    needs: build-prod
+    if: "!endsWith(github.ref_name, '-staging')"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send release email (production)
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: ${{ secrets.SMTP_HOST }}
+          server_port: ${{ secrets.SMTP_PORT }}
+          username: ${{ secrets.SMTP_USER }}
+          password: ${{ secrets.SMTP_PASS }}
+          subject: "[release][production] ${{ needs.build-prod.result }}"
+          to: ${{ secrets.NOTIFY_EMAIL_TO }}
+          from: ${{ secrets.NOTIFY_EMAIL_FROM }}
+          body: |
+            Repo: ${{ github.repository }}
+            Workflow: ${{ github.workflow }}
+            Run ID: ${{ github.run_id }}
+            Run URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            Tag: ${{ github.ref_name }}
+            Result: ${{ needs.build-prod.result }}
