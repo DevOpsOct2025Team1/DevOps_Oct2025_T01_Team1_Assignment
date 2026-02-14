@@ -13,6 +13,9 @@ jobs:
   build-staging:
     if: endsWith(github.ref_name, '-staging')
     runs-on: ubuntu-latest
+    outputs:
+      service: ${{ steps.parse.outputs.service }}
+      version: ${{ steps.parse.outputs.version }}
     permissions:
       contents: read
       packages: write
@@ -114,12 +117,19 @@ jobs:
     uses: ./.github/workflows/deploy.yml
     with:
       environment: staging
+      service: ${{ needs.build-staging.outputs.service }}
+      version: ${{ needs.build-staging.outputs.version }}
+      commit_sha: ${{ github.sha }}
+      commit_message: ${{ github.event.head_commit.message }}
+      author: ${{ github.actor }}
+      ref_name: ${{ github.ref_name }}
     secrets: inherit
 
   notify-release-staging:
     needs: build-staging
     if: endsWith(github.ref_name, '-staging')
     runs-on: ubuntu-latest
+    environment: staging
     steps:
       - name: Send release email (staging)
         uses: dawidd6/action-send-mail@v3
@@ -132,16 +142,32 @@ jobs:
           to: ${{ secrets.NOTIFY_EMAIL_TO }}
           from: ${{ secrets.NOTIFY_EMAIL_FROM }}
           body: |
-            Repo: ${{ github.repository }}
+            Hello Advisor,
+
+            This email is to inform you that a staging release build
+            has completed for review and verification.
+
+            Result: ${{ needs.build-staging.result }}
+            Service: ${{ needs.build-staging.outputs.service }}
+            Version: ${{ needs.build-staging.outputs.version }}
+            Commit SHA: ${{ github.sha }}
+            Commit Message: ${{ github.event.head_commit.message || 'N/A' }}
+            Author: ${{ github.actor }}
+            Ref: ${{ github.ref_name }}
+            Tag: ${{ github.ref_name }}
+            Repository: ${{ github.repository }}
             Workflow: ${{ github.workflow }}
             Run ID: ${{ github.run_id }}
             Run URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
-            Tag: ${{ github.ref_name }}
-            Result: ${{ needs.build-staging.result }}
+
+            If the result is failure, please review the run URL for logs.
 
   build-prod:
     if: "!endsWith(github.ref_name, '-staging')"
     runs-on: ubuntu-latest
+    outputs:
+      service: ${{ steps.parse.outputs.service }}
+      version: ${{ steps.parse.outputs.version }}
     permissions:
       contents: write
       packages: write
@@ -268,12 +294,19 @@ jobs:
     uses: ./.github/workflows/deploy.yml
     with:
       environment: production
+      service: ${{ needs.build-prod.outputs.service }}
+      version: ${{ needs.build-prod.outputs.version }}
+      commit_sha: ${{ github.sha }}
+      commit_message: ${{ github.event.head_commit.message }}
+      author: ${{ github.actor }}
+      ref_name: ${{ github.ref_name }}
     secrets: inherit
 
   notify-release-production:
     needs: build-prod
     if: "!endsWith(github.ref_name, '-staging')"
     runs-on: ubuntu-latest
+    environment: production
     steps:
       - name: Send release email (production)
         uses: dawidd6/action-send-mail@v3
@@ -286,9 +319,22 @@ jobs:
           to: ${{ secrets.NOTIFY_EMAIL_TO }}
           from: ${{ secrets.NOTIFY_EMAIL_FROM }}
           body: |
-            Repo: ${{ github.repository }}
+            Hello Advisor,
+
+            This email is to inform you that a production release build
+            has completed.
+
+            Result: ${{ needs.build-prod.result }}
+            Service: ${{ needs.build-prod.outputs.service }}
+            Version: ${{ needs.build-prod.outputs.version }}
+            Commit SHA: ${{ github.sha }}
+            Commit Message: ${{ github.event.head_commit.message || 'N/A' }}
+            Author: ${{ github.actor }}
+            Ref: ${{ github.ref_name }}
+            Tag: ${{ github.ref_name }}
+            Repository: ${{ github.repository }}
             Workflow: ${{ github.workflow }}
             Run ID: ${{ github.run_id }}
             Run URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
-            Tag: ${{ github.ref_name }}
-            Result: ${{ needs.build-prod.result }}
+
+            If the result is failure, please review the run URL for logs.

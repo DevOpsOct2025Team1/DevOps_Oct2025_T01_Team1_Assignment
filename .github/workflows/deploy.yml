@@ -7,6 +7,30 @@ on:
         required: true
         type: string
         description: "Target environment (dev, staging, production)"
+      service:
+        required: false
+        type: string
+        description: "Service name(s) deployed"
+      version:
+        required: false
+        type: string
+        description: "Version or tag deployed"
+      commit_sha:
+        required: false
+        type: string
+        description: "Commit SHA deployed"
+      commit_message:
+        required: false
+        type: string
+        description: "Commit message for the deployment"
+      author:
+        required: false
+        type: string
+        description: "User who triggered the deployment"
+      ref_name:
+        required: false
+        type: string
+        description: "Branch or tag name"
 
 jobs:
   deploy:
@@ -57,9 +81,22 @@ jobs:
           to: ${{ secrets.NOTIFY_EMAIL_TO }} # recipient email address put in github secrets
           from: ${{ secrets.NOTIFY_EMAIL_FROM }} # sender email address put in github secrets
           body: |
-            Repo: ${{ github.repository }}
+            Hello Advisor,
+
+            This email is to inform you that a deployment to the
+            ${{ inputs.environment }} environment has completed.
+
+            Result: ${{ needs.deploy.result }}
+            Environment: ${{ inputs.environment }}
+            Service: ${{ inputs.service || 'N/A' }}
+            Version: ${{ inputs.version || 'N/A' }}
+            Commit SHA: ${{ inputs.commit_sha || github.sha }}
+            Commit Message: ${{ inputs.commit_message || github.event.head_commit.message || 'N/A' }}
+            Author: ${{ inputs.author || github.triggering_actor || github.actor }}
+            Ref: ${{ inputs.ref_name || github.ref_name }}
+            Repository: ${{ github.repository }}
             Workflow: ${{ github.workflow }}
             Run ID: ${{ github.run_id }}
             Run URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
-            Environment: ${{ inputs.environment }}
-            Result: ${{ needs.deploy.result }}
+
+            If the result is failure, please review the run URL for logs.

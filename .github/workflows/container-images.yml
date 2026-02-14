@@ -110,4 +110,10 @@ jobs:
     uses: ./.github/workflows/deploy.yml
     with:
       environment: dev
+      service: ${{ join(fromJson(needs.detect-affected.outputs.projects), ', ') }}
+      version: ${{ github.event.workflow_run.head_sha }}
+      commit_sha: ${{ github.event.workflow_run.head_sha }}
+      commit_message: ${{ github.event.workflow_run.head_commit.message }}
+      author: ${{ github.event.workflow_run.actor.login }}
+      ref_name: ${{ github.event.workflow_run.head_branch }}
     secrets: inherit
