@@ -18,10 +18,10 @@ jobs:
 
     strategy:
       matrix:
-        language: [ 'go', 'javascript' ]
+        language: [ 'go', 'javascript', 'python' ]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Setup Go
         uses: actions/setup-go@v6
@@ -47,7 +47,7 @@ jobs:
           restore-keys: bun-${{ runner.os }}-
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
+        uses: github/codeql-action/init@v4
         with:
           languages: ${{ matrix.language }}
 
@@ -70,4 +70,4 @@ jobs:
           bun install --frozen-lockfile
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
+        uses: github/codeql-action/analyze@v4
