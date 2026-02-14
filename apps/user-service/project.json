@@ -26,6 +26,13 @@
         "cwd": "apps/user-service"
       }
     },
+    "integration-test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "go test -v -count=1 -tags=integration ./internal/store/...",
+        "cwd": "apps/user-service"
+      }
+    },
     "docker-build": {
       "executor": "nx:run-commands",
       "options": {
