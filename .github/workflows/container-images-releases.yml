@@ -132,7 +132,7 @@ jobs:
     environment: staging
     steps:
       - name: Send release email (staging)
-        uses: dawidd6/action-send-mail@v3
+        uses: dawidd6/action-send-mail@v9
         with:
           server_address: ${{ secrets.SMTP_HOST }}
           server_port: ${{ secrets.SMTP_PORT }}
@@ -309,7 +309,7 @@ jobs:
     environment: production
     steps:
       - name: Send release email (production)
-        uses: dawidd6/action-send-mail@v3
+        uses: dawidd6/action-send-mail@v9
         with:
           server_address: ${{ secrets.SMTP_HOST }}
           server_port: ${{ secrets.SMTP_PORT }}
