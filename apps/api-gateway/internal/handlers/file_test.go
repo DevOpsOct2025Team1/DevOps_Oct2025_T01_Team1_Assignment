@@ -331,3 +331,122 @@ func TestDownloadFile_Success(t *testing.T) {
 		t.Errorf("expected body 'test content', got %s", w.Body.String())
 	}
 }
+
+func TestMapGRPCError(t *testing.T) {
+	tests := []struct {
+		name     string
+		err      error
+		expected int
+	}{
+		{"InvalidArgument", status.Error(codes.InvalidArgument, "bad"), http.StatusBadRequest},
+		{"NotFound", status.Error(codes.NotFound, "missing"), http.StatusNotFound},
+		{"PermissionDenied", status.Error(codes.PermissionDenied, "denied"), http.StatusForbidden},
+		{"Unauthenticated", status.Error(codes.Unauthenticated, "unauth"), http.StatusUnauthorized},
+		{"AlreadyExists", status.Error(codes.AlreadyExists, "dup"), http.StatusConflict},
+		{"ResourceExhausted", status.Error(codes.ResourceExhausted, "limit"), http.StatusTooManyRequests},
+		{"Unavailable", status.Error(codes.Unavailable, "down"), http.StatusServiceUnavailable},
+		{"Internal", status.Error(codes.Internal, "err"), http.StatusInternalServerError},
+		{"NonGRPC", nil, http.StatusInternalServerError},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := mapGRPCError(tt.err)
+			if got != tt.expected {
+				t.Errorf("mapGRPCError(%v) = %d, want %d", tt.err, got, tt.expected)
+			}
+		})
+	}
+}
+
+func TestDeleteFile_NoUser(t *testing.T) {
+	mockClient := &mockFileClient{}
+	handler := NewFileHandler(mockClient)
+	gin.SetMode(gin.TestMode)
+	router := gin.New()
+	router.DELETE("/api/files/:id", handler.DeleteFile)
+
+	req, _ := http.NewRequest("DELETE", "/api/files/file-1", nil)
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusUnauthorized {
+		t.Errorf("expected %d, got %d", http.StatusUnauthorized, w.Code)
+	}
+}
+
+func TestDeleteFile_GRPCError(t *testing.T) {
+	mockClient := &mockFileClient{
+		deleteFileFunc: func(ctx context.Context, req *filev1.DeleteFileRequest) (*filev1.DeleteFileResponse, error) {
+			return nil, status.Error(codes.NotFound, "file not found")
+		},
+	}
+	handler := NewFileHandler(mockClient)
+	router := setupFileTestRouter(handler)
+
+	req, _ := http.NewRequest("DELETE", "/api/files/file-1", nil)
+	req.Header.Set("Authorization", "Bearer test-token")
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusNotFound {
+		t.Errorf("expected %d, got %d", http.StatusNotFound, w.Code)
+	}
+}
+
+func TestUploadFile_NoUser(t *testing.T) {
+	mockClient := &mockFileClient{}
+	handler := NewFileHandler(mockClient)
+	gin.SetMode(gin.TestMode)
+	router := gin.New()
+	router.POST("/api/files", handler.UploadFile)
+
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+	part, _ := writer.CreateFormFile("file", "test.txt")
+	part.Write([]byte("content"))
+	writer.Close()
+
+	req, _ := http.NewRequest("POST", "/api/files", body)
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusUnauthorized {
+		t.Errorf("expected %d, got %d", http.StatusUnauthorized, w.Code)
+	}
+}
+
+func TestDownloadFile_NoUser(t *testing.T) {
+	mockClient := &mockFileClient{}
+	handler := NewFileHandler(mockClient)
+	gin.SetMode(gin.TestMode)
+	router := gin.New()
+	router.GET("/api/files/:id/download", handler.DownloadFile)
+
+	req, _ := http.NewRequest("GET", "/api/files/f1/download", nil)
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusUnauthorized {
+		t.Errorf("expected %d, got %d", http.StatusUnauthorized, w.Code)
+	}
+}
+
+func TestDownloadFile_StreamError(t *testing.T) {
+	mockClient := &mockFileClient{
+		downloadFileFunc: func(ctx context.Context, req *filev1.DownloadFileRequest) (filev1.FileService_DownloadFileClient, error) {
+			return nil, status.Error(codes.NotFound, "not found")
+		},
+	}
+	handler := NewFileHandler(mockClient)
+	router := setupFileTestRouter(handler)
+
+	req, _ := http.NewRequest("GET", "/api/files/f1/download", nil)
+	req.Header.Set("Authorization", "Bearer test-token")
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusNotFound {
+		t.Errorf("expected %d, got %d", http.StatusNotFound, w.Code)
+	}
+}

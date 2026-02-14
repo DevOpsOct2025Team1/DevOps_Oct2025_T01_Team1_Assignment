@@ -459,3 +459,59 @@ func TestListUsers_InvalidRole(t *testing.T) {
 		t.Errorf("expected status %d, got %d", http.StatusBadRequest, w.Code)
 	}
 }
+
+func TestDeleteAccount_GetUserInvalidArgument(t *testing.T) {
+	currentUser := &userv1.User{Id: "admin", Username: "admin", Role: userv1.Role_ROLE_ADMIN}
+	mock := &mockUserClient{
+		getUserFunc: func(ctx context.Context, req *userv1.GetUserRequest) (*userv1.GetUserResponse, error) {
+			return nil, status.Error(codes.InvalidArgument, "invalid id")
+		},
+	}
+	handler := NewUserHandler(mock)
+	router := setupUserTestRouter(handler, currentUser)
+
+	w := makeUserRequest(t, router, "DELETE", "/api/admin/delete_user", map[string]string{"id": "bad-id"})
+	if w.Code != http.StatusBadRequest {
+		t.Errorf("expected %d, got %d", http.StatusBadRequest, w.Code)
+	}
+}
+
+func TestDeleteAccount_DeleteAccountNotFound(t *testing.T) {
+	currentUser := &userv1.User{Id: "admin", Username: "admin", Role: userv1.Role_ROLE_ADMIN}
+	mock := &mockUserClient{
+		getUserFunc: func(ctx context.Context, req *userv1.GetUserRequest) (*userv1.GetUserResponse, error) {
+			return &userv1.GetUserResponse{
+				User: &userv1.User{Id: req.Id, Username: "user", Role: userv1.Role_ROLE_USER},
+			}, nil
+		},
+		deleteAccountFunc: func(ctx context.Context, req *userv1.DeleteUserByIdRequest) (*userv1.DeleteUserByIdResponse, error) {
+			return nil, status.Error(codes.NotFound, "not found")
+		},
+	}
+	handler := NewUserHandler(mock)
+	router := setupUserTestRouter(handler, currentUser)
+
+	w := makeUserRequest(t, router, "DELETE", "/api/admin/delete_user", map[string]string{"id": "some-id"})
+	if w.Code != http.StatusNotFound {
+		t.Errorf("expected %d, got %d", http.StatusNotFound, w.Code)
+	}
+}
+
+func TestListUsers_ServiceError(t *testing.T) {
+	currentUser := &userv1.User{Id: "admin", Username: "admin", Role: userv1.Role_ROLE_ADMIN}
+	mock := &mockUserClient{
+		listUsersFunc: func(ctx context.Context, req *userv1.ListUsersRequest) (*userv1.ListUsersResponse, error) {
+			return nil, status.Error(codes.Internal, "db error")
+		},
+	}
+	handler := NewUserHandler(mock)
+	router := setupUserTestRouter(handler, currentUser)
+
+	req, _ := http.NewRequest("GET", "/api/admin/list_users", nil)
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusInternalServerError {
+		t.Errorf("expected %d, got %d", http.StatusInternalServerError, w.Code)
+	}
+}

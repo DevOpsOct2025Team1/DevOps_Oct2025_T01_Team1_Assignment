@@ -12,6 +12,8 @@ import (
 	"github.com/gin-gonic/gin"
 	authv1 "github.com/provsalt/DOP_P01_Team1/common/auth/v1"
 	userv1 "github.com/provsalt/DOP_P01_Team1/common/user/v1"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type mockAuthClient struct {
@@ -280,5 +282,39 @@ func TestLogin_InvalidCredentials(t *testing.T) {
 
 	if w.Code != http.StatusUnauthorized {
 		t.Errorf("expected status %d, got %d", http.StatusUnauthorized, w.Code)
+	}
+}
+
+func TestSignUp_GRPCAlreadyExists(t *testing.T) {
+	mock := &mockAuthClient{
+		signUpFunc: func(ctx context.Context, req *authv1.SignUpRequest) (*authv1.SignUpResponse, error) {
+			return nil, status.Error(codes.AlreadyExists, "user exists")
+		},
+	}
+	handler := NewAuthHandler(mock)
+	router := setupTestRouter(handler)
+
+	w := makeRequest(t, router, "POST", "/api/signup", map[string]string{
+		"username": "testing", "password": "pass",
+	})
+	if w.Code != http.StatusConflict {
+		t.Errorf("expected %d, got %d", http.StatusConflict, w.Code)
+	}
+}
+
+func TestLogin_GRPCNotFound(t *testing.T) {
+	mock := &mockAuthClient{
+		loginFunc: func(ctx context.Context, req *authv1.LoginRequest) (*authv1.LoginResponse, error) {
+			return nil, status.Error(codes.NotFound, "user not found")
+		},
+	}
+	handler := NewAuthHandler(mock)
+	router := setupTestRouter(handler)
+
+	w := makeRequest(t, router, "POST", "/api/login", map[string]string{
+		"username": "user", "password": "pass",
+	})
+	if w.Code != http.StatusNotFound {
+		t.Errorf("expected %d, got %d", http.StatusNotFound, w.Code)
 	}
 }
