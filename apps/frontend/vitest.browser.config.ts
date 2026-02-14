@@ -9,6 +9,11 @@ export default defineConfig({
   test: {
     setupFiles: ["tests/setup.ts"],
     globals: true,
+    coverage: {
+      provider: 'istanbul',
+      reporter: ['text', 'cobertura'],
+      reportsDirectory: './coverage',
+    },
     browser: {
       enabled: true,
       headless: true,

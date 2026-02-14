@@ -44,6 +44,26 @@ class FileServiceStub(object):
                 request_serializer=file_dot_v1_dot_file__pb2.DeleteFileRequest.SerializeToString,
                 response_deserializer=file_dot_v1_dot_file__pb2.DeleteFileResponse.FromString,
                 _registered_method=True)
+        self.InitiateMultipartUpload = channel.unary_unary(
+                '/file.v1.FileService/InitiateMultipartUpload',
+                request_serializer=file_dot_v1_dot_file__pb2.InitiateMultipartUploadRequest.SerializeToString,
+                response_deserializer=file_dot_v1_dot_file__pb2.InitiateMultipartUploadResponse.FromString,
+                _registered_method=True)
+        self.UploadPart = channel.unary_unary(
+                '/file.v1.FileService/UploadPart',
+                request_serializer=file_dot_v1_dot_file__pb2.UploadPartRequest.SerializeToString,
+                response_deserializer=file_dot_v1_dot_file__pb2.UploadPartResponse.FromString,
+                _registered_method=True)
+        self.CompleteMultipartUpload = channel.unary_unary(
+                '/file.v1.FileService/CompleteMultipartUpload',
+                request_serializer=file_dot_v1_dot_file__pb2.CompleteMultipartUploadRequest.SerializeToString,
+                response_deserializer=file_dot_v1_dot_file__pb2.FileResponse.FromString,
+                _registered_method=True)
+        self.AbortMultipartUpload = channel.unary_unary(
+                '/file.v1.FileService/AbortMultipartUpload',
+                request_serializer=file_dot_v1_dot_file__pb2.AbortMultipartUploadRequest.SerializeToString,
+                response_deserializer=file_dot_v1_dot_file__pb2.AbortMultipartUploadResponse.FromString,
+                _registered_method=True)
 
 
 class FileServiceServicer(object):
@@ -85,6 +105,30 @@ class FileServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def InitiateMultipartUpload(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def UploadPart(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def CompleteMultipartUpload(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def AbortMultipartUpload(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_FileServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -117,6 +161,26 @@ def add_FileServiceServicer_to_server(servicer, server):
                     servicer.DeleteFile,
                     request_deserializer=file_dot_v1_dot_file__pb2.DeleteFileRequest.FromString,
                     response_serializer=file_dot_v1_dot_file__pb2.DeleteFileResponse.SerializeToString,
+            ),
+            'InitiateMultipartUpload': grpc.unary_unary_rpc_method_handler(
+                    servicer.InitiateMultipartUpload,
+                    request_deserializer=file_dot_v1_dot_file__pb2.InitiateMultipartUploadRequest.FromString,
+                    response_serializer=file_dot_v1_dot_file__pb2.InitiateMultipartUploadResponse.SerializeToString,
+            ),
+            'UploadPart': grpc.unary_unary_rpc_method_handler(
+                    servicer.UploadPart,
+                    request_deserializer=file_dot_v1_dot_file__pb2.UploadPartRequest.FromString,
+                    response_serializer=file_dot_v1_dot_file__pb2.UploadPartResponse.SerializeToString,
+            ),
+            'CompleteMultipartUpload': grpc.unary_unary_rpc_method_handler(
+                    servicer.CompleteMultipartUpload,
+                    request_deserializer=file_dot_v1_dot_file__pb2.CompleteMultipartUploadRequest.FromString,
+                    response_serializer=file_dot_v1_dot_file__pb2.FileResponse.SerializeToString,
+            ),
+            'AbortMultipartUpload': grpc.unary_unary_rpc_method_handler(
+                    servicer.AbortMultipartUpload,
+                    request_deserializer=file_dot_v1_dot_file__pb2.AbortMultipartUploadRequest.FromString,
+                    response_serializer=file_dot_v1_dot_file__pb2.AbortMultipartUploadResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -281,6 +345,114 @@ class FileService(object):
             '/file.v1.FileService/DeleteFile',
             file_dot_v1_dot_file__pb2.DeleteFileRequest.SerializeToString,
             file_dot_v1_dot_file__pb2.DeleteFileResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def InitiateMultipartUpload(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/file.v1.FileService/InitiateMultipartUpload',
+            file_dot_v1_dot_file__pb2.InitiateMultipartUploadRequest.SerializeToString,
+            file_dot_v1_dot_file__pb2.InitiateMultipartUploadResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def UploadPart(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/file.v1.FileService/UploadPart',
+            file_dot_v1_dot_file__pb2.UploadPartRequest.SerializeToString,
+            file_dot_v1_dot_file__pb2.UploadPartResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def CompleteMultipartUpload(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/file.v1.FileService/CompleteMultipartUpload',
+            file_dot_v1_dot_file__pb2.CompleteMultipartUploadRequest.SerializeToString,
+            file_dot_v1_dot_file__pb2.FileResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def AbortMultipartUpload(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/file.v1.FileService/AbortMultipartUpload',
+            file_dot_v1_dot_file__pb2.AbortMultipartUploadRequest.SerializeToString,
+            file_dot_v1_dot_file__pb2.AbortMultipartUploadResponse.FromString,
             options,
             channel_credentials,
             insecure,

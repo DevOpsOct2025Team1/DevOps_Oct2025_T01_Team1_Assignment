@@ -6,6 +6,7 @@ from file_service.service import FileService
 from file_service.auth_client import AuthClient
 from file.v1 import file_pb2_grpc
 from file_service.health import register_health
+from file_service.store import init_upload_session_indexes
 from file_service.config import FILE_SERVICE_PORT, SERVICE_NAME, ENVIRONMENT, OTLP_ENDPOINT, AXIOM_TOKEN, DATASET
 SERVICE_PORT = FILE_SERVICE_PORT
 from file_service.telemetry import init_telemetry
@@ -21,8 +22,16 @@ def serve():
     )
 
     auth_client = AuthClient()
+    init_upload_session_indexes()
 
-    server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
+    max_msg_size = 20 * 1024 * 1024
+    server = grpc.server(
+        futures.ThreadPoolExecutor(max_workers=10),
+        options=[
+            ("grpc.max_receive_message_length", max_msg_size),
+            ("grpc.max_send_message_length", max_msg_size),
+        ],
+    )
     file_pb2_grpc.add_FileServiceServicer_to_server(FileService(auth_client), server)
     register_health(server)
 

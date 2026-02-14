@@ -96,7 +96,7 @@ func (m *mockUserClient) GetUser(_ context.Context, _ *userv1.GetUserRequest) (*
 
 func (m *mockUserClient) DeleteAccount(_ context.Context, _ *userv1.DeleteUserByIdRequest) (*userv1.DeleteUserByIdResponse, error) {
 	return &userv1.DeleteUserByIdResponse{Success: true}, nil
-}	
+}
 
 func (m *mockUserClient) ListUsers(_ context.Context, req *userv1.ListUsersRequest) (*userv1.ListUsersResponse, error) {
 	return &userv1.ListUsersResponse{
@@ -131,6 +131,37 @@ func (m *mockFileClient) UploadFile(ctx context.Context) (filev1.FileService_Upl
 
 func (m *mockFileClient) DownloadFile(ctx context.Context, req *filev1.DownloadFileRequest) (filev1.FileService_DownloadFileClient, error) {
 	return nil, fmt.Errorf("not implemented")
+}
+
+func (m *mockFileClient) InitiateMultipartUpload(ctx context.Context, req *filev1.InitiateMultipartUploadRequest) (*filev1.InitiateMultipartUploadResponse, error) {
+	return &filev1.InitiateMultipartUploadResponse{
+		UploadId:   "test-upload-id",
+		ChunkSize:  10 * 1024 * 1024,
+		TotalParts: 10,
+	}, nil
+}
+
+func (m *mockFileClient) UploadPart(ctx context.Context, req *filev1.UploadPartRequest) (*filev1.UploadPartResponse, error) {
+	return &filev1.UploadPartResponse{
+		Etag:       fmt.Sprintf("\"etag%d\"", req.PartNumber),
+		PartNumber: req.PartNumber,
+	}, nil
+}
+
+func (m *mockFileClient) CompleteMultipartUpload(ctx context.Context, req *filev1.CompleteMultipartUploadRequest) (*filev1.FileResponse, error) {
+	return &filev1.FileResponse{
+		File: &filev1.File{
+			Id:          "file-completed",
+			Filename:    "large-file.mp4",
+			Size:        104857600,
+			ContentType: "video/mp4",
+			CreatedAt:   1704067200,
+		},
+	}, nil
+}
+
+func (m *mockFileClient) AbortMultipartUpload(ctx context.Context, req *filev1.AbortMultipartUploadRequest) (*filev1.AbortMultipartUploadResponse, error) {
+	return &filev1.AbortMultipartUploadResponse{Success: true}, nil
 }
 
 func (m *mockFileClient) Close() error {
@@ -238,6 +269,7 @@ func InitializeScenario(ctx *godog.ScenarioContext) {
 	ctx.Step(`^I send a DELETE request to "([^"]*)" with json:$`, h.iSendADELETERequestToWithJSON)
 	ctx.Step(`^I am authenticated as "([^"]*)"$`, h.iAmAuthenticatedAs)
 	ctx.Step(`^I set headers:$`, h.iSetHeaders)
+	ctx.Step(`^I send a multipart form POST to "([^"]*)" with file "([^"]*)" containing "([^"]*)"$`, h.iSendAMultipartFormPOSTToWithFileContaining)
 }
 
 func TestFeatures(t *testing.T) {
@@ -245,7 +277,7 @@ func TestFeatures(t *testing.T) {
 		ScenarioInitializer: InitializeScenario,
 		Options: &godog.Options{
 			Format:   "pretty",
-			Paths:    []string{"health.feature", "auth.feature", "admin.feature", "security.feature", "list_users.feature"},
+			Paths:    []string{"health.feature", "auth.feature", "admin.feature", "security.feature", "list_users.feature", "multipart_upload.feature"},
 			TestingT: t,
 		},
 	}

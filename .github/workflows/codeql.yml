@@ -7,7 +7,6 @@ on:
     branches: [ "main" ]
   workflow_dispatch:
 
-
 jobs:
   analyze:
     runs-on: ubuntu-latest
@@ -19,20 +18,38 @@ jobs:
 
     strategy:
       matrix:
-        language: [ 'go', 'javascript' ]
+        language: [ 'go', 'javascript', 'python' ]
 
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
-        with:
-          languages: ${{ matrix.language }}
+      - uses: actions/checkout@v6
 
       - name: Setup Go
         uses: actions/setup-go@v6
         with:
           go-version: "1.25.5"
+
+      - name: Setup Node.js
+        if: matrix.language == 'javascript'
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+
+      - name: Setup Bun
+        if: matrix.language == 'javascript'
+        uses: oven-sh/setup-bun@v2
+
+      - name: Cache Bun dependencies
+        if: matrix.language == 'javascript'
+        uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ runner.os }}-${{ hashFiles('apps/frontend/bun.lock') }}
+          restore-keys: bun-${{ runner.os }}-
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v4
+        with:
+          languages: ${{ matrix.language }}
 
       - name: Build Go workspace
         if: matrix.language == 'go'
@@ -46,16 +63,6 @@ jobs:
             ./apps/user-service/... \
             -run TestNonExistent
 
-      - name: Setup Node.js
-        if: matrix.language == 'javascript'
-        uses: actions/setup-node@v6
-        with:
-          node-version: "24"
-
-      - name: Setup Bun
-        if: matrix.language == 'javascript'
-        uses: oven-sh/setup-bun@v2
-
       - name: Install frontend deps
         if: matrix.language == 'javascript'
         run: |
@@ -63,7 +70,7 @@ jobs:
           bun install --frozen-lockfile
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
+        uses: github/codeql-action/analyze@v4
 
   notify-security:
     needs: analyze

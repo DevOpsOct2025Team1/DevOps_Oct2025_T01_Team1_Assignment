@@ -34,6 +34,13 @@
         "cwd": "apps/file-service"
       }
     },
+    "coverage": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "uv run --group dev pytest --cov=file_service --cov-report=xml",
+        "cwd": "apps/file-service"
+      }
+    },
     "docker-build": {
       "executor": "nx:run-commands",
       "options": {

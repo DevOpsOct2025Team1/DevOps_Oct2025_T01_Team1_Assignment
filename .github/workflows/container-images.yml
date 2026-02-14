@@ -119,7 +119,7 @@ jobs:
     secrets: inherit
 
   notify-build-break:
-    needs: build-dev
+    needs: deploy-dev
     if: failure()
     runs-on: ubuntu-latest
     steps:

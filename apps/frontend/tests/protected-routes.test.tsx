@@ -49,6 +49,10 @@ vi.mock("../app/api/generated", () => ({
   getGetApiFilesIdDownloadUrl: (id: string) => `/api/files/${id}/download`,
 }))
 
+vi.mock("../app/utils/chunkedUpload", () => ({
+  uploadFileInChunks: vi.fn(),
+}))
+
 describe("Protected Routes", () => {
   beforeEach(() => {
     vi.resetModules()

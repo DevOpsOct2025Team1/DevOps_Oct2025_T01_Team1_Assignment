@@ -33,6 +33,14 @@ jobs:
         if: matrix.service == 'frontend'
         uses: oven-sh/setup-bun@v2
 
+      - name: Cache Bun dependencies
+        if: matrix.service == 'frontend'
+        uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ runner.os }}-${{ hashFiles('apps/frontend/bun.lock') }}
+          restore-keys: bun-${{ runner.os }}-
+
       - name: Install frontend dependencies
         if: matrix.service == 'frontend'
         run: |
@@ -45,13 +53,20 @@ jobs:
         with:
           node-version: "24"
 
+      - name: Cache NX
+        uses: actions/cache@v4
+        with:
+          path: .nx/cache
+          key: nx-${{ runner.os }}-${{ hashFiles('nx.json', '**/project.json') }}-${{ github.sha }}
+          restore-keys: nx-${{ runner.os }}-${{ hashFiles('nx.json', '**/project.json') }}-
+
       - name: Check integration-test target
         id: has_integration
         shell: bash
         run: |
           file="apps/${{ matrix.service }}/project.json"
           if [ -f "$file" ]; then
-            if jq -e '.targets | has("integration-test")' "$file" > /dev/null; then
+            if jq -e '.targets | has("integration-coverage")' "$file" > /dev/null; then
               echo "has=true" >> $GITHUB_OUTPUT
             else
               echo "has=false" >> $GITHUB_OUTPUT
@@ -62,7 +77,16 @@ jobs:
 
       - name: Run integration tests
         if: steps.has_integration.outputs.has == 'true'
-        run: ./nx run ${{ matrix.service }}:integration-test
+        run: ./nx run ${{ matrix.service }}:integration-coverage
+
+      - name: Upload coverage to Codecov
+        if: always() && steps.has_integration.outputs.has == 'true'
+        uses: codecov/codecov-action@v5
+        with:
+          files: coverage-integration.out
+          flags: ${{ matrix.service }}
+          token: ${{ secrets.CODECOV_TOKEN }}
+          working-directory: apps/${{ matrix.service }}
 
   notify-build-break:
     needs: integration-tests

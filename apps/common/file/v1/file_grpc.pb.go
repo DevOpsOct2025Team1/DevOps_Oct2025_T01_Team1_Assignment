@@ -19,12 +19,16 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	FileService_UploadFile_FullMethodName   = "/file.v1.FileService/UploadFile"
-	FileService_CreateFile_FullMethodName   = "/file.v1.FileService/CreateFile"
-	FileService_ListFiles_FullMethodName    = "/file.v1.FileService/ListFiles"
-	FileService_GetFile_FullMethodName      = "/file.v1.FileService/GetFile"
-	FileService_DownloadFile_FullMethodName = "/file.v1.FileService/DownloadFile"
-	FileService_DeleteFile_FullMethodName   = "/file.v1.FileService/DeleteFile"
+	FileService_UploadFile_FullMethodName              = "/file.v1.FileService/UploadFile"
+	FileService_CreateFile_FullMethodName              = "/file.v1.FileService/CreateFile"
+	FileService_ListFiles_FullMethodName               = "/file.v1.FileService/ListFiles"
+	FileService_GetFile_FullMethodName                 = "/file.v1.FileService/GetFile"
+	FileService_DownloadFile_FullMethodName            = "/file.v1.FileService/DownloadFile"
+	FileService_DeleteFile_FullMethodName              = "/file.v1.FileService/DeleteFile"
+	FileService_InitiateMultipartUpload_FullMethodName = "/file.v1.FileService/InitiateMultipartUpload"
+	FileService_UploadPart_FullMethodName              = "/file.v1.FileService/UploadPart"
+	FileService_CompleteMultipartUpload_FullMethodName = "/file.v1.FileService/CompleteMultipartUpload"
+	FileService_AbortMultipartUpload_FullMethodName    = "/file.v1.FileService/AbortMultipartUpload"
 )
 
 // FileServiceClient is the client API for FileService service.
@@ -37,6 +41,10 @@ type FileServiceClient interface {
 	GetFile(ctx context.Context, in *GetFileRequest, opts ...grpc.CallOption) (*FileResponse, error)
 	DownloadFile(ctx context.Context, in *DownloadFileRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[DownloadFileResponse], error)
 	DeleteFile(ctx context.Context, in *DeleteFileRequest, opts ...grpc.CallOption) (*DeleteFileResponse, error)
+	InitiateMultipartUpload(ctx context.Context, in *InitiateMultipartUploadRequest, opts ...grpc.CallOption) (*InitiateMultipartUploadResponse, error)
+	UploadPart(ctx context.Context, in *UploadPartRequest, opts ...grpc.CallOption) (*UploadPartResponse, error)
+	CompleteMultipartUpload(ctx context.Context, in *CompleteMultipartUploadRequest, opts ...grpc.CallOption) (*FileResponse, error)
+	AbortMultipartUpload(ctx context.Context, in *AbortMultipartUploadRequest, opts ...grpc.CallOption) (*AbortMultipartUploadResponse, error)
 }
 
 type fileServiceClient struct {
@@ -119,6 +127,46 @@ func (c *fileServiceClient) DeleteFile(ctx context.Context, in *DeleteFileReques
 	return out, nil
 }
 
+func (c *fileServiceClient) InitiateMultipartUpload(ctx context.Context, in *InitiateMultipartUploadRequest, opts ...grpc.CallOption) (*InitiateMultipartUploadResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(InitiateMultipartUploadResponse)
+	err := c.cc.Invoke(ctx, FileService_InitiateMultipartUpload_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *fileServiceClient) UploadPart(ctx context.Context, in *UploadPartRequest, opts ...grpc.CallOption) (*UploadPartResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UploadPartResponse)
+	err := c.cc.Invoke(ctx, FileService_UploadPart_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *fileServiceClient) CompleteMultipartUpload(ctx context.Context, in *CompleteMultipartUploadRequest, opts ...grpc.CallOption) (*FileResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(FileResponse)
+	err := c.cc.Invoke(ctx, FileService_CompleteMultipartUpload_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *fileServiceClient) AbortMultipartUpload(ctx context.Context, in *AbortMultipartUploadRequest, opts ...grpc.CallOption) (*AbortMultipartUploadResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AbortMultipartUploadResponse)
+	err := c.cc.Invoke(ctx, FileService_AbortMultipartUpload_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // FileServiceServer is the server API for FileService service.
 // All implementations must embed UnimplementedFileServiceServer
 // for forward compatibility.
@@ -129,6 +177,10 @@ type FileServiceServer interface {
 	GetFile(context.Context, *GetFileRequest) (*FileResponse, error)
 	DownloadFile(*DownloadFileRequest, grpc.ServerStreamingServer[DownloadFileResponse]) error
 	DeleteFile(context.Context, *DeleteFileRequest) (*DeleteFileResponse, error)
+	InitiateMultipartUpload(context.Context, *InitiateMultipartUploadRequest) (*InitiateMultipartUploadResponse, error)
+	UploadPart(context.Context, *UploadPartRequest) (*UploadPartResponse, error)
+	CompleteMultipartUpload(context.Context, *CompleteMultipartUploadRequest) (*FileResponse, error)
+	AbortMultipartUpload(context.Context, *AbortMultipartUploadRequest) (*AbortMultipartUploadResponse, error)
 	mustEmbedUnimplementedFileServiceServer()
 }
 
@@ -156,6 +208,18 @@ func (UnimplementedFileServiceServer) DownloadFile(*DownloadFileRequest, grpc.Se
 }
 func (UnimplementedFileServiceServer) DeleteFile(context.Context, *DeleteFileRequest) (*DeleteFileResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method DeleteFile not implemented")
+}
+func (UnimplementedFileServiceServer) InitiateMultipartUpload(context.Context, *InitiateMultipartUploadRequest) (*InitiateMultipartUploadResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method InitiateMultipartUpload not implemented")
+}
+func (UnimplementedFileServiceServer) UploadPart(context.Context, *UploadPartRequest) (*UploadPartResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method UploadPart not implemented")
+}
+func (UnimplementedFileServiceServer) CompleteMultipartUpload(context.Context, *CompleteMultipartUploadRequest) (*FileResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method CompleteMultipartUpload not implemented")
+}
+func (UnimplementedFileServiceServer) AbortMultipartUpload(context.Context, *AbortMultipartUploadRequest) (*AbortMultipartUploadResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method AbortMultipartUpload not implemented")
 }
 func (UnimplementedFileServiceServer) mustEmbedUnimplementedFileServiceServer() {}
 func (UnimplementedFileServiceServer) testEmbeddedByValue()                     {}
@@ -268,6 +332,78 @@ func _FileService_DeleteFile_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _FileService_InitiateMultipartUpload_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(InitiateMultipartUploadRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FileServiceServer).InitiateMultipartUpload(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: FileService_InitiateMultipartUpload_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FileServiceServer).InitiateMultipartUpload(ctx, req.(*InitiateMultipartUploadRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _FileService_UploadPart_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UploadPartRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FileServiceServer).UploadPart(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: FileService_UploadPart_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FileServiceServer).UploadPart(ctx, req.(*UploadPartRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _FileService_CompleteMultipartUpload_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CompleteMultipartUploadRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FileServiceServer).CompleteMultipartUpload(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: FileService_CompleteMultipartUpload_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FileServiceServer).CompleteMultipartUpload(ctx, req.(*CompleteMultipartUploadRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _FileService_AbortMultipartUpload_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AbortMultipartUploadRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FileServiceServer).AbortMultipartUpload(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: FileService_AbortMultipartUpload_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FileServiceServer).AbortMultipartUpload(ctx, req.(*AbortMultipartUploadRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // FileService_ServiceDesc is the grpc.ServiceDesc for FileService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -290,6 +426,22 @@ var FileService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeleteFile",
 			Handler:    _FileService_DeleteFile_Handler,
+		},
+		{
+			MethodName: "InitiateMultipartUpload",
+			Handler:    _FileService_InitiateMultipartUpload_Handler,
+		},
+		{
+			MethodName: "UploadPart",
+			Handler:    _FileService_UploadPart_Handler,
+		},
+		{
+			MethodName: "CompleteMultipartUpload",
+			Handler:    _FileService_CompleteMultipartUpload_Handler,
+		},
+		{
+			MethodName: "AbortMultipartUpload",
+			Handler:    _FileService_AbortMultipartUpload_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

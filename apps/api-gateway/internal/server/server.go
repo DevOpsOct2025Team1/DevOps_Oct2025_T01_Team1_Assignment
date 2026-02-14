@@ -21,6 +21,7 @@ type Server struct {
 
 func New(authClient handlers.AuthServiceClient, userClient handlers.UserServiceClient, fileClient handlers.FileServiceClient, cfg *config.Config) *Server {
 	router := gin.Default()
+	router.MaxMultipartMemory = 20 << 20
 	router.Use(otelgin.Middleware("api-gateway"))
 
 	allowOrigins := []string{"http://localhost:5173"}
@@ -66,6 +67,15 @@ func (s *Server) setupRoutes(cfg *config.Config) {
 		files.GET("/:id", fileHandler.GetFile)
 		files.GET("/:id/download", fileHandler.DownloadFile)
 		files.DELETE("/:id", fileHandler.DeleteFile)
+	}
+
+	multipart := s.Router.Group("/api/files/multipart")
+	multipart.Use(middleware.ValidateRole(s.authClient, []userv1.Role{userv1.Role_ROLE_USER, userv1.Role_ROLE_ADMIN}))
+	{
+		multipart.POST("/initiate", fileHandler.InitiateMultipartUpload)
+		multipart.POST("/:upload_id/part/:part_number", fileHandler.UploadPart)
+		multipart.POST("/:upload_id/complete", fileHandler.CompleteMultipartUpload)
+		multipart.DELETE("/:upload_id", fileHandler.AbortMultipartUpload)
 	}
 
 	s.Router.GET("/health", func(c *gin.Context) {

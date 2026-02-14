@@ -26,10 +26,24 @@
         "cwd": "apps/auth-service"
       }
     },
+    "coverage": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "go test -v -count=1 -coverprofile=coverage.out ./...",
+        "cwd": "apps/auth-service"
+      }
+    },
     "integration-test": {
       "executor": "nx:run-commands",
       "options": {
         "command": "go test -v -count=1 -tags=integration ./internal/integration/...",
+        "cwd": "apps/auth-service"
+      }
+    },
+    "integration-coverage": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "go test -v -count=1 -tags=integration -coverpkg=./... -coverprofile=coverage-integration.out ./internal/integration/...",
         "cwd": "apps/auth-service"
       }
     },

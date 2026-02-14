@@ -1,12 +1,13 @@
 import time
 import io
 import tempfile
+from datetime import datetime, timezone
 from bson import ObjectId
 from bson.errors import InvalidId
 import grpc
 from botocore.exceptions import ClientError
 from file.v1 import file_pb2, file_pb2_grpc
-from file_service.store import files_collection, s3_client, generate_s3_key
+from file_service.store import files_collection, s3_client, generate_s3_key, upload_sessions_collection
 from file_service.config import S3_BUCKET_NAME
 from file_service.auth_client import AuthClient
 
@@ -79,7 +80,6 @@ class FileService(file_pb2_grpc.FileServiceServicer):
         """Stream upload file to S3 and save metadata."""
         user_id = get_user_id(context, self.auth_client)
 
-        # First message should contain metadata
         MAX_FILES_PER_USER = 20
         MAX_FILE_SIZE = 2 * 1024 * 1024 * 1024
 
@@ -250,7 +250,7 @@ class FileService(file_pb2_grpc.FileServiceServicer):
             doc = files_collection.find_one({"_id": ObjectId(request.id), "user_id": user_id})
         except InvalidId:
             context.abort(grpc.StatusCode.INVALID_ARGUMENT, "Invalid file id format")
-        
+
         if not doc:
             context.abort(grpc.StatusCode.NOT_FOUND, "File not found")
 
@@ -262,7 +262,215 @@ class FileService(file_pb2_grpc.FileServiceServicer):
             except ClientError as e:
                 # Log error but continue with MongoDB deletion
                 print(f"Warning: Failed to delete file from S3: {str(e)}")
-        
+
         # Delete from MongoDB
         res = files_collection.delete_one({"_id": ObjectId(request.id), "user_id": user_id})
         return file_pb2.DeleteFileResponse(success=res.deleted_count == 1)
+
+    def InitiateMultipartUpload(self, request, context):
+        user_id = get_user_id(context, self.auth_client)
+
+        filename = request.filename
+        content_type = request.content_type or "application/octet-stream"
+        total_size = request.total_size
+
+        if total_size <= 0:
+            context.abort(grpc.StatusCode.INVALID_ARGUMENT, "total_size must be greater than 0")
+
+        MAX_FILE_SIZE = 2 * 1024 * 1024 * 1024
+        if total_size > MAX_FILE_SIZE:
+            context.abort(grpc.StatusCode.INVALID_ARGUMENT, "File size exceeds maximum allowed size of 2GB")
+
+        MAX_FILES_PER_USER = 20
+        file_count = files_collection.count_documents({"user_id": user_id})
+        if file_count >= MAX_FILES_PER_USER:
+            context.abort(
+                grpc.StatusCode.RESOURCE_EXHAUSTED,
+                "Maximum file limit reached (20 files per user)"
+            )
+
+        file_id = str(ObjectId())
+        s3_key = generate_s3_key(user_id, file_id, filename)
+
+        CHUNK_SIZE = 10 * 1024 * 1024
+        total_parts = (total_size + CHUNK_SIZE - 1) // CHUNK_SIZE
+
+        try:
+            response = s3_client.create_multipart_upload(
+                Bucket=S3_BUCKET_NAME,
+                Key=s3_key,
+                ContentType=content_type
+            )
+            upload_id = response['UploadId']
+
+            session_doc = {
+                "upload_id": upload_id,
+                "user_id": user_id,
+                "file_id": file_id,
+                "filename": filename,
+                "content_type": content_type,
+                "total_size": total_size,
+                "s3_key": s3_key,
+                "parts": [],
+                "created_at": datetime.now(timezone.utc),
+                "status": "in_progress"
+            }
+            upload_sessions_collection.insert_one(session_doc)
+
+            return file_pb2.InitiateMultipartUploadResponse(
+                upload_id=upload_id,
+                chunk_size=CHUNK_SIZE,
+                total_parts=total_parts
+            )
+        except ClientError as e:
+            context.abort(grpc.StatusCode.INTERNAL, f"Failed to initiate multipart upload: {str(e)}")
+
+    def UploadPart(self, request, context):
+        user_id = get_user_id(context, self.auth_client)
+
+        upload_id = request.upload_id
+        part_number = request.part_number
+        chunk = request.chunk
+
+        if part_number < 1:
+            context.abort(grpc.StatusCode.INVALID_ARGUMENT, "part_number must be >= 1")
+
+        CHUNK_SIZE = 10 * 1024 * 1024
+        if len(chunk) > CHUNK_SIZE:
+            context.abort(grpc.StatusCode.INVALID_ARGUMENT, "Chunk size exceeds maximum allowed size of 10MB")
+
+        session = upload_sessions_collection.find_one({
+            "upload_id": upload_id,
+            "user_id": user_id
+        })
+
+        if not session:
+            context.abort(grpc.StatusCode.NOT_FOUND, "Upload session not found or expired")
+
+        s3_key = session["s3_key"]
+
+        try:
+            response = s3_client.upload_part(
+                Bucket=S3_BUCKET_NAME,
+                Key=s3_key,
+                UploadId=upload_id,
+                PartNumber=part_number,
+                Body=chunk
+            )
+
+            etag = response['ETag']
+
+            upload_sessions_collection.update_one(
+                {"upload_id": upload_id, "user_id": user_id},
+                [
+                    {"$set": {
+                        "parts": {
+                            "$concatArrays": [
+                                {"$filter": {
+                                    "input": "$parts",
+                                    "cond": {"$ne": ["$$this.part_number", part_number]}
+                                }},
+                                [{"part_number": part_number, "etag": etag}]
+                            ]
+                        }
+                    }}
+                ]
+            )
+
+            return file_pb2.UploadPartResponse(
+                etag=etag,
+                part_number=part_number
+            )
+        except ClientError as e:
+            context.abort(grpc.StatusCode.INTERNAL, f"Failed to upload part: {str(e)}")
+
+    def CompleteMultipartUpload(self, request, context):
+        user_id = get_user_id(context, self.auth_client)
+
+        upload_id = request.upload_id
+        parts = request.parts
+
+        session = upload_sessions_collection.find_one({
+            "upload_id": upload_id,
+            "user_id": user_id
+        })
+
+        if not session:
+            context.abort(grpc.StatusCode.NOT_FOUND, "Upload session not found or expired")
+
+        file_id = session["file_id"]
+        filename = session["filename"]
+        content_type = session["content_type"]
+        total_size = session["total_size"]
+        s3_key = session["s3_key"]
+
+        multipart_upload = {
+            'Parts': [
+                {'PartNumber': part.part_number, 'ETag': part.etag}
+                for part in sorted(parts, key=lambda p: p.part_number)
+            ]
+        }
+
+        try:
+            s3_client.complete_multipart_upload(
+                Bucket=S3_BUCKET_NAME,
+                Key=s3_key,
+                UploadId=upload_id,
+                MultipartUpload=multipart_upload
+            )
+
+            doc = {
+                "_id": ObjectId(file_id),
+                "user_id": user_id,
+                "filename": filename,
+                "size": total_size,
+                "content_type": content_type,
+                "s3_key": s3_key,
+                "created_at": int(time.time())
+            }
+            files_collection.insert_one(doc)
+
+            upload_sessions_collection.delete_one({"upload_id": upload_id})
+
+            return file_pb2.FileResponse(
+                file=file_pb2.File(
+                    id=file_id,
+                    user_id=user_id,
+                    filename=filename,
+                    size=total_size,
+                    content_type=content_type,
+                    created_at=doc["created_at"]
+                )
+            )
+        except ClientError as e:
+            context.abort(grpc.StatusCode.INTERNAL, f"Failed to complete multipart upload: {str(e)}")
+
+    def AbortMultipartUpload(self, request, context):
+        user_id = get_user_id(context, self.auth_client)
+
+        upload_id = request.upload_id
+
+        session = upload_sessions_collection.find_one({
+            "upload_id": upload_id,
+            "user_id": user_id
+        })
+
+        if not session:
+            context.abort(grpc.StatusCode.NOT_FOUND, "Upload session not found")
+
+        s3_key = session["s3_key"]
+
+        try:
+            s3_client.abort_multipart_upload(
+                Bucket=S3_BUCKET_NAME,
+                Key=s3_key,
+                UploadId=upload_id
+            )
+        except ClientError as e:
+            print(f"Warning: Failed to abort S3 multipart upload: {str(e)}")
+
+        result = upload_sessions_collection.delete_one({"upload_id": upload_id})
+
+        return file_pb2.AbortMultipartUploadResponse(
+            success=result.deleted_count == 1
+        )

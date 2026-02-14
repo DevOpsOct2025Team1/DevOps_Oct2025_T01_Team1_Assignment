@@ -25,6 +25,13 @@
         "command": "bun test:browser",
         "cwd": "apps/frontend"
       }
+    },
+    "coverage": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bun run generate:api && vitest --config=vitest.browser.config.ts run --coverage",
+        "cwd": "apps/frontend"
+      }
     }
   },
   "tags": ["type:service", "lang:ts"]

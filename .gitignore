@@ -1,8 +1,6 @@
 .env
 .package-lock.json
 node_modules/
-.bun
-bun.lockb
 __pycache__/
 *.py[cod]
 *.pyo
@@ -13,3 +11,7 @@ __pycache__/
 
 .secrets
 act-event.json
+
+coverage.out
+coverage-integration.out
+coverage.xml

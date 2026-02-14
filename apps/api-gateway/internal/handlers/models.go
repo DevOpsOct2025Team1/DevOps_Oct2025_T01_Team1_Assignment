@@ -73,3 +73,39 @@ type GetFileResponse struct {
 type DeleteFileResponse struct {
 	Success bool `json:"success" example:"true"`
 }
+
+// InitiateMultipartUploadRequest represents the request to initiate a multipart upload
+type InitiateMultipartUploadRequest struct {
+	Filename    string `json:"filename" binding:"required" example:"large-video.mp4"`
+	ContentType string `json:"content_type" example:"video/mp4"`
+	TotalSize   int64  `json:"total_size" binding:"required" example:"1073741824"`
+}
+
+// InitiateMultipartUploadResponse represents the response for initiating a multipart upload
+type InitiateMultipartUploadResponse struct {
+	UploadID   string `json:"upload_id" example:"abc123"`
+	ChunkSize  int32  `json:"chunk_size" example:"10485760"`
+	TotalParts int32  `json:"total_parts" example:"10"`
+}
+
+// UploadPartResponse represents the response for uploading a single part
+type UploadPartResponse struct {
+	Etag       string `json:"etag" example:"\"etag1\""`
+	PartNumber int32  `json:"part_number" example:"1"`
+}
+
+// PartInfo represents a single part in the complete request
+type PartInfo struct {
+	PartNumber int32  `json:"part_number" example:"1"`
+	Etag       string `json:"etag" example:"\"etag1\""`
+}
+
+// CompleteMultipartUploadRequest represents the request to complete a multipart upload
+type CompleteMultipartUploadRequest struct {
+	Parts []PartInfo `json:"parts" binding:"required"`
+}
+
+// AbortMultipartUploadResponse represents the response for aborting a multipart upload
+type AbortMultipartUploadResponse struct {
+	Success bool `json:"success" example:"true"`
+}

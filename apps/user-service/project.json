@@ -26,6 +26,27 @@
         "cwd": "apps/user-service"
       }
     },
+    "coverage": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "go test -v -coverprofile=coverage.out ./...",
+        "cwd": "apps/user-service"
+      }
+    },
+    "integration-test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "go test -v -count=1 -tags=integration ./internal/store/...",
+        "cwd": "apps/user-service"
+      }
+    },
+    "integration-coverage": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "go test -v -count=1 -tags=integration -coverpkg=./... -coverprofile=coverage-integration.out ./internal/store/...",
+        "cwd": "apps/user-service"
+      }
+    },
     "docker-build": {
       "executor": "nx:run-commands",
       "options": {
