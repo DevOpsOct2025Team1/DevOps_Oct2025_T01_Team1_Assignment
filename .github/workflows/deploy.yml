@@ -11,7 +11,9 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment: ${{ inputs.environment }}
+    environment:
+      name: ${{ inputs.environment }}
+      url: ${{ vars.DEPLOY_URL }}
     steps:
       - name: Install cloudflared
         run: |
