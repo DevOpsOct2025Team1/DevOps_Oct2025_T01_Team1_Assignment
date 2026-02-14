@@ -7,3 +7,6 @@ __pycache__/
 .nx/installation
 .nx/cache
 .nx/workspace-data
+
+coverage.out
+coverage.xml

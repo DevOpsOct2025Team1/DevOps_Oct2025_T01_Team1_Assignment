@@ -26,6 +26,13 @@
         "cwd": "apps/user-service"
       }
     },
+    "coverage": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "go test -v -coverprofile=coverage.out ./...",
+        "cwd": "apps/user-service"
+      }
+    },
     "integration-test": {
       "executor": "nx:run-commands",
       "options": {

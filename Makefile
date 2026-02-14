@@ -1,4 +1,4 @@
-.PHONY: help build test serve docker-build docker-up docker-down clean
+.PHONY: help build test coverage serve docker-build docker-up docker-down clean
 
 help:
 	@echo 'Usage: make [target]'
@@ -11,6 +11,9 @@ build:
 
 test:
 	./nx run-many --target=test --all
+
+coverage:
+	./nx run-many --target=coverage --all
 
 serve:
 	./nx run-many --target=serve --all --parallel=3

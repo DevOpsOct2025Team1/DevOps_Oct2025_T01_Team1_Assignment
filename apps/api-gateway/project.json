@@ -26,6 +26,13 @@
         "cwd": "apps/api-gateway"
       }
     },
+    "coverage": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "go test -v -coverprofile=coverage.out ./...",
+        "cwd": "apps/api-gateway"
+      }
+    },
     "integration-test": {
       "executor": "nx:run-commands",
       "options": {

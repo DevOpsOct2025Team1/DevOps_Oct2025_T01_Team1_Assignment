@@ -10,6 +10,13 @@
         "command": "go test -v ./...",
         "cwd": "apps/common"
       }
+    },
+    "coverage": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "go test -v -coverprofile=coverage.out ./...",
+        "cwd": "apps/common"
+      }
     }
   },
   "tags": ["type:common", "lang:go"]

@@ -79,4 +79,12 @@ jobs:
           restore-keys: nx-${{ runner.os }}-${{ hashFiles('nx.json', '**/project.json') }}-
 
       - name: Run tests
-        run: ./nx test ${{ matrix.service }}
+        run: ./nx coverage ${{ matrix.service }}
+
+      - name: Upload coverage to Codecov
+        if: always()
+        uses: codecov/codecov-action@v5
+        with:
+          flags: ${{ matrix.service }}
+          token: ${{ secrets.CODECOV_TOKEN }}
+          working-directory: apps/${{ matrix.service }}
