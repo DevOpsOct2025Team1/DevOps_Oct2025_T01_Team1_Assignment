@@ -1,23 +1,25 @@
 # Devops Assignment
+
+[![CodeQL SAST Scan](https://github.com/DevOpsOct2025Team1/DevOps_Oct2025_T01_Team1_Assignment/actions/workflows/codeql.yml/badge.svg)](https://github.com/DevOpsOct2025Team1/DevOps_Oct2025_T01_Team1_Assignment/actions/workflows/codeql.yml)
+[![API Gateway](https://codecov.io/gh/DevOpsOct2025Team1/DevOps_Oct2025_T01_Team1_Assignment/branch/main/graph/badge.svg?flag=api-gateway)](https://codecov.io/gh/DevOpsOct2025Team1/DevOps_Oct2025_T01_Team1_Assignment)
+[![Auth Service](https://codecov.io/gh/DevOpsOct2025Team1/DevOps_Oct2025_T01_Team1_Assignment/branch/main/graph/badge.svg?flag=auth-service)](https://codecov.io/gh/DevOpsOct2025Team1/DevOps_Oct2025_T01_Team1_Assignment)
+[![User Service](https://codecov.io/gh/DevOpsOct2025Team1/DevOps_Oct2025_T01_Team1_Assignment/branch/main/graph/badge.svg?flag=user-service)](https://codecov.io/gh/DevOpsOct2025Team1/DevOps_Oct2025_T01_Team1_Assignment)
+[![File Service](https://codecov.io/gh/DevOpsOct2025Team1/DevOps_Oct2025_T01_Team1_Assignment/branch/main/graph/badge.svg?flag=file-service)](https://codecov.io/gh/DevOpsOct2025Team1/DevOps_Oct2025_T01_Team1_Assignment)
+[![Frontend](https://codecov.io/gh/DevOpsOct2025Team1/DevOps_Oct2025_T01_Team1_Assignment/branch/main/graph/badge.svg?flag=frontend)](https://codecov.io/gh/DevOpsOct2025Team1/DevOps_Oct2025_T01_Team1_Assignment)
+
 This assignment project uses a microservices architecture.
 ## Services
 
 - **User Service** (Port 8080): Manages user data with MongoDB
 - **Auth Service** (Port 8081): Handles authentication with JWT
 - **API Gateway** (Port 3000): HTTP/REST interface for clients
+- **File Service** (Port 50054): Handles files uploads, downloads.
 - **Frontend** (Port 5173): React application for user interface
 
 ## Prerequisites
 
 ### For Development (Docker Compose - Recommended)
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/) or Docker + Docker Compose
-
-## Quick Start
-
-### Setup env
-```bash
-make setup-envw
-```
 
 ### Serve all services
 ```bash
