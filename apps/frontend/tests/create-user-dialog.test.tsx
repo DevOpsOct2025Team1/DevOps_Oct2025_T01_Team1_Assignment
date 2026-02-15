@@ -62,4 +62,40 @@ describe("CreateUserDialog", () => {
     await user.click(screen.getByRole("button", { name: /create user/i }))
     expect(await screen.findByText("Server error")).toBeDefined()
   })
+
+  it("shows fallback error message when error has no message", async () => {
+    mutateAsyncMock.mockRejectedValueOnce({})
+    const user = userEvent.setup()
+    renderWithProviders(<BrowserRouter><CreateUserDialog /></BrowserRouter>)
+    await user.click(screen.getByRole("button", { name: /add user/i }))
+    await user.type(screen.getByLabelText(/username/i), "newuser")
+    await user.type(screen.getByLabelText(/password/i), "password123")
+    await user.click(screen.getByRole("button", { name: /create user/i }))
+    expect(await screen.findByText("Failed to create user")).toBeDefined()
+  })
+
+  it("shows validation error when only username is provided", async () => {
+    const user = userEvent.setup()
+    renderWithProviders(<BrowserRouter><CreateUserDialog /></BrowserRouter>)
+    await user.click(screen.getByRole("button", { name: /add user/i }))
+    await user.type(screen.getByLabelText(/username/i), "newuser")
+    await user.click(screen.getByRole("button", { name: /create user/i }))
+    expect(screen.getByText("Username and password are required")).toBeDefined()
+  })
+
+  it("shows validation error when only password is provided", async () => {
+    const user = userEvent.setup()
+    renderWithProviders(<BrowserRouter><CreateUserDialog /></BrowserRouter>)
+    await user.click(screen.getByRole("button", { name: /add user/i }))
+    await user.type(screen.getByLabelText(/password/i), "password123")
+    await user.click(screen.getByRole("button", { name: /create user/i }))
+    expect(screen.getByText("Username and password are required")).toBeDefined()
+  })
+
+  it("renders dialog description text", async () => {
+    const user = userEvent.setup()
+    renderWithProviders(<BrowserRouter><CreateUserDialog /></BrowserRouter>)
+    await user.click(screen.getByRole("button", { name: /add user/i }))
+    expect(screen.getByText(/default user privileges/)).toBeDefined()
+  })
 })

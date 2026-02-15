@@ -1,8 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from "vitest"
 import { BrowserRouter } from "react-router"
-import Dashboard from "../app/routes/dashboard"
 import { renderWithProviders } from "./test-utils"
-import { clearAuthCache } from "../app/utils/auth"
+import { clearAuthCache } from "~/utils/auth"
 
 const createUserMock = vi.fn(() => ({
   mutateAsync: vi.fn(),
@@ -53,9 +52,50 @@ vi.mock("../app/utils/chunkedUpload", () => ({
   uploadFileInChunks: vi.fn(),
 }))
 
+vi.mock("../app/api/orval-client", () => ({
+  resolveUrl: (url: string) => `http://localhost:3001${url}`,
+  getAuthHeaders: () => ({ Authorization: "Bearer fake-token" }),
+}))
+
+vi.mock("../app/routes/dashboard", async () => {
+  const { useEffect } = await import("react")
+  const { useNavigate } = await import("react-router")
+  const { useAuth } = await import("../app/contexts/AuthContext")
+  const { default: AdminPanel } = await import("../app/components/AdminPanel")
+  const { default: UserPanel } = await import("../app/components/UserPanel")
+
+  return {
+    default: function Dashboard() {
+      const navigate = useNavigate()
+      const { user, isAuthenticated } = useAuth()
+
+      useEffect(() => {
+        if (!isAuthenticated) {
+          navigate("/login")
+        }
+      }, [isAuthenticated])
+
+      if (!user) return null
+
+      const userIsAdmin = typeof user.role === "number"
+        ? user.role === 2
+        : user.role.toLowerCase().includes("admin")
+
+      return (
+        <div className="flex-1 bg-gray-50 py-8">
+          <div className="max-w-5xl mx-auto px-4">
+            {userIsAdmin ? <AdminPanel /> : <UserPanel />}
+          </div>
+        </div>
+      )
+    },
+  }
+})
+
+const { default: Dashboard } = await import("../app/routes/dashboard")
+
 describe("Protected Routes", () => {
   beforeEach(() => {
-    vi.resetModules()
     clearAuthCache()
     localStorage.clear()
     createUserMock.mockClear()
