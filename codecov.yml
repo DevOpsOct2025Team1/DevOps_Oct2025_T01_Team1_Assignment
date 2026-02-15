@@ -1,31 +1,13 @@
-fixes:
-  - "github.com/provsalt/DOP_P01_Team1/api-gateway/::apps/api-gateway/"
-  - "github.com/provsalt/DOP_P01_Team1/auth-service/::apps/auth-service/"
-  - "github.com/provsalt/DOP_P01_Team1/user-service/::apps/user-service/"
-  - "github.com/provsalt/DOP_P01_Team1/common/::apps/common/"
-
 flags:
   api-gateway:
-    paths:
-      - apps/api-gateway/
     carryforward: true
   auth-service:
-    paths:
-      - apps/auth-service/
     carryforward: true
   user-service:
-    paths:
-      - apps/user-service/
     carryforward: true
   file-service:
-    paths:
-      - apps/file-service/
     carryforward: true
   frontend:
-    paths:
-      - apps/frontend/
     carryforward: true
   common:
-    paths:
-      - apps/common/
     carryforward: true
