@@ -1,3 +1,9 @@
+fixes:
+  - "github.com/provsalt/DOP_P01_Team1/api-gateway/::apps/api-gateway/"
+  - "github.com/provsalt/DOP_P01_Team1/auth-service/::apps/auth-service/"
+  - "github.com/provsalt/DOP_P01_Team1/user-service/::apps/user-service/"
+  - "github.com/provsalt/DOP_P01_Team1/common/::apps/common/"
+
 flags:
   api-gateway:
     paths:
