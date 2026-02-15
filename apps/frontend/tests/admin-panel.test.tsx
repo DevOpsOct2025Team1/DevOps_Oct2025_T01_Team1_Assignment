@@ -76,4 +76,45 @@ describe("AdminPanel", () => {
     await user.type(searchInput, "alice")
     expect(searchInput).toBeDefined()
   })
+
+  it("formats admin role correctly for role value '2'", async () => {
+    listUsersMock.mockReturnValue({
+      status: 200,
+      data: { users: [
+        { id: "1", username: "superadmin", role: "2" },
+      ]},
+    })
+    renderWithProviders(<BrowserRouter><AdminPanel /></BrowserRouter>)
+    expect(screen.getByText("superadmin")).toBeDefined()
+    expect(screen.getByText("Admin")).toBeDefined()
+  })
+
+  it("formats admin role correctly for lowercase 'admin'", async () => {
+    listUsersMock.mockReturnValue({
+      status: 200,
+      data: { users: [
+        { id: "1", username: "admin1", role: "admin" },
+      ]},
+    })
+    renderWithProviders(<BrowserRouter><AdminPanel /></BrowserRouter>)
+    expect(screen.getByText("Admin")).toBeDefined()
+  })
+
+  it("returns empty array when status is not 200", async () => {
+    listUsersMock.mockReturnValue({ status: 401, data: null })
+    renderWithProviders(<BrowserRouter><AdminPanel /></BrowserRouter>)
+    expect(screen.getByText("No users found")).toBeDefined()
+  })
+
+  it("returns empty array when data is null", async () => {
+    listUsersMock.mockReturnValue({ status: 200, data: null })
+    renderWithProviders(<BrowserRouter><AdminPanel /></BrowserRouter>)
+    expect(screen.getByText("No users found")).toBeDefined()
+  })
+
+  it("handles missing users key in data", async () => {
+    listUsersMock.mockReturnValue({ status: 200, data: {} })
+    renderWithProviders(<BrowserRouter><AdminPanel /></BrowserRouter>)
+    expect(screen.getByText("No users found")).toBeDefined()
+  })
 })

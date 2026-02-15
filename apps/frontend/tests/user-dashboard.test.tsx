@@ -122,4 +122,91 @@ describe("UserPanel", () => {
     )
     expect(await findByText("No files uploaded yet")).toBeTruthy()
   })
+
+  it("opens delete confirmation dialog when delete is triggered", async () => {
+    const mockFiles = [
+      { id: "1", filename: "file1.txt", size: 1024, created_at: 1700000000 },
+    ]
+    getFilesMock.mockReturnValue({ status: 200, data: { files: mockFiles } })
+    const { findByText, getByRole } = renderWithProviders(
+      <BrowserRouter><UserPanel /></BrowserRouter>
+    )
+    expect(await findByText("file1.txt")).toBeTruthy()
+
+    const menuButton = getByRole("button", { name: /menu/i })
+    await userEvent.click(menuButton)
+    await userEvent.click(await findByText("Delete"))
+
+    expect(await findByText("Are you sure?")).toBeTruthy()
+    expect(await findByText(/permanently delete your file/)).toBeTruthy()
+  })
+
+  it("confirms file deletion", async () => {
+    const mockFiles = [
+      { id: "1", filename: "file1.txt", size: 1024, created_at: 1700000000 },
+    ]
+    getFilesMock.mockReturnValue({ status: 200, data: { files: mockFiles } })
+    const { findByText, getByRole } = renderWithProviders(
+      <BrowserRouter><UserPanel /></BrowserRouter>
+    )
+    expect(await findByText("file1.txt")).toBeTruthy()
+
+    const menuButton = getByRole("button", { name: /menu/i })
+    await userEvent.click(menuButton)
+    await userEvent.click(await findByText("Delete"))
+    await userEvent.click(getByRole("button", { name: /^delete$/i }))
+
+    expect(deleteFileMock).toHaveBeenCalledWith({ id: "1" })
+  })
+
+  it("cancels file deletion", async () => {
+    const mockFiles = [
+      { id: "1", filename: "file1.txt", size: 1024, created_at: 1700000000 },
+    ]
+    getFilesMock.mockReturnValue({ status: 200, data: { files: mockFiles } })
+    const { findByText, getByRole, queryByText } = renderWithProviders(
+      <BrowserRouter><UserPanel /></BrowserRouter>
+    )
+    expect(await findByText("file1.txt")).toBeTruthy()
+
+    const menuButton = getByRole("button", { name: /menu/i })
+    await userEvent.click(menuButton)
+    await userEvent.click(await findByText("Delete"))
+    expect(await findByText("Are you sure?")).toBeTruthy()
+
+    await userEvent.click(getByRole("button", { name: /cancel/i }))
+    expect(queryByText("Are you sure?")).toBeNull()
+  })
+
+  it("handles non-200 status", async () => {
+    getFilesMock.mockReturnValue({ status: 500, data: { files: [] } })
+    const { findByText } = renderWithProviders(
+      <BrowserRouter><UserPanel /></BrowserRouter>
+    )
+    expect(await findByText("No files uploaded yet")).toBeTruthy()
+  })
+
+  it("renders upload button", async () => {
+    getFilesMock.mockReturnValue({ status: 200, data: { files: [] } })
+    const { getByRole } = renderWithProviders(
+      <BrowserRouter><UserPanel /></BrowserRouter>
+    )
+    expect(getByRole("button", { name: /upload/i })).toBeDefined()
+  })
+
+  it("displays greeting with username from auth context", async () => {
+    getFilesMock.mockReturnValue({ status: 200, data: { files: [] } })
+    const { findByText } = renderWithProviders(
+      <BrowserRouter><UserPanel /></BrowserRouter>
+    )
+    expect(await findByText(/testuser/)).toBeTruthy()
+  })
+
+  it("displays file description text", async () => {
+    getFilesMock.mockReturnValue({ status: 200, data: { files: [] } })
+    const { findByText } = renderWithProviders(
+      <BrowserRouter><UserPanel /></BrowserRouter>
+    )
+    expect(await findByText("What brings you to your files today?")).toBeTruthy()
+  })
 })
