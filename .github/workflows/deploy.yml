@@ -35,6 +35,9 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    concurrency:
+      group: deploy-${{ inputs.environment }}
+      cancel-in-progress: false
     environment:
       name: ${{ inputs.environment }}
       url: ${{ vars.DEPLOY_URL }}
