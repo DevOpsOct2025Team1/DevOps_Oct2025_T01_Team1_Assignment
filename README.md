@@ -24,6 +24,8 @@ This assignment project uses a microservices architecture.
 ### Serve all services
 ```bash
 make serve
+# or
+./nx run-many --target=serve --all
 ```
 
 This starts all services via NX in development mode.
@@ -56,6 +58,8 @@ docker compose logs -f
 ./nx serve auth-service
 
 ./nx serve api-gateway
+,
+./nx serve frontend
 ```
 
 ## Frontend Development
@@ -63,34 +67,12 @@ docker compose logs -f
 ### Running the Frontend Locally
 
 The frontend is a React 19 application built with React Router v7 and Tailwind CSS v4.
-
-1. **Navigate to the frontend directory:**
-   ```bash
-   cd apps/frontend
-   ```
-
-2. **Install dependencies (if not already done):**
-   ```bash
-   npm install
-   ```
-
-3. **Start the development server:**
-   ```bash
-   npm run dev
-   ```
-
-   The frontend will be available at http://localhost:5173
-
-4. **Configure the API endpoint (optional):**
+ 
+**Configure the API endpoint (optional):**
    
    By default, the frontend connects to the API Gateway at `http://localhost:3001`. To change this:
    
    - Create a `.env` file in `apps/frontend/`:
      ```
      VITE_API_BASE_URL=http://localhost:3001
-     ```
-   
-   - Or set the environment variable before running:
-     ```bash
-     VITE_API_BASE_URL=http://your-api-url npm run dev
      ```
